@@ -81,7 +81,7 @@ public:
                 break;
 
             case CHAT_MSG_PARTY_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_PARTY))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_PARTY))
                     sLog->outChat("[PARTY] Leader %s tells group: %s",
                         player->GetName(), msg.c_str());
                 break;
@@ -96,13 +96,13 @@ public:
                 break;
 
             case CHAT_MSG_RAID_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
                     sLog->outChat("[RAID] Leader player %s tells raid: %s",
                         player->GetName(), msg.c_str());
                 break;
 
             case CHAT_MSG_RAID_WARNING:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
                     sLog->outChat("[RAID] Leader player %s warns raid with: %s",
                         player->GetName(), msg.c_str());
                 break;
@@ -117,7 +117,7 @@ public:
                 break;
 
             case CHAT_MSG_BATTLEGROUND_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_BGROUND))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_BGROUND))
                     sLog->outChat("[BATTLEGROUND] Leader player %s tells battleground: %s",
                         player->GetName(), msg.c_str());
                 break;

@@ -30,6 +30,7 @@ EndScriptData */
 #include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
+#include "Group.h"
 #include "GossipDef.h"
 
 #include <fstream>
@@ -90,6 +91,7 @@ public:
             { "areatriggers",   SEC_ADMINISTRATOR,  false, &HandleDebugAreaTriggersCommand,    "", NULL },
             { "los",            SEC_MODERATOR,      false, &HandleDebugLoSCommand,             "", NULL },
             { "moveflags",      SEC_ADMINISTRATOR,  false, &HandleDebugMoveflagsCommand,       "", NULL },
+            { "roll",           SEC_ADMINISTRATOR,  false, &HandleDebugForceRollCommand,       "", NULL },
             { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1328,6 +1330,45 @@ public:
         sLog->outSQLDev("(@PATH, XX, %.3f, %.3f, %.5f, 0,0, 0,100, 0),", player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
 
         handler->PSendSysMessage("Waypoint SQL written to SQL Developer log");
+        return true;
+    }
+
+    static bool HandleDebugForceRollCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Player *chr = handler->GetSession()->GetPlayer();
+
+        char* arg1 = strtok((char*)args, " ");
+        char* arg2 = strtok(NULL, " ");
+        char* arg3 = strtok(NULL, " ");
+
+        uint32 roll = atoi((char*)arg1);
+        uint32 min = atoi((char*)arg2);
+        uint32 max = atoi((char*)arg3);
+
+        if (min < 1 || max < 1 || max > 10000 || max < min || roll < min || max < roll)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        WorldPacket data(MSG_RANDOM_ROLL, 4+4+4+8);
+        data << uint32(min);
+        data << uint32(max);
+        data << uint32(roll);
+        data << uint64(chr->GetGUID());
+        if (chr->GetGroup())
+            chr->GetGroup()->BroadcastPacket(&data, false);
+        else
+        {
+            handler->SendSysMessage(LANG_NOT_IN_GROUP);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
         return true;
     }
 };

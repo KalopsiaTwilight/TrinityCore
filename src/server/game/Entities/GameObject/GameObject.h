@@ -307,7 +307,9 @@ struct GameObjectTemplate
         //27 GAMEOBJECT_TYPE_MINI_GAME
         struct
         {
-            uint32 gameType;                                //0
+            uint32 areaTrigger;                             //0
+            uint32 requiredLevel;                           //1
+            uint32 phase;                                   //2
         } miniGame;
         //29 GAMEOBJECT_TYPE_CAPTURE_POINT
         struct
@@ -632,6 +634,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
 
         bool IsTransport() const;
         bool IsDynTransport() const;
+        bool IsStaticMO() const;
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
 

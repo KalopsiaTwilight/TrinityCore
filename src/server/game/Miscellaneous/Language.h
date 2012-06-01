@@ -1067,6 +1067,28 @@ enum TrinityStrings
     // Use for custom patches             11000-11999
     LANG_AUTO_BROADCAST                 = 11000,
     LANG_INVALID_REALMID                = 11001,
+    LANG_COMMAND_RPITEMIDINVALID        = 11900,
+    LANG_REMOVERPITEM                   = 11901,
+    LANG_ADDRPITEM                      = 11902,
+    LANG_COMMAND_RPITEMTOOLOW           = 11903,
+    LANG_NPC_CHANGE_SIZE                = 11904,
+    LANG_CURRENT_FACTION_PLAYER         = 11905,
+    LANG_YOU_CHANGE_FACTION_PLAYER      = 11906,
+    LANG_SCALE_NO_MORE_CHANGES          = 11907,
+    LANG_YOU_CHANGE_SIZE_PERM           = 11908,
+    LANG_YOURS_SIZE_CHANGED_PERM        = 11909,
+    LANG_CURRENT_FACTION_PLAYER_PERM    = 11910,
+    LANG_YOU_CHANGE_FACTION_PLAYER_PERM = 11911,
+    LANG_WORLD_EMOTE                    = 11912,
+    LANG_RESTRICTED_ITEM                = 11913,
+    LANG_CUSTOM_SCALE_CHANGE            = 11914,
+    LANG_SELFTAXIS                      = 11915,
+    LANG_SELFTAXIS_NO_MORE_CHANGES      = 11916,
+    LANG_SELFTAXIS_ALREADYON            = 11917,
+    LANG_YOU_CHANGE_NPC_CUST_FACTION    = 11918,
+    LANG_SELFTAXIS_UNL                  = 11919,
+    LANG_ADDITEM_ALL                    = 11920,
+    LANG_REMOVEITEM_ALL                 = 11921,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

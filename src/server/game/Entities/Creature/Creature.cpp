@@ -2132,6 +2132,12 @@ bool Creature::LoadCreaturesAddon(bool reload)
         }
     }
 
+    if (cainfo->scale > 0)
+        SetObjectScale(cainfo->scale);
+
+    if (cainfo->faction > 1)
+        setFaction(cainfo->faction);
+
     return true;
 }
 

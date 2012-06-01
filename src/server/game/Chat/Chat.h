@@ -131,6 +131,7 @@ class ChatHandler
         bool ShowHelpForCommand(ChatCommand* table, const char* cmd);
         bool ShowHelpForSubCommands(ChatCommand* table, char const* cmd, char const* subcmd);
 
+        bool HandleAHBotOptionsCommand(const char * args);
         bool HandleNameAnnounceCommand(const char* args);
         bool HandleGMNameAnnounceCommand(const char* args);
         bool HandleGMAnnounceCommand(const char* args);
@@ -153,6 +154,7 @@ class ChatHandler
         bool HandleCastSelfCommand(const char *args);
         bool HandleCastTargetCommand(const char *args);
         bool HandleCastDestCommand(const char *args);
+        bool HandleCastAllCommand(const char *args);
 
         bool HandleCharacterCustomizeCommand(const char* args);
         bool HandleCharacterChangeFactionCommand(const char* args);
@@ -166,6 +168,8 @@ class ChatHandler
         bool HandleCharacterRenameCommand(const char* args);
         bool HandleCharacterReputationCommand(const char* args);
         bool HandleCharacterTitlesCommand(const char* args);
+        bool HandleCharacterFactionCommand(const char* args);
+        bool HandleCharacterFactionPermCommand(const char* args);
 
         bool HandleChannelSetOwnership(const char *args);
 
@@ -196,6 +200,7 @@ class ChatHandler
         bool HandleLookupFactionCommand(const char * args);
         bool HandleLookupItemCommand(const char * args);
         bool HandleLookupItemSetCommand(const char * args);
+        bool HandleLookupRPItemCommand(const char * args);
         bool HandleLookupObjectCommand(const char* args);
         bool HandleLookupPlayerIpCommand(const char* args);
         bool HandleLookupPlayerAccountCommand(const char* args);
@@ -225,6 +230,7 @@ class ChatHandler
         bool HandleSendMoneyCommand(const char* args);
 
         bool HandleServerCorpsesCommand(const char* args);
+        bool HandleServerEmoteCommand(const char* args);
         bool HandleServerExitCommand(const char* args);
         bool HandleServerIdleRestartCommand(const char* args);
         bool HandleServerIdleShutDownCommand(const char* args);
@@ -292,6 +298,8 @@ class ChatHandler
         bool HandleHideAreaCommand(const char* args);
         bool HandleAddItemCommand(const char* args);
         bool HandleAddItemSetCommand(const char* args);
+        bool HandleAddRPItemCommand(const char* args);
+        bool HandleAddItemAllCommand(const char* args);
         bool HandlePetUnlearnCommand(const char* args);
         bool HandlePetLearnCommand(const char* args);
         bool HandleCreatePetCommand(const char* args);
@@ -303,6 +311,10 @@ class ChatHandler
         bool HandleBankCommand(const char* args);
         bool HandleChangeWeather(const char* args);
         bool HandleKickPlayerCommand(const char * args);
+
+        bool HandleSelfScaleCommand(const char * args);
+        bool HandleSelfMorphCommand(const char * args);
+        bool HandleSelfTaxiCheatCommand(const char * args);
 
         // GM ticket command handlers
         bool HandleGMTicketListCommand(const char* args);

@@ -876,8 +876,8 @@ void ObjectMgr::LoadCreatureAddons()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                0       1       2      3       4       5      6
-    QueryResult result = WorldDatabase.Query("SELECT guid, path_id, mount, bytes1, bytes2, emote, auras FROM creature_addon");
+    //                                                0       1       2      3       4       5      6      7      8
+    QueryResult result = WorldDatabase.Query("SELECT guid, path_id, mount, bytes1, bytes2, emote, auras, scale, faction FROM creature_addon");
 
     if (!result)
     {
@@ -913,7 +913,9 @@ void ObjectMgr::LoadCreatureAddons()
         creatureAddon.bytes1  = fields[3].GetUInt32();
         creatureAddon.bytes2  = fields[4].GetUInt32();
         creatureAddon.emote   = fields[5].GetUInt32();
-
+        creatureAddon.scale   = fields[7].GetFloat();
+        creatureAddon.faction = uint32(fields[8].GetUInt16());
+        
         Tokens tokens(fields[6].GetString(), ' ');
         uint8 i = 0;
         creatureAddon.auras.resize(tokens.size());
@@ -941,6 +943,15 @@ void ObjectMgr::LoadCreatureAddons()
         {
             sLog->outErrorDb("Creature (GUID: %u) has invalid emote (%u) defined in `creature_addon`.", guid, creatureAddon.emote);
             creatureAddon.emote = 0;
+        }
+
+        if (creatureAddon.faction > 1)
+        {
+            if (!sFactionTemplateStore.LookupEntry(creatureAddon.faction))
+            {
+                sLog->outErrorDb("Creature (GUID: %u) has invalid faction (%u) defined in `creature_addon`.", guid, creatureAddon.faction);
+                creatureAddon.faction = 0;
+            }
         }
 
         ++count;
@@ -5621,7 +5632,9 @@ void ObjectMgr::GetTaxiPath(uint32 source, uint32 destination, uint32 &path, uin
         return;
     }
 
-    cost = dest_i->second.price;
+    //cost = dest_i->second.price;
+    //Change taxi cost to 0
+    cost = 0;
     path = dest_i->second.ID;
 }
 
@@ -5996,7 +6009,7 @@ void ObjectMgr::LoadAreaTriggerTeleports()
         if (!atEntry)
         {
             sLog->outErrorDb("Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", Trigger_ID);
-            continue;
+            //continue;
         }
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(at.target_mapId);

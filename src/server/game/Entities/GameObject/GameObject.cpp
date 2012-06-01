@@ -855,6 +855,14 @@ bool GameObject::IsDynTransport() const
     return gInfo->type == GAMEOBJECT_TYPE_MO_TRANSPORT || (gInfo->type == GAMEOBJECT_TYPE_TRANSPORT && !gInfo->transport.pause);
 }
 
+bool GameObject::IsStaticMO() const
+{
+    // If something is marked as a map object, don't transmit an out of range packet for it.
+    GameObjectTemplate const* gInfo = GetGOInfo();
+    if (!gInfo) return false;
+    return gInfo->type == GAMEOBJECT_TYPE_MAP_OBJECT;
+}
+
 Unit* GameObject::GetOwner() const
 {
     return ObjectAccessor::GetUnit(*this, GetOwnerGUID());
@@ -872,6 +880,9 @@ bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
         return true;
 
     if (IsTransport())
+        return true;
+
+    if (IsStaticMO())
         return true;
 
     if (!seer)
@@ -1233,7 +1244,31 @@ void GameObject::Use(Unit* user)
                     if (player->GetQuestStatus(info->goober.questId) != QUEST_STATUS_INCOMPLETE)
                         break;
                 }
+                /*
+                // Updated gameobject_teleports code
+                QueryResult result = WorldDatabase.PQuery("SELECT * FROM gameobject_teleports WHERE entry ='%u'", GetEntry());
+                if(result)
+                {
+                    uint32 required_level = (*result)[6].GetInt32();
 
+                    if ((required_level == 0) || (required_level <= player->getLevel()))
+                    {
+                        uint32 mapidt = (*result)[1].GetInt32();
+                        float xt = (*result)[2].GetFloat();
+                        float yt = (*result)[3].GetFloat();
+                        float zt = (*result)[4].GetFloat();
+                        float orientationt = (*result)[5].GetFloat();
+						uint32 phasemask = (*result)[7].GetInt32();
+
+                        player->TeleportTo(mapidt, xt, yt, zt, orientationt, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+						player->SetPhaseMask(phasemask,true);
+                    }
+                    else if (required_level != 0)
+                    {
+                    }
+                }
+                //End gameobject_teleports
+                */
                 if (Battleground* bg = player->GetBattleground())
                     bg->EventPlayerUsedGO(player, this);
 
@@ -1590,6 +1625,40 @@ void GameObject::Use(Unit* user)
             }
             break;
         }
+
+        case GAMEOBJECT_TYPE_MINI_GAME:                      //27
+        {
+            if (user->GetTypeId() != TYPEID_PLAYER)
+                return;
+                
+            GameObjectTemplate const* info = GetGOInfo();
+            if (!info)
+            {
+                sLog->outErrorDb("GOInfo for Gameobject (Entry: %u) not found!", GetEntry());
+                return;
+            }
+
+            Player* player = user->ToPlayer();
+            
+            if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
+                {
+                    AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
+                    if (!at)
+                    {
+                        sLog->outErrorDb("AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        return;
+                    }
+
+                    player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+                    if (info->miniGame.phase != 0)
+                        player->SetPhaseMask(info->miniGame.phase,true);
+                }
+                else if (info->miniGame.requiredLevel != 0)
+                {
+                }
+            return;
+        }
+
         case GAMEOBJECT_TYPE_BARBER_CHAIR:                  //32
         {
             GameObjectTemplate const* info = GetGOInfo();

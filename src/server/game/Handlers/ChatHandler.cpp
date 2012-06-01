@@ -138,7 +138,10 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         {
             // send in universal language in two side iteration allowed mode
             if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT))
-                lang = LANG_UNIVERSAL;
+            {
+                if (lang == LANG_ORCISH || lang == LANG_COMMON)
+                    lang = LANG_UNIVERSAL;
+            }
             else
             {
                 switch (type)
@@ -263,10 +266,16 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 return;
             }
 
+            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
+                break;
+
             if (!normalizePlayerName(to))
             {
-                SendPlayerNotFoundNotice(to);
-                break;
+                if (lang != LANG_ADDON)
+                {
+                    SendPlayerNotFoundNotice(to);
+                    return;
+                }
             }
 
             Player* receiver = sObjectAccessor->FindPlayerByName(to.c_str());
@@ -274,7 +283,8 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
             bool receiverIsPlayer = AccountMgr::IsPlayerAccount(receiver ? receiver->GetSession()->GetSecurity() : SEC_PLAYER);
             if (!receiver || (senderIsPlayer && !receiverIsPlayer && !receiver->isAcceptWhispers() && !receiver->IsInWhisperWhiteList(sender->GetGUID())))
             {
-                SendPlayerNotFoundNotice(to);
+                if (lang != LANG_ADDON)
+                    SendPlayerNotFoundNotice(to);
                 return;
             }
 
@@ -391,6 +401,8 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         } break;
         case CHAT_MSG_BATTLEGROUND:
         {
+            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
+                break;
             //battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group* group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup())
@@ -404,6 +416,8 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
         } break;
         case CHAT_MSG_BATTLEGROUND_LEADER:
         {
+            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
+                break;
             // battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group* group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup() || !group->IsLeader(GetPlayer()->GetGUID()))
@@ -425,6 +439,9 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                     return;
                 }
             }
+
+            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
+                break;
 
             if (ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
             {

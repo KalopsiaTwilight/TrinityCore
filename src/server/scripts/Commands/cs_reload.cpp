@@ -38,6 +38,7 @@ EndScriptData */
 #include "Chat.h"
 #include "WaypointManager.h"
 #include "WardenCheckMgr.h"
+#include "sc_npc_teleport.h"
 
 class reload_commandscript : public CommandScript
 {
@@ -118,6 +119,7 @@ public:
             { "mail_level_reward",            SEC_ADMINISTRATOR, true,  &HandleReloadMailLevelRewardCommand,            "", NULL },
             { "mail_loot_template",           SEC_ADMINISTRATOR, true,  &HandleReloadLootTemplatesMailCommand,          "", NULL },
             { "milling_loot_template",        SEC_ADMINISTRATOR, true,  &HandleReloadLootTemplatesMillingCommand,       "", NULL },
+            { "npc_tele",                     SEC_ADMINISTRATOR, true,  &HandleReloadNPCTeleCommand,                    "", NULL },
             { "npc_spellclick_spells",        SEC_ADMINISTRATOR, true,  &HandleReloadSpellClickSpellsCommand,           "", NULL},
             { "npc_trainer",                  SEC_ADMINISTRATOR, true,  &HandleReloadNpcTrainerCommand,                 "", NULL },
             { "npc_vendor",                   SEC_ADMINISTRATOR, true,  &HandleReloadNpcVendorCommand,                  "", NULL },
@@ -1303,6 +1305,14 @@ public:
         sLog->outString("Reloading vehicle_template_accessory table...");
         sObjectMgr->LoadVehicleTemplateAccessories();
         handler->SendGlobalGMSysMessage("Vehicle template accessories reloaded.");
+        return true;
+    }
+	
+	static bool HandleReloadNPCTeleCommand(ChatHandler* handler, const char* /*args*/)
+	{
+        sLog->outString("Reloading NPC teleport tables...");
+        LoadNpcTele();
+        handler->SendGlobalGMSysMessage("NPC teleport tables reloaded.");
         return true;
     }
 };

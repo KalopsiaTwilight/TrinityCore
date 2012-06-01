@@ -1384,7 +1384,7 @@ void Player::HandleDrowning(uint32 time_diff)
         else if (m_MirrorTimerFlagsLast & UNDERWATER_INWATER)
             SendMirrorTimer(BREATH_TIMER, UnderWaterTime, m_MirrorTimer[BREATH_TIMER], 10);
     }
-
+/*
     // In dark water
     if (m_MirrorTimerFlags & UNDERWARER_INDARKWATER)
     {
@@ -1422,7 +1422,7 @@ void Player::HandleDrowning(uint32 time_diff)
         else if (m_MirrorTimerFlagsLast & UNDERWARER_INDARKWATER)
             SendMirrorTimer(FATIGUE_TIMER, DarkWaterTime, m_MirrorTimer[FATIGUE_TIMER], 10);
     }
-
+*/
     if (m_MirrorTimerFlags & (UNDERWATER_INLAVA /*| UNDERWATER_INSLIME*/) && !(_lastLiquid && _lastLiquid->SpellId))
     {
         // Breath timer not activated - activate it
@@ -2857,8 +2857,8 @@ void Player::SetGMVisible(bool on)
     {
         m_ExtraFlags |= PLAYER_EXTRA_GM_INVISIBLE;          //add flag
 
-        SetAcceptWhispers(false);
-        SetGameMaster(true);
+        //SetAcceptWhispers(false);
+        //SetGameMaster(true);
 
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GM, GetSession()->GetSecurity());
     }
@@ -2871,6 +2871,7 @@ bool Player::IsGroupVisibleFor(Player const* p) const
         default: return IsInSameGroupWith(p);
         case 1:  return IsInSameRaidWith(p);
         case 2:  return GetTeam() == p->GetTeam();
+        case 3:  return GetSession()->GetSecurity() <= p->GetSession()->GetSecurity();
     }
 }
 
@@ -3153,7 +3154,14 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(UNIT_MOD_CAST_SPEED, 1.0f);
 
     // reset size before reapply auras
-    SetObjectScale(1.0f);
+    QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
+    {
+        float scale = (*result)[0].GetFloat();
+        SetObjectScale(scale);
+    }
+    else
+        SetObjectScale(1.0f);
 
     // save base values (bonuses already included in stored stats
     for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -5049,6 +5057,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_PLAYER_BGDATA);
             stmt->setUInt32(0, guid);
             trans->Append(stmt);
+            trans->PAppend("DELETE FROM characters_addon WHERE guid = '%u'", guid);
 
             stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_GLYPHS);
             stmt->setUInt32(0, guid);
@@ -5635,6 +5644,10 @@ void Player::RepopAtGraveyard()
 
 bool Player::CanJoinConstantChannelInZone(ChatChannelsEntry const* channel, AreaTableEntry const* zone)
 {
+    // Player can join LFG anywhere
+    if (channel->flags & CHANNEL_DBC_FLAG_LFG)
+        return true;
+
     if (channel->flags & CHANNEL_DBC_FLAG_ZONE_DEP && zone->flags & AREA_FLAG_ARENA_INSTANCE)
         return false;
 
@@ -16888,7 +16901,16 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
 
     //Need to call it to initialize m_team (m_team can be calculated from race)
     //Other way is to saves m_team into characters table.
-    setFactionForRace(getRace());
+    QueryResult resultFaction = CharacterDatabase.PQuery("SELECT faction FROM characters_addon WHERE faction>0 AND guid='%u'", guid);
+    if(resultFaction)
+    {
+        uint32 cfaction = (*resultFaction)[0].GetUInt32();
+        setFaction(cfaction);
+    }
+    else
+    {
+        setFactionForRace(getRace());
+    }
 
     // load home bind and check in same time class/race pair, it used later for restore broken positions
     if (!_LoadHomeBind(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOADHOMEBIND)))
@@ -17345,6 +17367,13 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
 
     sLog->outDebug(LOG_FILTER_PLAYER_LOADING, "The value of player %s after load item and aura is: ", m_name.c_str());
     outDebugValues();
+	
+    /*QueryResult customPhase = CharacterDatabase.PQuery("SELECT phase FROM characters_addon WHERE guid='%u' AND phase>'1'", guid);
+    if(customPhase)
+    {
+        uint32 cPhase = (*result)[0].GetUInt32();
+        SetPhaseMask(cPhase, false);
+    }*/
 
     // GM state
     if (!AccountMgr::IsPlayerAccount(GetSession()->GetSecurity()))
@@ -20085,8 +20114,19 @@ void Player::Whisper(const std::string& text, uint32 language, uint64 receiver)
         }
     }
     else if (!isAddonMessage)
+    {
+        WorldPacket data(SMSG_MESSAGECHAT, 200);
+        BuildPlayerChat(&data, CHAT_MSG_WHISPER, _text, language);
+        rPlayer->GetSession()->SendPacket(&data);
         // announce to player that player he is whispering to is dnd and cannot receive his message
-        ChatHandler(this).PSendSysMessage(LANG_PLAYER_DND, rPlayer->GetName(), rPlayer->dndMsg.c_str());
+        if (language != LANG_ADDON)
+        {
+            ChatHandler(this).PSendSysMessage(LANG_PLAYER_DND, rPlayer->GetName(), rPlayer->dndMsg.c_str());
+            data.Initialize(SMSG_MESSAGECHAT, 200);
+            rPlayer->BuildPlayerChat(&data, CHAT_MSG_WHISPER_INFORM, _text, language);
+            GetSession()->SendPacket(&data);
+        }
+    }
 
     // rest stuff shouldn't happen in case of addon message
     if (isAddonMessage)
@@ -20099,12 +20139,12 @@ void Player::Whisper(const std::string& text, uint32 language, uint64 receiver)
     }
 
     // announce to player that player he is whispering to is afk
-    if (rPlayer->isAFK())
+    if (rPlayer->isAFK() && language != LANG_ADDON)
         ChatHandler(this).PSendSysMessage(LANG_PLAYER_AFK, rPlayer->GetName(), rPlayer->afkMsg.c_str());
 
     // if player whisper someone, auto turn of dnd to be able to receive an answer
-    if (isDND() && !rPlayer->isGameMaster())
-        ToggleDND();
+    //if (isDND() && !rPlayer->isGameMaster())
+    //    ToggleDND();
 }
 
 void Player::PetSpellInitialize()
@@ -21008,20 +21048,30 @@ void Player::InitDisplayIds()
         return;
     }
 
-    uint8 gender = getGender();
-    switch (gender)
+    QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE display>'0' AND guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
     {
-        case GENDER_FEMALE:
-            SetDisplayId(info->displayId_f);
-            SetNativeDisplayId(info->displayId_f);
-            break;
-        case GENDER_MALE:
-            SetDisplayId(info->displayId_m);
-            SetNativeDisplayId(info->displayId_m);
-            break;
-        default:
-            sLog->outError("Invalid gender %u for player", gender);
-            return;
+        uint32 display = (*result)[0].GetUInt32();
+        SetDisplayId(display);
+        SetNativeDisplayId(display);
+    }
+    else
+    {
+        uint8 gender = getGender();
+        switch (gender)
+        {
+            case GENDER_FEMALE:
+                SetDisplayId(info->displayId_f);
+                SetNativeDisplayId(info->displayId_f);
+                break;
+            case GENDER_MALE:
+                SetDisplayId(info->displayId_m);
+                SetNativeDisplayId(info->displayId_m);
+                break;
+            default:
+                sLog->outError("Invalid gender %u for player",gender);
+                return;
+        }
     }
 }
 
@@ -21794,7 +21844,7 @@ bool Player::IsAlwaysDetectableFor(WorldObject const* seer) const
         return true;
 
     if (const Player* seerPlayer = seer->ToPlayer())
-        if (IsGroupVisibleFor(seerPlayer))
+        if (IsGroupVisibleFor(seerPlayer) && !IsHostileTo(seerPlayer) && !HasInvisibilityAura())
             return true;
 
      return false;
@@ -24131,7 +24181,9 @@ uint32 Player::GetPhaseMaskForSpawn() const
 {
     uint32 phase = PHASEMASK_NORMAL;
     if (!isGameMaster())
+	{
         phase = GetPhaseMask();
+	}
     else
     {
         AuraEffectList const& phases = GetAuraEffectsByType(SPELL_AURA_PHASE);

@@ -77,6 +77,7 @@
 #include "WardenCheckMgr.h"
 #include "Warden.h"
 #include "CalendarMgr.h"
+#include "AuctionHouseBot.h"
 
 ACE_Atomic_Op<ACE_Thread_Mutex, bool> World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -1755,6 +1756,9 @@ void World::SetInitialWorldSettings()
 
     LoadCharacterNameData();
 
+    sLog->outString("Initialize AuctionHouseBot...");
+    auctionbot.Initialize();
+
     // possibly enable db logging; avoid massive startup spam by doing it here.
     if (sLog->GetLogDBLater())
     {
@@ -1921,6 +1925,7 @@ void World::Update(uint32 diff)
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
+        auctionbot.Update();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)
@@ -2977,4 +2982,60 @@ CharacterNameData const* World::GetCharacterNameData(uint32 guid) const
         return &itr->second;
     else
         return NULL;
+}
+
+void World::CastAll(uint32 spell, bool triggered)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->CastSpell(target, spell, triggered);
+        }
+    }
+}
+
+void World::AddItemAll(uint32 itemId, int32 count)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+
+            //Subtract
+            if (count < 0)
+            {
+                target->DestroyItemCount(itemId, -count, true, false);
+                break;
+            }
+
+            //Adding items
+            uint32 noSpaceForCount = 0;
+
+            // check space and find places
+            ItemPosCountVec dest;
+            InventoryResult msg = target->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, count, &noSpaceForCount);
+            if (msg != EQUIP_ERR_OK)                               // convert to possible store amount
+                count -= noSpaceForCount;
+
+            if (count == 0 || dest.empty())                         // can't add any
+                break;
+
+            Item* item = target->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+
+            if (count > 0 && item)
+            {
+                target->SendNewItem(item, count, true, false);
+            }
+
+            if (noSpaceForCount > 0)
+                break;
+        }
+    }
 }

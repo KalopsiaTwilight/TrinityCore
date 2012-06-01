@@ -78,7 +78,8 @@ public:
             //{ TODO: fix or remove these commands
             { "name",           SEC_GAMEMASTER,     false, &HandleNpcSetNameCommand,           "", NULL },
             { "subname",        SEC_GAMEMASTER,     false, &HandleNpcSetSubNameCommand,        "", NULL },
-            //}
+            { "dynflags",       SEC_GAMEMASTER,     false, &HandleNpcSetDynamicFlagsCommand,   "", NULL },
+            { "unitflags",      SEC_GAMEMASTER,     false, &HandleNpcSetUnitFlagsCommand,      "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         static ChatCommand npcCommandTable[] =
@@ -86,11 +87,15 @@ public:
             { "info",           SEC_ADMINISTRATOR,  false, &HandleNpcInfoCommand,              "", NULL },
             { "move",           SEC_GAMEMASTER,     false, &HandleNpcMoveCommand,              "", NULL },
             { "playemote",      SEC_ADMINISTRATOR,  false, &HandleNpcPlayEmoteCommand,         "", NULL },
+            { "return",         SEC_GAMEMASTER,     false, &HandleNpcReturnCommand,            "", NULL },
             { "say",            SEC_MODERATOR,      false, &HandleNpcSayCommand,               "", NULL },
-            { "textemote",      SEC_MODERATOR,      false, &HandleNpcTextEmoteCommand,         "", NULL },
+            { "emote",          SEC_MODERATOR,      false, &HandleNpcTextEmoteCommand,         "", NULL },
             { "whisper",        SEC_MODERATOR,      false, &HandleNpcWhisperCommand,           "", NULL },
             { "yell",           SEC_MODERATOR,      false, &HandleNpcYellCommand,              "", NULL },
             { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
+            { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
+            { "scale",          SEC_GAMEMASTER,     false, &HandleNpcCustScaleCommand,         "", NULL },
+            { "faction",        SEC_GAMEMASTER,     false, &HandleNpcCustFactCommand,          "", NULL },
             { "add",            SEC_GAMEMASTER,     false, NULL,                 "", npcAddCommandTable },
             { "delete",         SEC_GAMEMASTER,     false, NULL,              "", npcDeleteCommandTable },
             { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
@@ -513,13 +518,14 @@ public:
         }
 
         creature->SetUInt32Value(UNIT_NPC_FLAGS, npcFlags);
+        creature->SaveToDB();
 
-        PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_CREATURE_NPCFLAG);
+        /*PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_CREATURE_NPCFLAG);
 
         stmt->setUInt32(0, npcFlags);
         stmt->setUInt32(1, creature->GetEntry());
 
-        WorldDatabase.Execute(stmt);
+        WorldDatabase.Execute(stmt);*/
 
         handler->SendSysMessage(LANG_VALUE_SAVED_REJOIN);
 
@@ -734,6 +740,21 @@ public:
             stmt->setInt32(2, target->GetGUIDTransport());
 
             WorldDatabase.Execute(stmt);
+        }
+
+        if (target->GetTypeId() == TYPEID_UNIT)
+        {
+            uint32 lowguid = 0;
+            lowguid = target->GetDBTableGUIDLow();
+            if (lowguid > 0)
+            {
+                QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+                if (result)
+                    WorldDatabase.PExecute("UPDATE creature_addon SET emote = '%u' WHERE guid = '%u'", emote, lowguid);
+                else
+                    WorldDatabase.PExecute("INSERT INTO creature_addon(guid,emote) VALUES ('%u','%u')", lowguid, emote);
+            }
         }
 
         target->SetUInt32Value(UNIT_NPC_EMOTESTATE, emote);
@@ -1494,6 +1515,150 @@ public:
 
         creature->SaveToDB();
         */
+        return true;
+    }
+
+    static bool HandleNpcReturnCommand(ChatHandler* handler, const char* args)
+    {
+        Creature* pCreature = handler->getSelectedCreature();
+        if (!pCreature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        pCreature->AI()->EnterEvadeMode();
+        return true;
+    }
+	
+	static bool HandleNpcSetDynamicFlagsCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 npcDynFlags = (uint32) atoi((char*)args);
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetUInt32Value(UNIT_DYNAMIC_FLAGS, npcDynFlags);
+        creature->SaveToDB();
+        return true;
+    }
+
+    static bool HandleNpcSetUnitFlagsCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 npcUnitFlags = (uint32) atoi((char*)args);
+
+        Creature* creature = handler->getSelectedCreature();
+
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetUInt32Value(UNIT_FIELD_FLAGS, npcUnitFlags);
+        creature->SaveToDB();
+        return true;
+    }
+
+    static bool HandleNpcCustScaleCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        float Scale = (float)atof((char*)args);
+        if (Scale > 10.0f || Scale < 0.0f)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+
+        uint32 lowguid = 0;
+        lowguid = creature->GetDBTableGUIDLow();
+        if (lowguid > 0)
+        {
+            QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+            if (result)
+                WorldDatabase.PExecute("UPDATE creature_addon SET scale = '%f' WHERE guid = '%u'", Scale, lowguid);
+            else
+                WorldDatabase.PExecute("INSERT INTO creature_addon(guid,scale) VALUES ('%u','%f')", lowguid, Scale);
+        }
+        return true;
+    }
+
+    static bool HandleNpcCustFactCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        char* pfactionid = handler->extractKeyFromLink((char*)args, "Hfaction");
+
+        Creature* target = handler->getSelectedCreature();
+        if (!target || target->isPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!pfactionid)
+        {
+            if (target)
+            {
+                uint32 factionid = target->getFaction();
+                handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid);
+            }
+            return true;
+        }
+
+        uint32 factionid = atoi(pfactionid);
+
+        if (!sFactionTemplateStore.LookupEntry(factionid))
+        {
+            handler->PSendSysMessage(LANG_WRONG_FACTION, factionid);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        handler->PSendSysMessage(LANG_YOU_CHANGE_NPC_CUST_FACTION, target->GetGUIDLow(), factionid);
+
+        target->setFaction(factionid);
+
+        uint32 lowguid = 0;
+        lowguid = target->GetDBTableGUIDLow();
+        if (lowguid > 0)
+        {
+            QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+            if (result)
+                WorldDatabase.PExecute("UPDATE creature_addon SET faction = '%u' WHERE guid = '%u'", factionid, lowguid);
+            else
+                WorldDatabase.PExecute("INSERT INTO creature_addon(guid,faction) VALUES ('%u','%u')", lowguid, factionid);
+        }
         return true;
     }
 };

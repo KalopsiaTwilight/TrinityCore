@@ -280,8 +280,8 @@ public:
     {
         if (!*args)
         {
-            handler->SendSysMessage(LANG_CMD_SYNTAX);
-            handler->SetSentErrorMessage(true);
+            //handler->SendSysMessage(LANG_CMD_SYNTAX);
+            //handler->SetSentErrorMessage(true);
             return false;
         }
 

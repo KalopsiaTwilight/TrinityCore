@@ -78,6 +78,18 @@ bool ChatHandler::HandleAnnounceCommand(const char* args)
     return true;
 }
 
+// world emote
+bool ChatHandler::HandleServerEmoteCommand(const char* args)
+{
+    if (!*args)
+        return false;
+
+    char buff[2048];
+    sprintf(buff, GetTrinityString(LANG_WORLD_EMOTE), args);
+    sWorld->SendServerMessage(SERVER_MSG_STRING, buff);
+    return true;
+}
+
 // announce to logged in GMs
 bool ChatHandler::HandleGMAnnounceCommand(const char* args)
 {
