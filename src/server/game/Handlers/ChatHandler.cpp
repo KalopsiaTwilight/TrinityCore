@@ -274,7 +274,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
                 if (lang != LANG_ADDON)
                 {
                     SendPlayerNotFoundNotice(to);
-                    return;
+                    break;
                 }
             }
 
