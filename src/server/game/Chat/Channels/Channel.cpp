@@ -214,6 +214,15 @@ void Channel::Join(uint64 p, const char *pass)
             SetOwner(p, (players.size() > 1 ? true : false));
             players[p].SetModerator(true);
         }
+        // GMs should automatically get mod powers in channels
+        else if (AccountMgr::IsGMAccount(player->GetSession()->GetSecurity()))
+        {
+            players[p].SetModerator(true);
+        }
+    }
+    else if (AccountMgr::IsGMAccount(player->GetSession()->GetSecurity()))
+    {
+        players[p].SetModerator(true);
     }
 }
 
