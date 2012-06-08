@@ -2725,10 +2725,6 @@ bool ChatHandler::HandleCharacterLevelCommand(const char *args)
     if (!extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
         return false;
 
-    // check online security
-    if (HasLowerSecurity(target, 0))
-        return false;
-
     int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
     int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
@@ -2766,10 +2762,6 @@ bool ChatHandler::HandleLevelUpCommand(const char *args)
     uint64 target_guid;
     std::string target_name;
     if (!extractPlayerTarget(nameStr, &target, &target_guid, &target_name))
-        return false;
-
-    // check online security
-    if (HasLowerSecurity(target, 0))
         return false;
 
     int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(target_guid);
