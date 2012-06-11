@@ -1089,6 +1089,7 @@ enum TrinityStrings
     LANG_SELFTAXIS_UNL                  = 11919,
     LANG_ADDITEM_ALL                    = 11920,
     LANG_REMOVEITEM_ALL                 = 11921,
+    LANG_COMMAND_PLAYED_LOCALLY         = 11922,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

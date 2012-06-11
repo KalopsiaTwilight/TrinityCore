@@ -422,6 +422,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "bindsight",      SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleBindSightCommand>,           "", NULL },
         { "unbindsight",    SEC_ADMINISTRATOR,  false, OldHandler<&ChatHandler::HandleUnbindSightCommand>,         "", NULL },
         { "playall",        SEC_GAMEMASTER,  false, OldHandler<&ChatHandler::HandlePlayAllCommand>,             "", NULL },
+        { "playlocal",      SEC_GAMEMASTER,  false, OldHandler<&ChatHandler::HandlePlayLocalCommand>,           "", NULL },
         { "scale",          SEC_PLAYER,         false, OldHandler<&ChatHandler::HandleSelfScaleCommand>,           "", NULL },
         { "morph",          SEC_GAMEMASTER,     false, OldHandler<&ChatHandler::HandleSelfMorphCommand>,           "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }

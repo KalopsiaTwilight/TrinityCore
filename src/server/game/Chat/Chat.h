@@ -347,6 +347,7 @@ class ChatHandler
 
         bool HandleFlushArenaPointsCommand(const char *args);
         bool HandlePlayAllCommand(const char* args);
+        bool HandlePlayLocalCommand(const char* args);
         bool HandleRepairitemsCommand(const char* args);
 
         bool HandleTempGameObjectCommand(const char* args);

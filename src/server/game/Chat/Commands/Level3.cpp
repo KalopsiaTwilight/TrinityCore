@@ -5385,3 +5385,27 @@ bool ChatHandler::HandleAddItemAllCommand(const char *args)
     
     return true;
 }
+
+bool ChatHandler::HandlePlayLocalCommand(const char *args)
+{
+    if (!*args)
+        return false;
+
+    uint32 soundId = atoi((char*)args);
+
+    if (!sSoundEntriesStore.LookupEntry(soundId))
+    {
+        PSendSysMessage(LANG_SOUND_NOT_EXIST, soundId);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    WorldPacket data(SMSG_PLAY_SOUND, 4);
+    //data << uint32(soundId) << m_session->GetPlayer()->GetGUID();
+    data << uint32(soundId);
+    //sWorld->SendGlobalMessage(&data);
+    m_session->GetPlayer()->Player::SendMessageToSetInRange(&data, MAX_VISIBILITY_DISTANCE, true);
+
+    PSendSysMessage(LANG_COMMAND_PLAYED_LOCALLY, soundId);
+    return true;
+}
