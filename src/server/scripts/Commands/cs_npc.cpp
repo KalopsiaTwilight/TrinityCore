@@ -93,7 +93,6 @@ public:
             { "whisper",        SEC_MODERATOR,      false, &HandleNpcWhisperCommand,           "", NULL },
             { "yell",           SEC_MODERATOR,      false, &HandleNpcYellCommand,              "", NULL },
             { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
-            { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
             { "scale",          SEC_GAMEMASTER,     false, &HandleNpcCustScaleCommand,         "", NULL },
             { "faction",        SEC_GAMEMASTER,     false, &HandleNpcCustFactCommand,          "", NULL },
             { "add",            SEC_GAMEMASTER,     false, NULL,                 "", npcAddCommandTable },
@@ -126,6 +125,16 @@ public:
         if (teamval < 0) { teamval = 0; }
 
         uint32 id  = atoi(charID);
+
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (id == 21369 || id == 24666 || id == 25554)
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
 
         Player* chr = handler->GetSession()->GetPlayer();
         float x = chr->GetPositionX();
@@ -1198,6 +1207,16 @@ public:
         uint32 id = atoi(charID);
         if (!id)
             return false;
+
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (id == 21369 || id == 24666 || id == 25554)
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
 
         chr->SummonCreature(id, *chr, TEMPSUMMON_CORPSE_DESPAWN, 120);
 
