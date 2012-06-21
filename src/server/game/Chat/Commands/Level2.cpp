@@ -937,3 +937,19 @@ bool ChatHandler::HandleLookupTitleCommand(const char* args)
         SendSysMessage(LANG_COMMAND_NOTITLEFOUND);
     return true;
 }
+
+//morph self
+bool ChatHandler::HandleSelfMorphCommand(const char* args)
+{
+    if (!*args)
+        return false;
+
+    uint16 display_id = (uint16)atoi((char*)args);
+
+	Player *chr = m_session->GetPlayer();
+
+    chr->SetDisplayId(display_id);
+    PSendSysMessage(LANG_SELF_MORPH, display_id);
+
+    return true;
+}

@@ -76,6 +76,7 @@ public:
         static ChatCommand serverCommandTable[] =
         {
             { "corpses",        SEC_GAMEMASTER,     true,  &HandleServerCorpsesCommand,           "", NULL },
+            { "emote",          SEC_MODERATOR,      true,  &HandleServerEmoteCommand,             "", NULL },
             { "exit",           SEC_CONSOLE,        true,  &HandleServerExitCommand,              "", NULL },
             { "idlerestart",    SEC_ADMINISTRATOR,  true,  NULL,         "", serverIdleRestartCommandTable },
             { "idleshutdown",   SEC_ADMINISTRATOR,  true,  NULL,        "", serverIdleShutdownCommandTable },
@@ -421,6 +422,16 @@ public:
         else
             handler->PSendSysMessage(LANG_SQLDRIVER_QUERY_LOGGING_DISABLED);
 
+        return true;
+    }
+
+    // world emote
+    static bool HandleServerEmoteCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        sWorld->SendServerMessage(SERVER_MSG_STRING, args);
         return true;
     }
 };

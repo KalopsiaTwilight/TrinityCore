@@ -4624,46 +4624,6 @@ bool ChatHandler::HandleUnbindSightCommand(const char * /*args*/)
     return true;
 }
 
-bool ChatHandler::HandleCastAllCommand(const char *args)
-{
-    if (!*args)
-        return false;
-
-    // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
-    uint32 spell = extractSpellIdFromLink((char*)args);
-    if (!spell)
-        return false;
-
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
-    if (!spellInfo)
-    {
-        PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
-        SetSentErrorMessage(true);
-        return false;
-    }
-
-    if (!SpellMgr::IsSpellValid(spellInfo, m_session->GetPlayer()))
-    {
-        PSendSysMessage(LANG_COMMAND_SPELL_BROKEN, spell);
-        SetSentErrorMessage(true);
-        return false;
-    }
-
-    char* trig_str = strtok(NULL, " ");
-    if (trig_str)
-    {
-        int l = strlen(trig_str);
-        if (strncmp(trig_str, "triggered", l) != 0)
-            return false;
-    }
-
-    bool triggered = (trig_str != NULL);
-    
-    sWorld->CastAll(spell, triggered);
-
-    return true;
-}
-
 bool ChatHandler::HandleAddItemAllCommand(const char *args)
 {
     if (!*args)
