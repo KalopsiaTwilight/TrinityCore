@@ -128,7 +128,7 @@ public:
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
         {
-            if (id == 21369 || id == 24666 || id == 25554)
+            if (id == 21369 || id == 24666 || id == 25554) //21369-Flame strike trigger, 24666-Flame strike trigger, 25554-Flame strike trigger
             {
                 handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
                 handler->SetSentErrorMessage(true);
@@ -1210,7 +1210,7 @@ public:
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
         {
-            if (id == 21369 || id == 24666 || id == 25554)
+            if (id == 21369 || id == 24666 || id == 25554) //21369-Flame strike trigger, 24666-Flame strike trigger, 25554-Flame strike trigger
             {
                 handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
                 handler->SetSentErrorMessage(true);
