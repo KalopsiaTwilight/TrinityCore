@@ -220,10 +220,11 @@ void Channel::Join(uint64 p, const char *pass)
             players[p].SetModerator(true);
         }
     }
-    else if (AccountMgr::IsGMAccount(player->GetSession()->GetSecurity()))
+    // Disabled for now.  Potentially causing crashes, and moderator powers don't quite work ideally
+    /*else if (AccountMgr::IsGMAccount(player->GetSession()->GetSecurity()))
     {
         players[p].SetModerator(true);
-    }
+    }*/
 }
 
 void Channel::Leave(uint64 p, bool send)
