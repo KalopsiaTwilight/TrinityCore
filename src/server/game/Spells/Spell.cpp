@@ -827,7 +827,7 @@ void Spell::SelectEffectImplicitTargets(SpellEffIndex effIndex, SpellImplicitTar
             break;
     }
 
-    switch(targetType.GetSelectionCategory())
+    switch (targetType.GetSelectionCategory())
     {
         case TARGET_SELECT_CATEGORY_CHANNEL:
             SelectImplicitChannelTargets(effIndex, targetType);
@@ -845,7 +845,7 @@ void Spell::SelectEffectImplicitTargets(SpellEffIndex effIndex, SpellImplicitTar
             switch (targetType.GetObjectType())
             {
                 case TARGET_OBJECT_TYPE_SRC:
-                    switch(targetType.GetReferenceType())
+                    switch (targetType.GetReferenceType())
                     {
                         case TARGET_REFERENCE_TYPE_CASTER:
                             m_targets.SetSrc(*m_caster);
@@ -856,7 +856,7 @@ void Spell::SelectEffectImplicitTargets(SpellEffIndex effIndex, SpellImplicitTar
                     }
                     break;
                 case TARGET_OBJECT_TYPE_DEST:
-                     switch(targetType.GetReferenceType())
+                     switch (targetType.GetReferenceType())
                      {
                          case TARGET_REFERENCE_TYPE_CASTER:
                              SelectImplicitCasterDestTargets(effIndex, targetType);
@@ -873,7 +873,7 @@ void Spell::SelectEffectImplicitTargets(SpellEffIndex effIndex, SpellImplicitTar
                      }
                      break;
                 default:
-                    switch(targetType.GetReferenceType())
+                    switch (targetType.GetReferenceType())
                     {
                         case TARGET_REFERENCE_TYPE_CASTER:
                             SelectImplicitCasterObjectTargets(effIndex, targetType);
@@ -1205,6 +1205,9 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
         default:
             break;
     }
+
+    CallScriptObjectAreaTargetSelectHandlers(targets, effIndex);
+
     std::list<Unit*> unitTargets;
     std::list<GameObject*> gObjTargets;
     // for compability with older code - add only unit and go targets
@@ -1216,8 +1219,6 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
         else if (GameObject* gObjTarget = (*itr)->ToGameObject())
             gObjTargets.push_back(gObjTarget);
     }
-
-    CallScriptObjectAreaTargetSelectHandlers(targets, effIndex);
 
     if (!unitTargets.empty())
     {
@@ -1367,7 +1368,7 @@ void Spell::SelectImplicitAreaTargets(SpellEffIndex effIndex, SpellImplicitTarge
 
 void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplicitTargetInfo const& targetType)
 {
-    switch(targetType.GetTarget())
+    switch (targetType.GetTarget())
     {
         case TARGET_DEST_CASTER:
             m_targets.SetDst(*m_caster);
@@ -1432,7 +1433,7 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
 void Spell::SelectImplicitTargetDestTargets(SpellEffIndex effIndex, SpellImplicitTargetInfo const& targetType)
 {
     WorldObject* target = m_targets.GetObjectTarget();
-    switch(targetType.GetTarget())
+    switch (targetType.GetTarget())
     {
         case TARGET_DEST_TARGET_ENEMY:
         case TARGET_DEST_TARGET_ANY:
@@ -1465,7 +1466,7 @@ void Spell::SelectImplicitDestDestTargets(SpellEffIndex effIndex, SpellImplicitT
     if (!m_targets.HasDst())
         m_targets.SetDst(*m_caster);
 
-    switch(targetType.GetTarget())
+    switch (targetType.GetTarget())
     {
         case TARGET_DEST_DYNOBJ_ENEMY:
         case TARGET_DEST_DYNOBJ_ALLY:
@@ -1491,7 +1492,7 @@ void Spell::SelectImplicitDestDestTargets(SpellEffIndex effIndex, SpellImplicitT
 
 void Spell::SelectImplicitCasterObjectTargets(SpellEffIndex effIndex, SpellImplicitTargetInfo const& targetType)
 {
-    switch(targetType.GetTarget())
+    switch (targetType.GetTarget())
     {
         case TARGET_UNIT_CASTER:
             AddUnitTarget(m_caster, 1 << effIndex, false);
@@ -1562,14 +1563,14 @@ void Spell::SelectImplicitChainTargets(SpellEffIndex effIndex, SpellImplicitTarg
         SearchChainTargets(targets, maxTargets - 1, target, targetType.GetObjectType(), targetType.GetCheckType()
             , m_spellInfo->Effects[effIndex].ImplicitTargetConditions, targetType.GetTarget() == TARGET_UNIT_TARGET_CHAINHEAL_ALLY);
 
+        // Chain primary target is added earlier
+        CallScriptObjectAreaTargetSelectHandlers(targets, effIndex);
+
         // for backward compability
         std::list<Unit*> unitTargets;
         for (std::list<WorldObject*>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
             if (Unit* unitTarget = (*itr)->ToUnit())
                 unitTargets.push_back(unitTarget);
-
-        // Chain primary target is added earlier
-        CallScriptObjectAreaTargetSelectHandlers(targets, effIndex);
 
         for (std::list<Unit*>::iterator itr = unitTargets.begin(); itr != unitTargets.end(); ++itr)
             AddUnitTarget(*itr, effMask, false);
