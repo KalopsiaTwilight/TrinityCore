@@ -18,7 +18,6 @@
 
 #include "ObjectMgr.h"                                      // for normalizePlayerName
 #include "ChannelMgr.h"
-#include "AccountMgr.h"
 
 void WorldSession::HandleJoinChannel(WorldPacket& recvPacket)
 {
@@ -49,10 +48,7 @@ void WorldSession::HandleJoinChannel(WorldPacket& recvPacket)
 
     if (channelname.empty())
         return;
-
-    if (channelname == "gmc" && !AccountMgr::IsGMAccount(_player->GetSession()->GetSecurity()))
-        return;
-
+    
     if (ChannelMgr* cMgr = channelMgr(_player->GetTeam()))
     {
         cMgr->team = _player->GetTeam();
