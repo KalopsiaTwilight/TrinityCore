@@ -448,6 +448,12 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
 
                 if (Channel* chn = cMgr->GetChannel(channel, _player))
                 {
+                    if (channel == "gmc" && AccountMgr::IsGMAccount(GetSecurity()))
+                    {
+                        std::string name = _player->GetSession()->GetPlayer()->GetName();
+                        sWorld->SendGMText(LANG_GM_ANNOUNCE_COLOR, name.c_str(), msg);
+                        break;
+                    }
                     sScriptMgr->OnPlayerChat(_player, type, lang, msg, chn);
 
                     chn->Say(_player->GetGUID(), msg.c_str(), lang);

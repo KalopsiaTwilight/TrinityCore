@@ -2871,7 +2871,7 @@ bool Player::IsGroupVisibleFor(Player const* p) const
         default: return IsInSameGroupWith(p);
         case 1:  return IsInSameRaidWith(p);
         case 2:  return GetTeam() == p->GetTeam();
-        case 3:  return GetSession()->GetSecurity() <= p->GetSession()->GetSecurity();
+        case 3:  return GetSession()->GetSecurity() >= p->GetSession()->GetSecurity();
     }
 }
 

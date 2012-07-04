@@ -1304,7 +1304,16 @@ public:
             return false;
 
         uint32 anim_id = atoi((char*)args);
-        handler->GetSession()->GetPlayer()->SetUInt32Value(UNIT_NPC_EMOTESTATE, anim_id);
+
+        Unit* target = handler->getSelectedUnit();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+
+        // check online security
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+            return false;
+
+        target->SetUInt32Value(UNIT_NPC_EMOTESTATE, anim_id);
 
         return true;
     }
@@ -1433,7 +1442,7 @@ public:
         if (handler->HasLowerSecurity(chr, 0))
             return false;
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", chr->GetGUIDLow());
         if(result)
         {
             handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
@@ -1441,20 +1450,18 @@ public:
                 ChatHandler(chr).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
 
             chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
-            QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f',scale_times_changed=10 WHERE guid='%u'", Scale, handler->getSelectedPlayer()->GetGUIDLow());
+            QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f',scale_times_changed=10 WHERE guid='%u'", Scale, chr->GetGUIDLow());
 
             return true;
         }
         else
         {
-            Player *chr = handler->GetSession()->GetPlayer();
-
             handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
             if (handler->needReportToTarget(chr))
                 ChatHandler(chr).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
 
             chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
-            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','10')", handler->getSelectedPlayer()->GetGUIDLow(), Scale);
+            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','10')", chr->GetGUIDLow(), Scale);
 
             return true;
         }
@@ -1476,14 +1483,14 @@ public:
         else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
             return false;
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
+        QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE guid='%u'", target->GetGUIDLow());
         if(result)
 		{
             if (display_id > 0)
             {
                 target->SetDisplayId(display_id);
                 target->SetNativeDisplayId(display_id);
-                CharacterDatabase.PExecute("UPDATE characters_addon SET display='%u' WHERE guid='%u'", display_id, handler->getSelectedPlayer()->GetGUIDLow());
+                CharacterDatabase.PExecute("UPDATE characters_addon SET display='%u' WHERE guid='%u'", display_id, target->GetGUIDLow());
             }
             else
             {
@@ -1500,23 +1507,14 @@ public:
                         target->SetNativeDisplayId(info->displayId_m);
                         break;
                 }
-                CharacterDatabase.PExecute("UPDATE characters_addon SET display='0' WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
+                CharacterDatabase.PExecute("UPDATE characters_addon SET display='0' WHERE guid='%u'", target->GetGUIDLow());
             }
 		}
         else
         {
-            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,display) VALUES ('%u','%u')", handler->getSelectedPlayer()->GetGUIDLow(), display_id);
+            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,display) VALUES ('%u','%u')", target->GetGUIDLow(), display_id);
         }
 
-            /*QueryResult result = CharacterDatabase.PQuery("SELECT display FROM custom_display WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
-            if(result)
-            {
-                CharacterDatabase.PExecute("UPDATE custom_display SET display='%u' WHERE guid='%u'", display_id, handler->getSelectedPlayer()->GetGUIDLow());
-            }
-            else
-            {
-                CharacterDatabase.PExecute("INSERT INTO custom_display(guid,display) VALUES ('%u','%u')", handler->getSelectedPlayer()->GetGUIDLow(), display_id);
-            }*/
         return true;
     }
 
