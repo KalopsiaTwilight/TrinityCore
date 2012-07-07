@@ -2871,7 +2871,7 @@ bool Player::IsGroupVisibleFor(Player const* p) const
         default: return IsInSameGroupWith(p);
         case 1:  return IsInSameRaidWith(p);
         case 2:  return GetTeam() == p->GetTeam();
-        case 3:  return GetSession()->GetSecurity() >= p->GetSession()->GetSecurity();
+        case 3:  return true;
     }
 }
 
@@ -21866,8 +21866,13 @@ bool Player::IsAlwaysDetectableFor(WorldObject const* seer) const
         return true;
 
     if (const Player* seerPlayer = seer->ToPlayer())
+    {
         if (IsGroupVisibleFor(seerPlayer) && !IsHostileTo(seerPlayer) && !HasInvisibilityAura())
             return true;
+
+        if (IsGroupVisibleFor(seerPlayer) && IsHostileTo(seerPlayer) && !HasInvisibilityAura() && !seer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP) && !seerPlayer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP))
+            return true;
+    }
 
      return false;
  }
