@@ -197,10 +197,14 @@ public:
         }
 
         std::string param = (char*)args;
+        Player* gm = handler->GetSession()->GetPlayer();
 
         if (param == "on")
         {
-            handler->GetSession()->GetPlayer()->SetGMVisible(true);
+            gm->SetGMVisible(true);
+            if(gm->HasAura(37802,0)) {
+                gm->RemoveAurasDueToSpell(37802);
+            }
             handler->GetSession()->SendNotification(LANG_INVISIBLE_VISIBLE);
             return true;
         }
@@ -208,7 +212,8 @@ public:
         if (param == "off")
         {
             handler->GetSession()->SendNotification(LANG_INVISIBLE_INVISIBLE);
-            handler->GetSession()->GetPlayer()->SetGMVisible(false);
+            gm->SetGMVisible(false);
+            gm->AddAura(37802,gm);
             return true;
         }
 
