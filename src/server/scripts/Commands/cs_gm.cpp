@@ -201,10 +201,10 @@ public:
 
         if (param == "on")
         {
-            gm->SetGMVisible(true);
             if(gm->HasAura(37802,0)) {
                 gm->RemoveAurasDueToSpell(37802);
             }
+            gm->SetGMVisible(true);
             handler->GetSession()->SendNotification(LANG_INVISIBLE_VISIBLE);
             return true;
         }
