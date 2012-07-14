@@ -2375,6 +2375,8 @@ bool ChatHandler::HandleComeToMeCommand(const char *args)
     if (!newFlagStr)
         return false;
 
+    uint32 newFlags = (uint32)strtoul(newFlagStr, NULL, 0);
+
     Creature* caster = getSelectedCreature();
     if (!caster)
     {
@@ -2382,6 +2384,8 @@ bool ChatHandler::HandleComeToMeCommand(const char *args)
         SetSentErrorMessage(true);
         return false;
     }
+
+    caster->SetUnitMovementFlags(newFlags);
 
     Player* player = m_session->GetPlayer();
 
