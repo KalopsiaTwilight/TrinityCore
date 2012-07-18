@@ -448,7 +448,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket & recv_data)
 
                 if (Channel* chn = cMgr->GetChannel(channel, _player))
                 {
-                    if (channel == "gmc" && AccountMgr::IsGMAccount(GetSecurity()))
+                    if (channel == "gmc" && AccountMgr::IsModeratorAccount(GetSecurity()))
                     {
                         std::string name = _player->GetSession()->GetPlayer()->GetName();
                         sWorld->SendGMText(LANG_GM_ANNOUNCE_COLOR, name.c_str(), msg.c_str());
