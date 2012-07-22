@@ -21868,10 +21868,13 @@ bool Player::IsAlwaysDetectableFor(WorldObject const* seer) const
 
     if (const Player* seerPlayer = seer->ToPlayer())
     {
-        if (IsGroupVisibleFor(seerPlayer) && !IsHostileTo(seerPlayer) && !HasInvisibilityAura())
+        if (IsGroupVisibleFor(seerPlayer))
             return true;
 
-        if (IsGroupVisibleFor(seerPlayer) && IsHostileTo(seerPlayer) && !HasInvisibilityAura() && !seer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP) && !seerPlayer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP))
+        if (IsGroupVisibleFor(seerPlayer) && IsHostileTo(seerPlayer) && HasStealthAura() && !seer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP) && !seerPlayer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP))
+            return true;
+
+        if (IsGroupVisibleFor(seerPlayer) && !IsHostileTo(seerPlayer) && HasStealthAura())
             return true;
     }
 
