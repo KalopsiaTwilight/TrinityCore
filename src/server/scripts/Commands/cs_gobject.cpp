@@ -57,6 +57,7 @@ public:
             { "near",           SEC_GAMEMASTER,     false, &HandleGameObjectNearCommand,      "", NULL },
             { "target",         SEC_GAMEMASTER,     false, &HandleGameObjectTargetCommand,    "", NULL },
             { "turn",           SEC_GAMEMASTER,     false, &HandleGameObjectTurnCommand,      "", NULL },
+            { "scale",          SEC_GAMEMASTER,     false, &HandleGameObjectScaleCommand,     "", NULL },
             { "add",            SEC_GAMEMASTER,     false, NULL,            "", gobjectAddCommandTable },
             { "set",            SEC_GAMEMASTER,     false, NULL,            "", gobjectSetCommandTable },
             { NULL,             0,                  false, NULL,                              "", NULL }
@@ -162,7 +163,7 @@ public:
         }
 
         // fill the gameobject data and save to the db
-        object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), player->GetPhaseMaskForSpawn());
+        object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), player->GetPhaseMaskForSpawn(), 0.0f);
 
         // this will generate a new guid if the object is in an instance
         if (!object->LoadGameObjectFromDB(guidLow, map))
@@ -578,15 +579,21 @@ public:
     static bool HandleGameObjectInfoCommand(ChatHandler* handler, char const* args)
     {
         uint32 entry = 0;
+        uint32 guid = 0;
         uint32 type = 0;
         uint32 displayId = 0;
         std::string name;
         uint32 lootId = 0;
+        float scale = 0.0f;
 
         if (!*args)
         {
             if (WorldObject* object = handler->getSelectedObject())
+            {
                 entry = object->GetEntry();
+                guid = object->GetGUIDLow();
+                scale = object->GetObjectScale();
+            }
             else
                 entry = atoi((char*)args);
         }
@@ -605,6 +612,8 @@ public:
             lootId = gameObjectInfo->fishinghole.lootId;
 
         handler->PSendSysMessage(LANG_GOINFO_ENTRY, entry);
+        handler->PSendSysMessage(LANG_GOINFO_GUID, guid);
+        handler->PSendSysMessage(LANG_GOINFO_SCALE, scale);
         handler->PSendSysMessage(LANG_GOINFO_TYPE, type);
         handler->PSendSysMessage(LANG_GOINFO_LOOTID, lootId);
         handler->PSendSysMessage(LANG_GOINFO_DISPLAYID, displayId);
@@ -666,6 +675,50 @@ public:
             object->SendMessageToSet(&data, true);
         }
         handler->PSendSysMessage("Set gobject type %d state %d", objectType, objectState);
+        return true;
+    }
+
+    //set phasemask for selected object
+    static bool HandleGameObjectScaleCommand(ChatHandler* handler, char const* args)
+    {
+        // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
+        char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
+        if (!id)
+            return false;
+
+        uint32 guidLow = atoi(id);
+        if (!guidLow)
+            return false;
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGOData(guidLow))
+            object = handler->GetObjectGlobalyWithGuidOrNearWithDbGuid(guidLow, gameObjectData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* scale = strtok (NULL, " ");
+        float scaleDB = scale ? atof(scale) : 0;
+        if (scaleDB == 0)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        object->SetObjectScale(scaleDB);
+        object->DestroyForNearbyPlayers();
+        object->UpdateObjectVisibility();
+        object->SaveToDB();
+        object->Refresh();
+
+        handler->PSendSysMessage("Set gobject GUID %u to scale %f", guidLow, scaleDB);
         return true;
     }
 };

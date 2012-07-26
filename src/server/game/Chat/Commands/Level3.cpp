@@ -2233,10 +2233,12 @@ bool ChatHandler::HandleGroupRemoveCommand(const char *args)
 bool ChatHandler::HandlePossessCommand(const char * /*args*/)
 {
     Unit* unit = getSelectedUnit();
+    uint32 faction = unit->getFaction();
     if (!unit)
         return false;
 
     m_session->GetPlayer()->CastSpell(unit, 530, true);
+    unit->setFaction(faction);
     return true;
 }
 

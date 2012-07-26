@@ -271,15 +271,28 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
             return false;
 
+        char* fperm = strtok(NULL, " ");                    //check for permanent rename trigger, default: 0
+        uint32 perm = 0;
+        if (fperm)
+            perm = atol(fperm);
+
+        if (perm == 1)
+            perm = 1;
+
         if (target)
         {
             // check online security
             if (handler->HasLowerSecurity(target, 0))
                 return false;
 
-            handler->PSendSysMessage(LANG_RENAME_PLAYER, handler->GetNameLink(target).c_str());
             target->SetAtLoginFlag(AT_LOGIN_RENAME);
-            CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, time) VALUES ('%s', NOW())", targetName);
+            if (perm == 1)
+            {
+                handler->PSendSysMessage(LANG_RENAME_PLAYER_PERM, handler->GetNameLink(target).c_str());
+                CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, gm, time) VALUES ('%s', '%s', NOW())", targetName, handler->GetSession()->GetPlayerName());
+            }
+            else
+                handler->PSendSysMessage(LANG_RENAME_PLAYER, handler->GetNameLink(target).c_str());
         }
         else
         {
@@ -288,13 +301,18 @@ public:
                 return false;
 
             std::string oldNameLink = handler->playerLink(targetName);
-            handler->PSendSysMessage(LANG_RENAME_PLAYER_GUID, oldNameLink.c_str(), GUID_LOPART(targetGuid));
 
             PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ADD_AT_LOGIN_FLAG);
             stmt->setUInt16(0, uint16(AT_LOGIN_RENAME));
             stmt->setUInt32(1, GUID_LOPART(targetGuid));
             CharacterDatabase.Execute(stmt);
-            CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, time) VALUES ('%s', NOW())", targetName);
+            if (perm == 1)
+            {
+                handler->PSendSysMessage(LANG_RENAME_PLAYER_GUID_PERM, oldNameLink.c_str(), GUID_LOPART(targetGuid));
+                CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, gm, time) VALUES ('%s', '%s', NOW())", targetName, handler->GetSession()->GetPlayerName());
+            }
+            else
+                handler->PSendSysMessage(LANG_RENAME_PLAYER_GUID, oldNameLink.c_str(), GUID_LOPART(targetGuid));
         }
 
         return true;
