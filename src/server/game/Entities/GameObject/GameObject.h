@@ -594,7 +594,6 @@ struct GameObjectData
     GOState go_state;
     uint8 spawnMask;
     uint8 artKit;
-    float scale;
     bool dbData;
 };
 
@@ -651,7 +650,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         const char* GetNameForLocaleIdx(LocaleConstant locale_idx) const;
 
         void SaveToDB();
-        void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float scale);
+        void SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask);
         bool LoadFromDB(uint32 guid, Map* map) { return LoadGameObjectFromDB(guid, map, false); }
         bool LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap = true);
         void DeleteFromDB();

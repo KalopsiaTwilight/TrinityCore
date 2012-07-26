@@ -205,13 +205,8 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
     SetFloatValue(GAMEOBJECT_PARENTROTATION+1, rotation1);
 
     UpdateRotationFields(rotation2, rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
-    
-    GameObjectData const* data = sObjectMgr->GetGOData(guidlow);
 
-    if (data && data->scale > 0)
-        SetObjectScale(data->scale);
-    else
-        SetObjectScale(goinfo->size);
+    SetObjectScale(goinfo->size);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
     SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
@@ -655,14 +650,11 @@ void GameObject::SaveToDB()
         sLog->outError("GameObject::SaveToDB failed, cannot get gameobject data!");
         return;
     }
-    float Scale = GetObjectScale();
-    if (Scale == m_goInfo->size)
-        Scale = 0.0f;
 
-    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask, Scale);
+    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask);
 }
 
-void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float scale)
+void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
 {
     const GameObjectTemplate* goI = GetGOInfo();
 
@@ -691,7 +683,6 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
-    data.scale = scale;
 
     // Update in DB
     SQLTransaction trans = WorldDatabase.BeginTransaction();
@@ -719,7 +710,6 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float
     stmt->setInt32(index++, int32(m_respawnDelayTime));
     stmt->setUInt8(index++, GetGoAnimProgress());
     stmt->setUInt8(index++, uint8(GetGoState()));
-    stmt->setFloat(index++, scale);
     trans->Append(stmt);
 
     WorldDatabase.CommitTransaction(trans);
@@ -751,8 +741,6 @@ bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
     uint32 animprogress = data->animprogress;
     GOState go_state = data->go_state;
     uint32 artKit = data->artKit;
-
-    float scale = data->scale;
 
     m_DBTableGuid = guid;
     if (map->GetInstanceId() != 0) guid = sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT);
