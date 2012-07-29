@@ -1739,7 +1739,8 @@ void ObjectMgr::LoadGameobjects()
     //   7          8          9          10         11             12            13     14         15         16          17          18
         "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, eventEntry, pool_entry, scale "
         "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
-        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid");
+        "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid "
+        "LEFT OUTER JOIN gameobject_addon ON gameobject.guid = gameobject_addon.guid");
 
     if (!result)
     {

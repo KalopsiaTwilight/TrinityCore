@@ -290,6 +290,7 @@ public:
             {
                 handler->PSendSysMessage(LANG_RENAME_PLAYER_PERM, handler->GetNameLink(target).c_str());
                 CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, gm, time) VALUES ('%s', '%s', NOW())", targetName, handler->GetSession()->GetPlayerName());
+                sObjectMgr->LoadReservedPlayersNames();
             }
             else
                 handler->PSendSysMessage(LANG_RENAME_PLAYER, handler->GetNameLink(target).c_str());
@@ -310,6 +311,7 @@ public:
             {
                 handler->PSendSysMessage(LANG_RENAME_PLAYER_GUID_PERM, oldNameLink.c_str(), GUID_LOPART(targetGuid));
                 CharacterDatabase.PExecute("INSERT IGNORE INTO reserved_name (name, gm, time) VALUES ('%s', '%s', NOW())", targetName, handler->GetSession()->GetPlayerName());
+                sObjectMgr->LoadReservedPlayersNames();
             }
             else
                 handler->PSendSysMessage(LANG_RENAME_PLAYER_GUID, oldNameLink.c_str(), GUID_LOPART(targetGuid));

@@ -207,8 +207,8 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
     UpdateRotationFields(rotation2, rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
     GameObjectData const* data = sObjectMgr->GetGOData(guidlow);
-    if (data && data->scale > 0)
-        SetObjectScale(data->scale);
+    if (scale > 0)
+        SetObjectScale(scale);
     else
         SetObjectScale(goinfo->size);
 
@@ -658,7 +658,7 @@ void GameObject::SaveToDB()
     float scale = GetObjectScale();
     if (scale == m_goInfo->size)
         scale = 0.0f;
-
+    
     SaveToDB(GetMapId(), data->spawnMask, data->phaseMask, scale);
 }
 
@@ -719,10 +719,20 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float
     stmt->setInt32(index++, int32(m_respawnDelayTime));
     stmt->setUInt8(index++, GetGoAnimProgress());
     stmt->setUInt8(index++, uint8(GetGoState()));
-    stmt->setFloat(index++, scale);
     trans->Append(stmt);
 
     WorldDatabase.CommitTransaction(trans);
+
+    if (scale > 0)
+    {
+        QueryResult result = WorldDatabase.PQuery("SELECT guid FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
+        if (result)
+            WorldDatabase.PExecute("UPDATE gameobject_addon SET scale = '%f' WHERE guid = '%u'", scale, m_DBTableGuid);
+        else
+            WorldDatabase.PExecute("INSERT INTO gameobject_addon(guid,scale) VALUES ('%u','%f')", m_DBTableGuid, scale);
+    }
+    else
+        WorldDatabase.PExecute("DELETE FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
 }
 
 bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
@@ -756,7 +766,7 @@ bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
     m_DBTableGuid = guid;
     if (map->GetInstanceId() != 0) guid = sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT);
 
-    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit))
+    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit, scale))
         return false;
 
     if (data->spawntimesecs >= 0)
