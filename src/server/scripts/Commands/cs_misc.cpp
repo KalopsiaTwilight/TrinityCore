@@ -2842,20 +2842,26 @@ public:
     static bool HandlePossessCommand(ChatHandler* handler, char const* /*args*/)
     {
         Unit* unit = handler->getSelectedUnit();
+        uint32 faction = unit->getFaction();
         if (!unit)
             return false;
 
         handler->GetSession()->GetPlayer()->CastSpell(unit, 530, true);
+        unit->setFaction(faction);
         return true;
     }
 
     static bool HandleUnPossessCommand(ChatHandler* handler, char const* /*args*/)
     {
         Unit* unit = handler->getSelectedUnit();
-        if (!unit)
+        Creature* creature = handler->getSelectedCreature();
+        if (!unit && !creature)
             unit = handler->GetSession()->GetPlayer();
 
         unit->RemoveCharmAuras();
+
+        if (creature)
+		    creature->AI()->EnterEvadeMode();
 
         return true;
     }
