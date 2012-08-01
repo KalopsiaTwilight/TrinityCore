@@ -823,6 +823,12 @@ void GameObject::DeleteFromDB()
     stmt->setUInt32(0, m_DBTableGuid);
 
     WorldDatabase.Execute(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAMEOBJECT_ADDON);
+
+    stmt->setUInt32(0, m_DBTableGuid);
+
+    WorldDatabase.Execute(stmt);
 }
 
 GameObject* GameObject::GetGameObject(WorldObject& object, uint64 guid)
