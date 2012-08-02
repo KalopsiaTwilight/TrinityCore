@@ -83,6 +83,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/AI/ScriptedAI
   ${CMAKE_SOURCE_DIR}/src/server/game/AI/SmartScripts
   ${CMAKE_SOURCE_DIR}/src/server/game/AuctionHouse
+  ${CMAKE_SOURCE_DIR}/src/server/game/AuctionHouse/AuctionHouseBot
   ${CMAKE_SOURCE_DIR}/src/server/game/Battlegrounds
   ${CMAKE_SOURCE_DIR}/src/server/game/Battlegrounds/Zones
   ${CMAKE_SOURCE_DIR}/src/server/game/Calendar
