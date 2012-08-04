@@ -1310,7 +1310,7 @@ public:
 	
 	static bool HandleReloadNPCTeleCommand(ChatHandler* handler, const char* /*args*/)
 	{
-        sLog->outString("Reloading NPC teleport tables...");
+        sLog->outInfo(LOG_FILTER_GENERAL, "Reloading NPC teleport tables...");
         LoadNpcTele();
         handler->SendGlobalGMSysMessage("NPC teleport tables reloaded.");
         return true;

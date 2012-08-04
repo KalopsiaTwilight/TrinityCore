@@ -1748,7 +1748,7 @@ void World::SetInitialWorldSettings()
 
     LoadCharacterNameData();
 
-    sLog->outString("Initialize AuctionHouseBot...");
+    sLog->outInfo(LOG_FILTER_GENERAL, "Initialize AuctionHouseBot...");
 
     auctionbot.Initialize();
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);

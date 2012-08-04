@@ -565,7 +565,7 @@ void ObjectMgr::LoadCreatureTemplateAddons()
         {
             if (!sFactionTemplateStore.LookupEntry(creatureAddon.faction))
             {
-                sLog->outErrorDb("Creature (Entry: %u) has invalid faction (%u) defined in `creature_template_addon`.", entry, creatureAddon.faction);
+                sLog->outError(LOG_FILTER_SQL, "Creature (Entry: %u) has invalid faction (%u) defined in `creature_template_addon`.", entry, creatureAddon.faction);
                 creatureAddon.faction = 0;
             }
         }
@@ -960,7 +960,7 @@ void ObjectMgr::LoadCreatureAddons()
         {
             if (!sFactionTemplateStore.LookupEntry(creatureAddon.faction))
             {
-                sLog->outErrorDb("Creature (GUID: %u) has invalid faction (%u) defined in `creature_addon`.", guid, creatureAddon.faction);
+                sLog->outError(LOG_FILTER_SQL, "Creature (GUID: %u) has invalid faction (%u) defined in `creature_addon`.", guid, creatureAddon.faction);
                 creatureAddon.faction = 0;
             }
         }

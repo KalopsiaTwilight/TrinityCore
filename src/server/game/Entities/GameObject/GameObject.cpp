@@ -1661,10 +1661,7 @@ void GameObject::Use(Unit* user)
                 
             GameObjectTemplate const* info = GetGOInfo();
             if (!info)
-            {
-                sLog->outErrorDb("GOInfo for Gameobject (Entry: %u) not found!", GetEntry());
                 return;
-            }
 
             Player* player = user->ToPlayer();
             
@@ -1673,7 +1670,7 @@ void GameObject::Use(Unit* user)
                     AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
                     if (!at)
                     {
-                        sLog->outErrorDb("AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        sLog->outError(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
                         return;
                     }
 
