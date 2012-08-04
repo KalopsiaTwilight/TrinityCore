@@ -223,7 +223,7 @@ public:
 
         return true;
     }
-    
+
     static bool HandleLookupEventCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
@@ -661,7 +661,7 @@ public:
                             {
                                 QuestStatus status = target->GetQuestStatus(qInfo->GetQuestId());
 
-                                switch (status) 
+                                switch (status)
                                 {
                                     case QUEST_STATUS_COMPLETE:
                                         statusStr = handler->GetTrinityString(LANG_COMMAND_QUEST_COMPLETE);
@@ -709,7 +709,7 @@ public:
                 {
                     QuestStatus status = target->GetQuestStatus(qInfo->GetQuestId());
 
-                    switch (status) 
+                    switch (status)
                     {
                         case QUEST_STATUS_COMPLETE:
                             statusStr = handler->GetTrinityString(LANG_COMMAND_QUEST_COMPLETE);
@@ -1316,7 +1316,7 @@ public:
     static bool HandleLookupPlayerEmailCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
-            return false;   
+            return false;
 
         std::string email = strtok((char*)args, " ");
         char* limitStr = strtok(NULL, " ");
