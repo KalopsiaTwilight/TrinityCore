@@ -952,8 +952,11 @@ void ObjectMgr::LoadCreatureAddons()
 
         if (creatureAddon.emote)
         {
-            sLog->outError(LOG_FILTER_SQL, "Creature (GUID: %u) has invalid emote (%u) defined in `creature_addon`.", guid, creatureAddon.emote);
-            creatureAddon.emote = 0;
+            if (!sEmotesStore.LookupEntry(creatureAddon.emote))
+            {
+                sLog->outError(LOG_FILTER_SQL, "Creature (GUID: %u) has invalid emote (%u) defined in `creature_addon`.", guid, creatureAddon.emote);
+                creatureAddon.emote = 0;
+            }
         }
 
         if (creatureAddon.faction)
