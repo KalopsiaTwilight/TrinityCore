@@ -112,11 +112,11 @@ public:
             { "unfreeze",           SEC_MODERATOR,          false, &HandleUnFreezeCommand,              "", NULL },
             { "listfreeze",         SEC_MODERATOR,          false, &HandleListFreezeCommand,            "", NULL },
             { "group",              SEC_ADMINISTRATOR,      false, NULL,                                "", groupCommandTable },
-            { "possess",            SEC_ADMINISTRATOR,      false, &HandlePossessCommand,                "", NULL },
-            { "unpossess",          SEC_ADMINISTRATOR,      false, &HandleUnPossessCommand,              "", NULL },
-            { "bindsight",          SEC_ADMINISTRATOR,      false, &HandleBindSightCommand,              "", NULL },
-            { "unbindsight",        SEC_ADMINISTRATOR,      false, &HandleUnbindSightCommand,            "", NULL },
-            { "playall",            SEC_GAMEMASTER,         false, &HandlePlayAllCommand,                "", NULL },
+            { "possess",            SEC_ADMINISTRATOR,      false, &HandlePossessCommand,               "", NULL },
+            { "unpossess",          SEC_ADMINISTRATOR,      false, &HandleUnPossessCommand,             "", NULL },
+            { "bindsight",          SEC_ADMINISTRATOR,      false, &HandleBindSightCommand,             "", NULL },
+            { "unbindsight",        SEC_ADMINISTRATOR,      false, &HandleUnbindSightCommand,           "", NULL },
+            { "playall",            SEC_GAMEMASTER,         false, &HandlePlayAllCommand,               "", NULL },
             // Custom stuff
             { "addrpitem",          SEC_PLAYER,             false, &HandleAddRPItemCommand,             "", NULL },
             { "taxi",               SEC_PLAYER,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
@@ -125,6 +125,7 @@ public:
             { "morph",              SEC_GAMEMASTER,         false, &HandleSelfMorphCommand,             "", NULL },
             { "additemall",         SEC_ADMINISTRATOR,      false, &HandleAddItemAllCommand,            "", NULL },
             { "ahbotoptions",       SEC_ADMINISTRATOR,      true,  &HandleAHBotOptionsCommand,          "", NULL },
+            { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -3663,6 +3664,25 @@ public:
         handler->GetSession()->GetPlayer()->Player::SendMessageToSetInRange(&data, MAX_VISIBILITY_DISTANCE, true);
 
         handler->PSendSysMessage(LANG_COMMAND_PLAYED_LOCALLY, soundId);
+        return true;
+    }
+
+    static bool HandleUnAuraAllCommand(ChatHandler* handler, char const* args)
+    {
+        std::string argstr = args;
+        if (argstr == "all")
+        {
+            sWorld->MassUnauraAll();
+            return true;
+        }
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId)
+            return false;
+
+        sWorld->MassUnaura(spellId);
+
         return true;
     }
 

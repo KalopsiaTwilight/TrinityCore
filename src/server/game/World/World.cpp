@@ -3036,3 +3036,31 @@ void World::AddItemAll(uint32 itemId, int32 count)
         }
     }
 }
+
+void World::MassUnaura(uint32 spellId)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->RemoveAurasDueToSpell(spellId);
+        }
+    }
+}
+
+void World::MassUnauraAll()
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->RemoveAllAuras();
+        }
+    }
+}

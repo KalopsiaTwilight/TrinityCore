@@ -761,8 +761,11 @@ class World
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
         void   ResetEventSeasonalQuests(uint16 event_id);
 
+        //Custom
         void CastAll(uint32 spell, bool triggered);
         void AddItemAll(uint32 itemId, int32 count);
+        void MassUnaura(uint32 spellId);
+        void MassUnauraAll();
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
