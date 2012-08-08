@@ -695,7 +695,12 @@ public:
 
     static bool HandleDismountCommand(ChatHandler* handler, char const* /*args*/)
     {
-        Player* player = handler->GetSession()->GetPlayer();
+        Player* player = handler->GetSession()->GetPlayer()->GetSelectedPlayer();
+
+        if (!player)
+            player = handler->GetSession()->GetPlayer();
+        else if (handler->HasLowerSecurity(player, 0)) // check online security
+            return false;
 
         // If player is not mounted, so go out :)
         if (!player->IsMounted())
