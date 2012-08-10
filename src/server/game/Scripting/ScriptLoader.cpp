@@ -46,6 +46,7 @@ void AddSC_SmartSCripts();
 //Commands
 void AddSC_account_commandscript();
 void AddSC_achievement_commandscript();
+void AddSC_ah_bot_commandscript();
 void AddSC_ban_commandscript();
 void AddSC_cast_commandscript();
 void AddSC_character_commandscript();
@@ -660,6 +661,7 @@ void AddCommandScripts()
 {
     AddSC_account_commandscript();
     AddSC_achievement_commandscript();
+    AddSC_ah_bot_commandscript();
     AddSC_ban_commandscript();
     AddSC_cast_commandscript();
     AddSC_character_commandscript();
