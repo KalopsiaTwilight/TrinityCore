@@ -20,6 +20,7 @@
 #    SERVER RATES
 #    AUTO BROADCAST
 #    BATTLEGROUND CONFIG
+#    BATTLEFIELD CONFIG
 #    ARENA CONFIG
 #    NETWORK CONFIG
 #    CONSOLE AND REMOTE ACCESS
@@ -402,6 +403,15 @@ PersistentCharacterCleanFlags = 0
 #        Default:     ""             - (Disabled)
 
 PidFile = ""
+
+#
+#    PacketLogFile
+#        Description: Binary packet logging file for the world server.
+#                     Filename extension must be .bin to be parsable with WowPacketParser.
+#        Example:     "World.bin" - (Enabled)
+#        Default:     ""          - (Disabled)
+
+PacketLogFile = ""
 
 #
 #    ChatLogs.Channel
@@ -2175,6 +2185,62 @@ Battleground.Random.ResetHour = 6
 ###################################################################################################
 
 ###################################################################################################
+# BATTLEFIELD CONFIG
+#
+#     Wintergrasp.Enable
+#         Description: Enable the Wintergrasp battlefield.
+#         Default:     0 - (Disabled)
+#                      1 - (Enabled, Experimental as of still being in development)
+
+Wintergrasp.Enable = 0
+
+#
+#     Wintergrasp.PlayerMax
+#         Description: Maximum number of players allowed in Wintergrasp.
+#         Default:     100
+
+Wintergrasp.PlayerMax = 100
+
+#
+#     Wintergrasp.PlayerMin
+#         Description: Minimum number of players required for Wintergrasp.
+#         Default:     0
+
+Wintergrasp.PlayerMin = 0
+
+#
+#     Wintergrasp.PlayerMinLvl
+#         Description: Required character level for the Wintergrasp battle.
+#         Default:     77
+
+Wintergrasp.PlayerMinLvl = 77
+
+#
+#     Wintergrasp.BattleTimer
+#         Description: Time (in minutes) for the Wintergrasp battle to last.
+#         Default:     30
+
+Wintergrasp.BattleTimer = 30
+
+#
+#     Wintergrasp.NoBattleTimer
+#         Description: Time (in minutes) between Wintergrasp battles.
+#         Default:     150
+
+Wintergrasp.NoBattleTimer = 150
+
+#
+#     Wintergrasp.CrashRestartTimer
+#         Description: Time (in minutes) to delay the restart of Wintergrasp if the world server
+#                      crashed during a running battle.
+#         Default:     10
+
+Wintergrasp.CrashRestartTimer = 10
+
+#
+###################################################################################################
+
+###################################################################################################
 # ARENA CONFIG
 #
 #    Arena.MaxRatingDifference
@@ -2259,6 +2325,15 @@ Arena.ArenaStartPersonalRating = 0
 #        Default:     1500
 
 Arena.ArenaStartMatchmakerRating = 1500
+
+#
+#    ArenaLog.ExtendedInfo
+#        Description: Include extended info to ArenaLogFile for each player after rated arena
+#                     matches (guid, name, team, IP, healing/damage done, killing blows).
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+ArenaLog.ExtendedInfo = 0
 
 #
 ###################################################################################################
@@ -2620,20 +2695,20 @@ PlayerDump.DisallowOverwrite = 1
 #                         Example: "13 11 9 5 3 1"
 #
 #                     File: Name of the file (read as optional1 if Type = File)
-#                         Allows to use one "%u" to create dynamic files
+#                         Allows to use one "%s" to create dynamic files
 #
 #                     Mode: Mode to open the file (read as optional2 if Type = File)
 #                          a - (Append)
 #                          w - (Overwrite)
 #
 
-Appender.Console=1,5,0
+Appender.Console=1,3,0
 Appender.Server=2,2,0,Server.log,w
 Appender.GM=2,2,0,GM.log
 Appender.DBErrors=2,2,0,DBErrors.log
 Appender.Char=2,2,0,Char.log,w
 Appender.RA=2,2,0,RA.log
-Appender.Warden=2,2,0,Warden.log
+Appender.Warden=2,4,0,Warden.log
 Appender.Chat=2,2,0,Chat.log
 Appender.CharDump=2,2,0,%s.log
 Appender.Arenas=2,2,0,Arena.log
@@ -2712,18 +2787,20 @@ Appenders=Console Server GM DBErrors Char RA Warden Chat
 #                     (Using spaces as separator).
 #
 
-Logger.Root=0,3,Console Server
+Logger.Root=0,5,Console Server
 Logger.Chat=22,3,Chat
 Logger.DBErrors=26,5,Console Server DBErrors
 Logger.GM=27,3,Console Server GM
 Logger.RA=28,3,RA
-Logger.Warden=29,3,Warden
+Logger.Warden=29,4,Warden
+Logger.WorldServer=31,3,Console Server
 Logger.Character=34,3,Char
 Logger.Arenas=35,3,Arenas
 Logger.SQLDriver=36,5,SQLDriver
 Logger.SQLDev=37,3,SQLDev
 Logger.CharDump=38,3,CharDump
 Logger.Load=40,3,Console Server
+Logger.Opcodes=41,6,Console Server
 
 #
 #    Loggers
@@ -2731,5 +2808,5 @@ Logger.Load=40,3,Console Server
 #                     (Using spaces as separator).
 #        Default:     "Root Chat DBErrors GM RA Warden Character Load"
 
-Loggers=Root Chat DBErrors GM RA Warden Character Load
+Loggers=Root Chat DBErrors GM RA Warden Character Load WorldServer Opcodes
 
