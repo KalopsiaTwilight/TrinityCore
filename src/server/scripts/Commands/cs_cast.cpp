@@ -364,12 +364,16 @@ public:
             return false;
         }
 
-        char* guid = strtok(NULL, " ");
-        if (!guid)
+        char* player = strtok(NULL, " ");
+        if (!player)
             return false;
 
-        uint64 receiver_guid = atol(guid);
-        Player* player = ObjectAccessor::FindPlayer(receiver_guid);
+        Player* target = ObjectAccessor::FindPlayerByName(player);
+        if (!target)
+            {
+                handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+                return false;
+            }
 
         char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)
@@ -380,7 +384,7 @@ public:
         }
 
         bool triggered = (triggeredStr != NULL);
-        caster->CastSpell(player, spellId, triggered);
+        caster->CastSpell(target, spellId, triggered);
         return true;
     }
 };

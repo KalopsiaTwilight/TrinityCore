@@ -253,7 +253,13 @@ public:
                     target->UpdateTriggerVisibility();
                     return true;
                 }
-                return false;
+                else
+                {
+                    handler->GetSession()->GetPlayer()->SetGameMaster(true);
+                    handler->GetSession()->SendNotification(LANG_GM_ON);
+                    handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+                    return true;
+                }
             }
             else
             {
@@ -282,7 +288,13 @@ public:
                     target->UpdateTriggerVisibility();
                     return true;
                 }
-                return false;
+                else
+                {
+                    handler->GetSession()->GetPlayer()->SetGameMaster(false);
+                    handler->GetSession()->SendNotification(LANG_GM_OFF);
+                    handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+                    return true;
+                }
             }
             else
             {
