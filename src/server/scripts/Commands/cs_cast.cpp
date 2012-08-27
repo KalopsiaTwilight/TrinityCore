@@ -39,7 +39,7 @@ public:
             { "self",           SEC_ADMINISTRATOR,  false, &HandleCastSelfCommand,              "", NULL },
             { "target",         SEC_ADMINISTRATOR,  false, &HandleCastTargetCommad,             "", NULL },
             { "dest",           SEC_ADMINISTRATOR,  false, &HandleCastDestCommand,              "", NULL },
-            { "player",           SEC_ADMINISTRATOR,  false, &HandleCastPlayerCommand,          "", NULL },
+            { "player",         SEC_ADMINISTRATOR,  false, &HandleCastPlayerCommand,            "", NULL },
             { "all",            SEC_ADMINISTRATOR,  false, &HandleCastAllCommand,               "", NULL },
             { "",               SEC_ADMINISTRATOR,  false, &HandleCastCommand,                  "", NULL },
             { NULL,             0,                  false, NULL,                                "", NULL }
@@ -372,6 +372,7 @@ public:
         if (!target)
             {
                 handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+                handler->SetSentErrorMessage(true);
                 return false;
             }
 

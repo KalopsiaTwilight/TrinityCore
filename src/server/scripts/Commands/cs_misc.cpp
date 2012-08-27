@@ -1786,7 +1786,7 @@ public:
         if (target)
         {
             if (!zoneName.empty())
-                handler->PSendSysMessage(LANG_PINFO_MAP_ONLINE, map->name[locale], zoneName.c_str(), areaName.c_str(), phase);
+                handler->PSendSysMessage(LANG_PINFO_MAP_ONLINE, map->name[locale], areaName.c_str(), zoneName.c_str(), phase);
             else
                 handler->PSendSysMessage(LANG_PINFO_MAP_ONLINE, map->name[locale], areaName.c_str(), "<unknown>", phase);
         }

@@ -99,6 +99,7 @@ public:
             { "delete",         SEC_GAMEMASTER,     false, NULL,              "", npcDeleteCommandTable },
             { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
             { "set",            SEC_GAMEMASTER,     false, NULL,                 "", npcSetCommandTable },
+            { "attack",         SEC_GAMEMASTER,     false, &HandleNpcAttackCommand,            "", NULL },
             { NULL,             0,                  false, NULL,                               "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1678,6 +1679,37 @@ public:
             else
                 WorldDatabase.PExecute("INSERT INTO creature_addon(guid,faction) VALUES ('%u','%u')", lowguid, factionid);
         }
+        return true;
+    }
+
+    static bool HandleNpcAttackCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* player = strtok((char*)args, " ");
+        if (!player)
+            return false;
+
+        Player* target = ObjectAccessor::FindPlayerByName(player);
+        if (!target)
+            {
+                handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+
+        creature->Attack(target, true);
+        creature->getThreatManager().addThreat(target, 1000000000.0f);
+
         return true;
     }
 };
