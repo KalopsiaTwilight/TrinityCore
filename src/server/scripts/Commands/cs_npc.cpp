@@ -1707,7 +1707,6 @@ public:
                 return false;
             }
 
-        creature->Attack(target, true);
         creature->getThreatManager().addThreat(target, 1000000000.0f);
 
         return true;
