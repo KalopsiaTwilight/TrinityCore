@@ -60,6 +60,13 @@ Battlefield::Battlefield()
 
 Battlefield::~Battlefield()
 {
+    for (BfCapturePointMap::iterator itr = m_capturePoints.begin(); itr != m_capturePoints.end(); ++itr)
+        delete itr->second;
+
+    for (GraveyardVect::const_iterator itr = m_GraveyardList.begin(); itr != m_GraveyardList.end(); ++itr)
+        delete *itr;
+
+    m_capturePoints.clear();
 }
 
 // Called when a player enters the zone
@@ -444,8 +451,8 @@ WorldPacket Battlefield::BuildWarningAnnPacket(std::string msg)
     data << uint32(1);
     data << uint8(0);
     data << uint64(0);
-    data << uint32(strlen(msg.c_str()) + 1);
-    data << msg.c_str();
+    data << uint32(msg.length() + 1);
+    data << msg;
     data << uint8(0);
 
     return data;
