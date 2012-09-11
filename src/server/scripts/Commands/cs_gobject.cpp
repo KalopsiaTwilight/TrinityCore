@@ -312,7 +312,15 @@ public:
         }
 
         GameObject* target = handler->GetSession()->GetPlayer()->GetMap()->GetGameObject(MAKE_NEW_GUID(guidLow, id, HIGHGUID_GAMEOBJECT));
-        scale = target->GetObjectScale();
+        
+        if (target)
+            scale = target->GetObjectScale();
+        
+        if (!scale)
+        {
+            handler->PSendSysMessage(LANG_GOINFO_SCALE_ERROR);
+            return false;
+        }
 
         handler->PSendSysMessage(LANG_GAMEOBJECT_DETAIL, guidLow, objectInfo->name.c_str(), guidLow, id, x, y, z, mapId, o, phase, scale);
 

@@ -1097,6 +1097,7 @@ enum TrinityStrings
     LANG_SELF_MORPH                     = 11924,
     LANG_RENAME_PLAYER_PERM             = 11925,
     LANG_RENAME_PLAYER_GUID_PERM        = 11926,
+    LANG_GOINFO_SCALE_ERROR             = 11927,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

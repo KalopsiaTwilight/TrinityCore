@@ -1305,8 +1305,16 @@ TalentsInspecting = 1
 ThreatRadius = 60
 
 #
+#    MaxAgroRange
+#        Description: Maximum distance that a creature will aggro. Normal formula is
+#                     45 >= d >= 5, with d = 20 - (playerLevel - creatureLevel)
+#        Default:     45
+
+MaxAgroRange = 45
+
+#
 #    Rate.Creature.Aggro
-#        Description: Aggro radius percentage.
+#        Description: Aggro radius percentage. Applied AFTER MaxAgroRange.
 #        Default:     1   - (Enabled, 100%)
 #                     1.5 - (Enabled, 150%)
 #                     0   - (Disabled, 0%)

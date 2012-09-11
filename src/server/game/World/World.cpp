@@ -1007,6 +1007,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_DIE_COMMAND_MODE] = ConfigMgr::GetBoolDefault("Die.Command.Mode", true);
 
     m_float_configs[CONFIG_THREAT_RADIUS] = ConfigMgr::GetFloatDefault("ThreatRadius", 60.0f);
+    m_float_configs[CONFIG_MAX_AGRO_RANGE] = ConfigMgr::GetFloatDefault("MaxAgroRange", 45.0f);
 
     // always use declined names in the russian client
     m_bool_configs[CONFIG_DECLINED_NAMES_USED] =
