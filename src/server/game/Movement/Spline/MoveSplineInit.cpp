@@ -71,10 +71,11 @@ namespace Movement
             real_position.z = unit.GetTransOffsetZ();
             real_position.orientation = unit.GetTransOffsetO();
         }
+
         // there is a big chance that current position is unknown if current state is not finalized, need compute it
         // this also allows calculate spline position and update map position in much greater intervals
-        // Don't compute for transport movement. The unit could be in a motion between two transports, thus having transport moveflag but is resulting in regular positions
-        else if (!move_spline.Finalized())
+        // Don't compute for transport movement if the unit is in a motion between two transports
+        if (!move_spline.Finalized() && move_spline.onTransport == transport)
             real_position = move_spline.ComputePosition();
 
         // should i do the things that user should do? - no.
@@ -84,6 +85,7 @@ namespace Movement
         // corrent first vertex
         args.path[0] = real_position;
         args.initialOrientation = real_position.orientation;
+        move_spline.onTransport = transport;
 
         uint32 moveFlags = unit.m_movementInfo.GetMovementFlags();
         if (args.flags.walkmode)
@@ -158,17 +160,9 @@ namespace Movement
     {
         if (_transformForTransport)
         {
-            if (Unit* vehicle = _owner.GetVehicleBase())
-            {
-                input.x -= vehicle->GetPositionX();
-                input.y -= vehicle->GetPositionY();
-                input.z -= vehicle->GetPositionZMinusOffset();
-            }
-            else if (Transport* transport = _owner.GetTransport())
-            {
-                float unused = 0.0f;
+            float unused = 0.0f;
+            if (TransportBase* transport = _owner.GetDirectTransport())
                 transport->CalculatePassengerOffset(input.x, input.y, input.z, unused);
-            }
         }
 
         return input;

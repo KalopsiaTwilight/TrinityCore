@@ -5635,8 +5635,8 @@ WorldSafeLocsEntry const* ObjectMgr::GetDefaultGraveYard(uint32 team)
 {
     enum DefaultGraveyard
     {
-        HORDE_GRAVEYARD = 10, // Crossroads
-        ALLIANCE_GRAVEYARD = 4, // Westfall
+        HORDE_GRAVEYARD    = 10, // Crossroads
+        ALLIANCE_GRAVEYARD = 4   // Westfall
     };
 
     if (team == HORDE)
@@ -7329,6 +7329,11 @@ uint8 ObjectMgr::CheckPlayerName(const std::string& name, bool create)
     uint32 strictMask = sWorld->getIntConfig(CONFIG_STRICT_PLAYER_NAMES);
     if (!isValidString(wname, strictMask, false, create))
         return CHAR_NAME_MIXED_LANGUAGES;
+
+    wstrToLower(wname);
+    for (size_t i = 2; i < wname.size(); ++i)
+        if (wname[i] == wname[i-1] && wname[i] == wname[i-2])
+            return CHAR_NAME_THREE_CONSECUTIVE;
 
     return CHAR_NAME_SUCCESS;
 }
