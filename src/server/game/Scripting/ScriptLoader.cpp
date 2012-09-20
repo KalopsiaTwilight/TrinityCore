@@ -1270,6 +1270,7 @@ void AddCustomScripts()
     /* This is where custom scripts should be added. */
 	//TeleNPC2
     AddSC_npc_teleport();
+    void AddSC_GOMove_commandscript();
 
 #endif
 }

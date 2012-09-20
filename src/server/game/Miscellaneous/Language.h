@@ -1070,7 +1070,7 @@ enum TrinityStrings
 
     // Use for custom patches             11000-11999
     LANG_AUTO_BROADCAST                 = 11000,
-    LANG_INVALID_REALMID                = 11001
+    LANG_INVALID_REALMID                = 11001,
     LANG_COMMAND_RPITEMIDINVALID        = 11900,
     LANG_REMOVERPITEM                   = 11901,
     LANG_ADDRPITEM                      = 11902,
@@ -1098,7 +1098,7 @@ enum TrinityStrings
     LANG_SELF_MORPH                     = 11924,
     LANG_RENAME_PLAYER_PERM             = 11925,
     LANG_RENAME_PLAYER_GUID_PERM        = 11926,
-    LANG_GOINFO_SCALE_ERROR             = 11927,
+    LANG_GOINFO_SCALE_ERROR             = 11927
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)
