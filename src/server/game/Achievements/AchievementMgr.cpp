@@ -628,8 +628,7 @@ void AchievementMgr::LoadFromDB(PreparedQueryResult achievementResult, PreparedQ
             if (AchievementReward const* reward = sAchievementMgr->GetAchievementReward(achievement))
                 if (uint32 titleId = reward->titleId[Player::TeamForRace(GetPlayer()->getRace()) == ALLIANCE ? 0 : 1])
                     if (CharTitlesEntry const* titleEntry = sCharTitlesStore.LookupEntry(titleId))
-                        if (!GetPlayer()->HasTitle(titleEntry))
-                            GetPlayer()->SetTitle(titleEntry);
+                        GetPlayer()->SetTitle(titleEntry);
 
         } while (achievementResult->NextRow());
     }
@@ -717,7 +716,7 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement) 
     WorldPacket data(SMSG_ACHIEVEMENT_EARNED, 8+4+8);
     data.append(GetPlayer()->GetPackGUID());
     data << uint32(achievement->ID);
-    data << uint32(secsToTimeBitFields(time(NULL)));
+    data.AppendPackedTime(time(NULL));
     data << uint32(0);
     GetPlayer()->SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), true);
 }
@@ -735,7 +734,7 @@ void AchievementMgr::SendCriteriaUpdate(AchievementCriteriaEntry const* entry, C
         data << uint32(0);
     else
         data << uint32(timedCompleted ? 0 : 1); // this are some flags, 1 is for keeping the counter at 0 in client
-    data << uint32(secsToTimeBitFields(progress->date));
+    data.AppendPackedTime(progress->date);
     data << uint32(timeElapsed);    // time elapsed in seconds
     data << uint32(0);              // unk
     GetPlayer()->SendDirectMessage(&data);
@@ -2126,7 +2125,7 @@ void AchievementMgr::BuildAllDataPacket(WorldPacket* data) const
             continue;
 
         *data << uint32(iter->first);
-        *data << uint32(secsToTimeBitFields(iter->second.date));
+        data->AppendPackedTime(iter->second.date);
     }
     *data << int32(-1);
 
@@ -2136,7 +2135,7 @@ void AchievementMgr::BuildAllDataPacket(WorldPacket* data) const
         data->appendPackGUID(iter->second.counter);
         data->append(GetPlayer()->GetPackGUID());
         *data << uint32(0);
-        *data << uint32(secsToTimeBitFields(iter->second.date));
+        data->AppendPackedTime(iter->second.date);
         *data << uint32(0);
         *data << uint32(0);
     }
