@@ -262,6 +262,8 @@ enum UnitRename
 #define MAX_SPELL_POSSESS       8
 #define MAX_SPELL_CONTROL_BAR   10
 
+#define MAX_AGGRO_RESET_TIME 10 // in seconds
+
 enum Swing
 {
     NOSWING                    = 0,
@@ -1332,8 +1334,8 @@ class Unit : public WorldObject
         bool HealthAbovePct(int32 pct) const { return GetHealth() > CountPctFromMaxHealth(pct); }
         bool HealthAbovePctHealed(int32 pct, uint32 heal) const { return uint64(GetHealth()) + uint64(heal) > CountPctFromMaxHealth(pct); }
         float GetHealthPct() const { return GetMaxHealth() ? 100.f * GetHealth() / GetMaxHealth() : 0.0f; }
-        uint32 CountPctFromMaxHealth(int32 pct) const { return CalculatePctN(GetMaxHealth(), pct); }
-        uint32 CountPctFromCurHealth(int32 pct) const { return CalculatePctN(GetHealth(), pct); }
+        uint32 CountPctFromMaxHealth(int32 pct) const { return CalculatePct(GetMaxHealth(), pct); }
+        uint32 CountPctFromCurHealth(int32 pct) const { return CalculatePct(GetHealth(), pct); }
 
         void SetHealth(uint32 val);
         void SetMaxHealth(uint32 val);
@@ -2218,6 +2220,10 @@ class Unit : public WorldObject
         // Movement info
         Movement::MoveSpline * movespline;
 
+        // Part of Evade mechanics
+        time_t GetLastDamagedTime() const { return _lastDamagedTime; }
+        void SetLastDamagedTime(time_t val) { _lastDamagedTime = val; }
+
     protected:
         explicit Unit (bool isWorldObject);
 
@@ -2339,6 +2345,8 @@ class Unit : public WorldObject
 
         Spell const* _focusSpell;   ///> Locks the target during spell cast for proper facing
         bool _isWalkingBeforeCharm; // Are we walking before we were charmed?
+
+        time_t _lastDamagedTime; // Part of Evade mechanics
 };
 
 namespace Trinity
