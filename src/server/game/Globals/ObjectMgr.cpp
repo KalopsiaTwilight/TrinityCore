@@ -45,6 +45,7 @@
 #include "ScriptMgr.h"
 #include "SpellScript.h"
 #include "PoolMgr.h"
+#include "LFGMgr.h"
 
 ScriptMapMap sQuestEndScripts;
 ScriptMapMap sQuestStartScripts;
@@ -5055,7 +5056,7 @@ void ObjectMgr::LoadInstanceEncounters()
             continue;
         }
 
-        if (lastEncounterDungeon && !sLFGDungeonStore.LookupEntry(lastEncounterDungeon))
+        if (lastEncounterDungeon && !sLFGMgr->GetLFGDungeon(lastEncounterDungeon))
         {
             sLog->outError(LOG_FILTER_SQL, "Table `instance_encounters` has an encounter %u (%s) marked as final for invalid dungeon id %u, skipped!", entry, dungeonEncounter->encounterName[0], lastEncounterDungeon);
             continue;
@@ -5560,7 +5561,7 @@ uint32 ObjectMgr::GetTaxiMountDisplayId(uint32 id, uint32 team, bool allowed_alt
             if (!mount_id)
             {
                 sLog->outError(LOG_FILTER_SQL, "No displayid found for the taxi mount with the entry %u! Can't load it!", mount_entry);
-                return false;
+                return 0;
             }
         }
     }
@@ -7617,6 +7618,27 @@ uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 trigger_id)
 SpellScriptsBounds ObjectMgr::GetSpellScriptsBounds(uint32 spell_id)
 {
     return SpellScriptsBounds(_spellScriptsStore.lower_bound(spell_id), _spellScriptsStore.upper_bound(spell_id));
+}
+
+// this allows calculating base reputations to offline players, just by race and class
+int32 ObjectMgr::GetBaseReputationOff(FactionEntry const* factionEntry, uint8 race, uint8 playerClass)
+{
+    if (!factionEntry)
+        return 0;
+
+    uint32 raceMask = (1 << (race - 1));
+    uint32 classMask = (1 << (playerClass-1));
+
+    for (int i = 0; i < 4; i++)
+    {
+        if ((!factionEntry->BaseRepClassMask[i] ||
+            factionEntry->BaseRepClassMask[i] & classMask) &&
+            (!factionEntry->BaseRepRaceMask[i] ||
+            factionEntry->BaseRepRaceMask[i] & raceMask))
+            return factionEntry->BaseRepValue[i];
+    }
+
+    return 0;
 }
 
 SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial)

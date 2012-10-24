@@ -32,7 +32,7 @@
 #define GOSSIP_ITEM_ETERNOS1       "I want to fly on the wings of the Bronze Flight"
 #define GOSSIP_ITEM_ETERNOS2       "What abilities do Amber Drakes have?"
 
-#define HAS_ESSENCE(a) ((a)->HasItemCount(ITEM_EMERALD_ESSENCE, 1) || (a)->HasItemCount(ITEM_AMBER_ESSENCE, 1) || (a)->HasItemCount(ITEM_RUBY_ESSENCE, 1))
+#define HAS_ESSENCE(a) ((a)->HasItemCount(ITEM_EMERALD_ESSENCE) || (a)->HasItemCount(ITEM_AMBER_ESSENCE) || (a)->HasItemCount(ITEM_RUBY_ESSENCE))
 
 enum GossipNPCs
 {
@@ -108,10 +108,10 @@ class npc_verdisa_beglaristrasz_eternos : public CreatureScript
 {
 public:
     npc_verdisa_beglaristrasz_eternos() : CreatureScript("npc_verdisa_beglaristrasz_eternos") { }
-    
-	    InstanceScript* instance;
-    
-	bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+
+        InstanceScript* instance;
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (creature->GetEntry())
@@ -232,7 +232,7 @@ public:
     {
         npc_verdisa_beglaristrasz_eternosAI(Creature* creature) : ScriptedAI(creature) { }
 
-        void MovementInform(uint32 type, uint32 id)
+        void MovementInform(uint32 /*type*/, uint32 id)
         {
             // When Belgaristraz finish his moving say grateful text
             if (me->GetEntry() == NPC_BELGARISTRASZ)
@@ -245,7 +245,7 @@ public:
                 me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
     };
-        
+
     CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_verdisa_beglaristrasz_eternosAI(creature);
@@ -293,7 +293,7 @@ public:
         {
             instance = creature->GetInstanceScript();
         }
-     
+
             InstanceScript* instance;
 
             uint64 summonerGUID;
@@ -324,9 +324,9 @@ public:
             HealthWarningOff = false;
             DisableTakeOff = false;
         }
-            
+
         void IsSummonedBy(Unit* summoner)
-        {   
+        {
             if (instance->GetBossState(DATA_EREGOS_EVENT) == IN_PROGRESS)
                 if (Creature* eregos = me->FindNearestCreature(NPC_EREGOS, 450.0f, true))
                 {
@@ -357,7 +357,7 @@ public:
         void UpdateAI(const uint32 diff)
         {
             if (!(instance->GetBossState(DATA_VAROS_EVENT) == DONE))
-            {   
+            {
                 if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
                 {
                     if (!(WelcomeOff))
@@ -380,7 +380,7 @@ public:
                     {
                         Talk(WHISPER_DRAKES_ABILITIES, me->GetCreatorGUID());
                         WelcomeSequelOff = false;
-                    }   
+                    }
                     else WelcomeSequelTimer -= diff;
                 }
             }
@@ -391,10 +391,10 @@ public:
                     if (!(SpecialOff))
                     {
                         if (SpecialTimer <= diff)
-                        { 
+                        {
                             Talk(WHISPER_DRAKES_SPECIAL, me->GetCreatorGUID());
                             SpecialOff = true;
-                        }   
+                        }
                         else SpecialTimer -= diff;
                     }
                 }
@@ -402,25 +402,25 @@ public:
             if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
             {
                 if (!(HealthWarningOff))
-                {  
+                {
                     if (me->GetHealthPct() <= 40.0f)
                     {
                         Talk(WHISPER_DRAKES_LOWHEALTH, me->GetCreatorGUID());
                         HealthWarningOff = true;
                     }
                 }
-            } 
+            }
             if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
-            {    
+            {
                 if (HealthWarningOff)
-                { 
+                {
                     if (WarningTimer <= diff)
                     {
                         HealthWarningOff = false;
                         WarningTimer = 25000;
                     }
                     else WarningTimer -= diff;
-                } 
+                }
             }
             if (!(me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE)))
             {
@@ -433,7 +433,7 @@ public:
                         me->SetSpeed(MOVE_FLIGHT, 1.0f, true);
                         Talk(SAY_DRAKES_TAKEOFF);
                         Position pos;
-                        me->GetPosition(&pos); 
+                        me->GetPosition(&pos);
                         pos.m_positionX += 10.0f;
                         pos.m_positionY += 10.0f;
                         pos.m_positionZ += 12.0f;

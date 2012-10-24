@@ -28,16 +28,19 @@ static SFMTRandTSS sfmtRand;
 
 int32 irand(int32 min, int32 max)
 {
+    assert(max >= min);
     return int32(sfmtRand->IRandom(min, max));
 }
 
 uint32 urand(uint32 min, uint32 max)
 {
+    assert(max >= min);
     return sfmtRand->URandom(min, max);
 }
 
 float frand(float min, float max)
 {
+    assert(max >= min);
     return float(sfmtRand->Random() * (max - min) + min);
 }
 
@@ -145,6 +148,37 @@ std::string secsToTimeString(uint64 timeInSecs, bool shortText, bool hoursOnly)
     }
 
     return ss.str();
+}
+
+int32 MoneyStringToMoney(const std::string& moneyString)
+{
+    int32 money = 0;
+
+    if (!(std::count(moneyString.begin(), moneyString.end(), 'g') == 1 ||
+        std::count(moneyString.begin(), moneyString.end(), 's') == 1 ||
+        std::count(moneyString.begin(), moneyString.end(), 'c') == 1))
+        return 0; // Bad format
+
+    Tokenizer tokens(moneyString, ' ');
+    for (Tokenizer::const_iterator itr = tokens.begin(); itr != tokens.end(); ++itr)
+    {
+        std::string tokenString(*itr);
+        uint32 gCount = std::count(tokenString.begin(), tokenString.end(), 'g');
+        uint32 sCount = std::count(tokenString.begin(), tokenString.end(), 's');
+        uint32 cCount = std::count(tokenString.begin(), tokenString.end(), 'c');
+        if (gCount + sCount + cCount != 1)
+            return 0;
+
+        uint32 amount = atoi(*itr);
+        if (gCount == 1)
+            money += amount * 100 * 100;
+        else if (sCount == 1)
+            money += amount * 100;
+        else if (cCount == 1)
+            money += amount;
+    }
+
+    return money;
 }
 
 uint32 TimeStringToSecs(const std::string& timestring)

@@ -31,7 +31,7 @@ template<typename T, class S> struct Finder
 {
     T val_;
     T S::* idMember_;
- 
+
     Finder(T val, T S::* idMember) : val_(val), idMember_(idMember) {}
     bool operator()(const std::pair<int, S> &obj) { return obj.second.*idMember_ == val_; }
 };
@@ -65,6 +65,8 @@ private:
 };
 
 void stripLineInvisibleChars(std::string &src);
+
+int32 MoneyStringToMoney(const std::string& moneyString);
 
 std::string secsToTimeString(uint64 timeInSecs, bool shortText = false, bool hoursOnly = false);
 uint32 TimeStringToSecs(const std::string& timestring);
