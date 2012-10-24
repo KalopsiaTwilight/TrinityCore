@@ -76,6 +76,7 @@ void AddSC_tele_commandscript();
 void AddSC_ticket_commandscript();
 void AddSC_titles_commandscript();
 void AddSC_wp_commandscript();
+void AddSC_GOMove_commandscript();
 
 #ifdef SCRIPTS
 //world
@@ -1271,7 +1272,6 @@ void AddCustomScripts()
     /* This is where custom scripts should be added. */
 	//TeleNPC2
     AddSC_npc_teleport();
-    void AddSC_GOMove_commandscript();
 
 #endif
 }

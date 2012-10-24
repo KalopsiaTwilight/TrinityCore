@@ -782,8 +782,8 @@ void AuctionHouseBot::Initialize()
 
     std::string disabledItems = ConfigMgr::GetStringDefault("AuctionHouseBot.DisabledItems", "");
     DisableItemStore.clear();
-    Tokens tokens(disabledItems, ' ');
-    for (Tokens::iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
+    Tokenizer tokens(disabledItems, ' ');
+    for (Tokenizer::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
     {
         uint32 id = uint32(atol(*iter));
         DisableItemStore.insert(id);
