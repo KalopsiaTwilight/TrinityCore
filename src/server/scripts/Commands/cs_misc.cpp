@@ -121,7 +121,7 @@ public:
             { "morph",              SEC_GAMEMASTER,         false, &HandleSelfMorphCommand,             "", NULL },
             { "additemall",         SEC_ADMINISTRATOR,      false, &HandleAddItemAllCommand,            "", NULL },
             { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
-            { "gbank",              SEC_PLAYER,             false, &HandleGuildBankCommand,             "", NULL },
+            { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;

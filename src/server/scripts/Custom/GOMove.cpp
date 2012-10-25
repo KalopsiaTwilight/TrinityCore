@@ -247,7 +247,7 @@ public:
         GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player));
         if (!object)
             return;
-        sWorld->SendGlobalText("asd", player->GetSession());
+        //sWorld->SendGlobalText("asd", player->GetSession());
         uint64 ownerGuid = object->GetOwnerGUID();
         if (ownerGuid)
         {
