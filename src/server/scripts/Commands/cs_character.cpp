@@ -267,7 +267,7 @@ public:
             return false;
 
         LocaleConstant loc = handler->GetSessionDbcLocale();
-        char const* targetName = target->GetName();
+        char const* targetName = target->GetName().c_str();
         char const* knownStr = handler->GetTrinityString(LANG_KNOWN);
 
         // Search in CharTitles.dbc
@@ -705,7 +705,7 @@ public:
         uint64 characterGuid;
         uint32 accountId;
 
-        Player* player = sObjectAccessor->FindPlayerByName(characterName.c_str());
+        Player* player = sObjectAccessor->FindPlayerByName(characterName);
         if (player)
         {
             characterGuid = player->GetGUID();
