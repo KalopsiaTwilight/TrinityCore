@@ -85,7 +85,7 @@ public:
             {
                 switch(ID)
                 {
-                case TEST: session->SendAreaTriggerMessage(player->GetName());      break;
+                case TEST: session->SendAreaTriggerMessage(player->GetName().c_str());      break;
                 case FACE: { float piper2 = M_PI/2; float multi = player->GetOrientation()/piper2; float multi_int = floor(multi); float new_ori = (multi-multi_int > 0.5f) ? (multi_int+1)*piper2 : multi_int*piper2; player->SetFacingTo(new_ori); } break;
                 case SELECTNEAR:
                     {

@@ -2915,31 +2915,48 @@ public:
             return false;
 
         float Scale = (float)atof((char*)args);
-        if (Scale > 1.1f || Scale < 0.9f)
+        if (Scale > 1.15f || Scale < 0.85f)
         {
             handler->SendSysMessage(LANG_BAD_VALUE);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+        uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
+        if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
+        {
+            handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
+            handler->SetSentErrorMessage(true);
+        }
+
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
         if(result)
         {
             Field* fields = result->Fetch();
 
             float customScale = fields[0].GetFloat();
             uint8 scaleTimesChanged = fields[1].GetUInt8();
+            uint8 scaleUnlocked = fields[2].GetUInt8();
 
             if (scaleTimesChanged < 10)
             {
-                Player *chr = handler->GetSession()->GetPlayer();
-		        uint8 scaleChangesRemaining = (10 - (scaleTimesChanged + 1));
-                handler->PSendSysMessage(LANG_CUSTOM_SCALE_CHANGE, Scale, scaleChangesRemaining);
-                chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+                if ((scaleUnlocked = 0 && Scale > 1.1f) || (scaleUnlocked = 0 && Scale < 0.9f))
+                {
+                    handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
 
-                QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f', scale_times_changed=(`scale_times_changed`+1) WHERE guid='%u'", Scale, chr->GetGUIDLow());
+                else
+                {
+                    Player *chr = handler->GetSession()->GetPlayer();
+		            uint8 scaleChangesRemaining = (10 - (scaleTimesChanged + 1));
+                    handler->PSendSysMessage(LANG_CUSTOM_SCALE_CHANGE, customScale, Scale, scaleChangesRemaining);
+                    chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
 
-                return true;
+                    QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f', scale_times_changed=(`scale_times_changed`+1) WHERE guid='%u'", Scale, chr->GetGUIDLow());
+                    return true;
+                }
 	        }
 
             else
@@ -2955,7 +2972,7 @@ public:
             Player *chr = handler->GetSession()->GetPlayer();
 
             uint8 scaleChangesRemaining = 9;
-            handler->PSendSysMessage(LANG_CUSTOM_SCALE_CHANGE, Scale, scaleChangesRemaining);
+            handler->PSendSysMessage(LANG_CUSTOM_SCALE_CREATE, Scale, scaleChangesRemaining);
             chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
             CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','1')", chr->GetGUIDLow(), Scale);
 
