@@ -1225,6 +1225,23 @@ public:
             itemId = uint32(atol(id));
         }
 
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (itemId == 1312 || itemId == 12183 || itemId == 13262 || itemId == 17142 || itemId == 17182 || itemId == 17204 || 
+            itemId == 17782 || itemId == 18563 || itemId == 18564 || itemId == 18565 || itemId == 19016 || itemId == 19018 || itemId == 19019 ||
+            itemId == 21176 || itemId == 22589 || itemId == 22630 || itemId == 22631 || itemId == 22632 || itemId == 22726 || itemId == 22727 ||
+            itemId == 22736 || itemId == 22737 || itemId == 23051 || itemId == 25596 || itemId == 30311 || itemId == 30312 || itemId == 30313 ||
+            itemId == 30314 || itemId == 30316 || itemId == 30317 || itemId == 30318 || itemId == 30319 || itemId == 30320 || itemId == 32837 ||
+            itemId == 32838 || itemId == 34334 || itemId == 42624 || itemId == 45038 || itemId == 45039 || itemId == 45896 || itemId == 45897 ||
+            itemId == 46017 || itemId == 49623 || itemId == 50274 || itemId == 17 || itemId == 12947 || itemId == 18582 || itemId == 18583 ||
+            itemId == 18584 || itemId == 20880 || itemId == 32824 || itemId == 100250 || itemId == 5417 || itemId == 5418)
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_ITEM, itemId);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
         char const* ccount = strtok(NULL, " ");
 
         int32 count = 1;
@@ -2929,6 +2946,8 @@ public:
             handler->SetSentErrorMessage(true);
         }
 
+        uint8 chrLevel = handler->GetSession()->GetPlayer()->getLevel();
+
         QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
         if(result)
         {
@@ -2940,7 +2959,8 @@ public:
 
             if (scaleTimesChanged < 10)
             {
-                if ((scaleUnlocked = 0 && Scale > 1.1f) || (scaleUnlocked = 0 && Scale < 0.9f))
+                //if ((scaleUnlocked == 0 && Scale > 1.1f) || (scaleUnlocked == 0 && Scale < 0.9f))
+                if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
@@ -2969,14 +2989,24 @@ public:
 
         else
 	    {
-            Player *chr = handler->GetSession()->GetPlayer();
+            //if ((Scale > 1.1f) || (Scale < 0.9f))
+            if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+                {
+                    handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+            else
+            {
+                Player *chr = handler->GetSession()->GetPlayer();
 
-            uint8 scaleChangesRemaining = 9;
-            handler->PSendSysMessage(LANG_CUSTOM_SCALE_CREATE, Scale, scaleChangesRemaining);
-            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
-            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','1')", chr->GetGUIDLow(), Scale);
+                uint8 scaleChangesRemaining = 9;
+                handler->PSendSysMessage(LANG_CUSTOM_SCALE_CREATE, Scale, scaleChangesRemaining);
+                chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+                CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','1')", chr->GetGUIDLow(), Scale);
 
-            return true;
+                return true;
+            }
 	    }
     }
 
