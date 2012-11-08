@@ -3151,3 +3151,23 @@ void World::MassUnauraAll()
         }
     }
 }
+
+void World::MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone, float orient, uint32 phase)
+{
+    for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
+    {
+        if (itr->second &&
+            itr->second->GetPlayer() &&
+            itr->second->GetPlayer()->IsInWorld())
+        {
+            Player* target = itr->second->GetPlayer();
+            target->SetSummonPoint(mapid, x, y, z);
+
+            WorldPacket data(SMSG_SUMMON_REQUEST, 8+4+4);
+            data << uint64(guid);
+            data << uint32(zone);
+            data << uint32(MAX_PLAYER_SUMMON_DELAY*IN_MILLISECONDS);
+            target->GetSession()->SendPacket(&data);
+        }
+    }
+}

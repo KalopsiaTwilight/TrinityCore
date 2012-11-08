@@ -121,6 +121,7 @@ public:
             { "morph",              SEC_GAMEMASTER,         false, &HandleSelfMorphCommand,             "", NULL },
             { "additemall",         SEC_ADMINISTRATOR,      false, &HandleAddItemAllCommand,            "", NULL },
             { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
+            { "masssummon",         SEC_GAMEMASTER,         false, &HandleMassSummonCommand,            "", NULL },
             { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
@@ -3155,6 +3156,26 @@ public:
             return false;
 
         sWorld->MassUnaura(spellId);
+
+        return true;
+    }
+
+    static bool HandleMassSummonCommand(ChatHandler* handler, char const* args)
+    {
+        Player* target = handler->GetSession()->GetPlayer();
+        uint64 guid = target->GetGUID();
+        float x, y, z;
+        target->GetPosition(x, y, z);
+        uint32 mapId = target->GetMapId();
+        uint32 zone = target->GetZoneId();
+        float orient = target->GetOrientation();
+        uint32 phase = target->GetPhaseMask();
+
+        //handler->GetSession()->GetPlayer()->GetClosePoint(x, y, z, target->GetObjectSize());
+        //target->TeleportTo(handler->GetSession()->GetPlayer()->GetMapId(), x, y, z, target->GetOrientation());
+        //target->SetPhaseMask(handler->GetSession()->GetPlayer()->GetPhaseMask(), true);
+
+        sWorld->MassSummon(guid, mapId, x, y, z, zone, orient, phase);
 
         return true;
     }
