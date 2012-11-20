@@ -79,7 +79,6 @@ public:
             { "config",                       SEC_ADMINISTRATOR, true,  &HandleReloadConfigCommand,                     "", NULL },
             { "creature_text",                SEC_ADMINISTRATOR, true,  &HandleReloadCreatureText,                      "", NULL },
             { "creature_ai_scripts",          SEC_ADMINISTRATOR, true,  &HandleReloadEventAIScriptsCommand,             "", NULL },
-            { "creature_ai_summons",          SEC_ADMINISTRATOR, true,  &HandleReloadEventAISummonsCommand,             "", NULL },
             { "creature_ai_texts",            SEC_ADMINISTRATOR, true,  &HandleReloadEventAITextsCommand,               "", NULL },
             { "creature_involvedrelation",    SEC_ADMINISTRATOR, true,  &HandleReloadCreatureQuestInvRelationsCommand,  "", NULL },
             { "creature_linked_respawn",      SEC_GAMEMASTER,    true,  &HandleReloadLinkedRespawnCommand,              "", NULL },
@@ -278,7 +277,6 @@ public:
     static bool HandleReloadAllEventAICommand(ChatHandler* handler, const char* /*args*/)
     {
         HandleReloadEventAITextsCommand(handler, "a");
-        HandleReloadEventAISummonsCommand(handler, "a");
         HandleReloadEventAIScriptsCommand(handler, "a");
         return true;
     }
@@ -1036,14 +1034,6 @@ public:
         sLog->outInfo(LOG_FILTER_GENERAL, "Re-Loading Texts from `creature_ai_texts`...");
         sEventAIMgr->LoadCreatureEventAI_Texts();
         handler->SendGlobalGMSysMessage("DB table `creature_ai_texts` reloaded.");
-        return true;
-    }
-
-    static bool HandleReloadEventAISummonsCommand(ChatHandler* handler, const char* /*args*/)
-    {
-        sLog->outInfo(LOG_FILTER_GENERAL, "Re-Loading Summons from `creature_ai_summons`...");
-        sEventAIMgr->LoadCreatureEventAI_Summons();
-        handler->SendGlobalGMSysMessage("DB table `creature_ai_summons` reloaded.");
         return true;
     }
 

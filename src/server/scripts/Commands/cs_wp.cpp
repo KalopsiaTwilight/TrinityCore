@@ -26,6 +26,7 @@ EndScriptData */
 #include "ObjectMgr.h"
 #include "WaypointManager.h"
 #include "Chat.h"
+#include "Player.h"
 
 class wp_commandscript : public CommandScript
 {
@@ -941,7 +942,7 @@ public:
                 {
                     wpCreature->SetDisplayId(target->GetDisplayId());
                     wpCreature->SetObjectScale(0.5f);
-                    wpCreature->SetLevel(point > STRONG_MAX_LEVEL ? STRONG_MAX_LEVEL : point);
+                    wpCreature->SetLevel(std::min<uint32>(point, STRONG_MAX_LEVEL));
                 }
             }
             while (result->NextRow());

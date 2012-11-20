@@ -26,6 +26,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
 #include "deadmines.h"
+#include "TemporarySummon.h"
 
 enum Sounds
 {
@@ -237,16 +238,7 @@ class instance_deadmines : public InstanceMapScript
 
             void DoPlaySound(GameObject* unit, uint32 sound)
             {
-                WorldPacket data(4);
-                data.SetOpcode(SMSG_PLAY_SOUND);
-                data << uint32(sound);
-                unit->SendMessageToSet(&data, false);
-            }
-
-            void DoPlaySoundCreature(Unit* unit, uint32 sound)
-            {
-                WorldPacket data(4);
-                data.SetOpcode(SMSG_PLAY_SOUND);
+                WorldPacket data(SMSG_PLAY_SOUND, 4);
                 data << uint32(sound);
                 unit->SendMessageToSet(&data, false);
             }

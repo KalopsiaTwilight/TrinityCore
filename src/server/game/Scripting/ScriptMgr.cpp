@@ -30,6 +30,7 @@
 #include "SpellScript.h"
 #include "GossipDef.h"
 #include "CreatureAI.h"
+#include "Player.h"
 #include "sc_npc_teleport.h"
 
 // This is the global static registry of scripts.
