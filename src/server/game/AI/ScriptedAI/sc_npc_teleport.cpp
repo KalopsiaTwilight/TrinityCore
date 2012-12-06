@@ -13,6 +13,7 @@
 
 #include "ScriptPCH.h"
 #include "sc_npc_teleport.h"
+#include "Player.h"
 
 #define TELE    nsNpcTel::CatDest
 #define PAGE    nsNpcTel::Page

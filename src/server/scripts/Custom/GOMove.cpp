@@ -58,7 +58,7 @@ public:
             {
                 GameObject* target = GetObjectByGUIDLow(objectGUIDLow, handler);
                 if (!target)
-                    ChatHandler(player).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
+                    ChatHandler(player->GetSession()).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
                 else
                 {
                     float x,y,z,o;
@@ -91,7 +91,7 @@ public:
                     {
                         GameObject* object = handler->GetNearbyGameObject();
                         if (!object)
-                            ChatHandler(player).PSendSysMessage("No objects found");
+                            ChatHandler(player->GetSession()).PSendSysMessage("No objects found");
                         else
                         {
                             SendSelectionInfo(player, object->GetGUIDLow(), true);
@@ -107,7 +107,7 @@ public:
             {
                 GameObject* target = GetObjectByGUIDLow(objectGUIDLow, handler);
                 if (!target)
-                    ChatHandler(player).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
+                    ChatHandler(player->GetSession()).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
                 else
                 {
                     float x,y,z,o;
@@ -229,14 +229,14 @@ public:
             snprintf(msg, 250, "GOMOVE REMOVE %u  0", guidLow);
         else
         {
-            GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player));
+            GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player->GetSession()));
             if(!object)
                 return;
             snprintf(msg, 250, "GOMOVE ADD %u %s %u", guidLow, object->GetName(), object->GetEntry());
         }
 
         WorldPacket data;
-        ChatHandler(player).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+        ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
         player->GetSession()->SendPacket(&data);
     }
 
@@ -244,7 +244,7 @@ public:
     {
         if (!player || !guidLow)
             return;
-        GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player));
+        GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player->GetSession()));
         if (!object)
             return;
         //sWorld->SendGlobalText("asd", player->GetSession());
@@ -254,14 +254,14 @@ public:
             Unit* owner = ObjectAccessor::GetUnit(*player, ownerGuid);
             if (!owner || !IS_PLAYER_GUID(ownerGuid))
             {
-                ChatHandler(player).PSendSysMessage(LANG_COMMAND_DELOBJREFERCREATURE, GUID_LOPART(ownerGuid), object->GetGUIDLow());
-                ChatHandler(player).SetSentErrorMessage(true);
+                ChatHandler(player->GetSession()).PSendSysMessage(LANG_COMMAND_DELOBJREFERCREATURE, GUID_LOPART(ownerGuid), object->GetGUIDLow());
+                ChatHandler(player->GetSession()).SetSentErrorMessage(true);
                 return;
             }
             owner->RemoveGameObject(object, false);
         }
         if (message)
-            ChatHandler(player).PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, object->GetGUIDLow());
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, object->GetGUIDLow());
         object->SetRespawnTime(0);
         object->Delete();
         object->DeleteFromDB();
@@ -277,7 +277,7 @@ public:
         if (move)
         {
             oldGuidLow = e;
-            GameObject* object = GetObjectByGUIDLow(oldGuidLow, &ChatHandler(player));
+            GameObject* object = GetObjectByGUIDLow(oldGuidLow, &ChatHandler(player->GetSession()));
             if (!object)
                 return NULL;
             e = object->GetEntry();
@@ -290,15 +290,15 @@ public:
         const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(e);
         if (!objectInfo)
         {
-            ChatHandler(player).PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, e);
-            ChatHandler(player).SetSentErrorMessage(true);
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, e);
+            ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             return NULL;
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
             sLog->outError(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
-            ChatHandler(player).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
-            ChatHandler(player).SetSentErrorMessage(true);
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
+            ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             return NULL;
         }
         Map* map = player->GetMap();
@@ -317,14 +317,14 @@ public:
         }
         sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGOData(guidLow));
         if (message)
-            ChatHandler(player).PSendSysMessage(LANG_GAMEOBJECT_ADD, e, objectInfo->name.c_str(), guidLow, x, y, z);
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_ADD, e, objectInfo->name.c_str(), guidLow, x, y, z);
 
         if (move) // Swap objects
         {
             char msg[250];
             snprintf(msg, 250, "GOMOVE SWAP %u  %u", oldGuidLow, object->GetGUIDLow());
             WorldPacket data;
-            ChatHandler(player).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+            ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
             player->GetSession()->SendPacket(&data);
         }
 

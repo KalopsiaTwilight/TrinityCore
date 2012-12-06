@@ -1438,7 +1438,7 @@ public:
         {
             handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
             if (handler->needReportToTarget(chr))
-                ChatHandler(chr).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
+                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
 
             chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
             QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f',scale_times_changed=10 WHERE guid='%u'", Scale, chr->GetGUIDLow());
@@ -1449,7 +1449,7 @@ public:
         {
             handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
             if (handler->needReportToTarget(chr))
-                ChatHandler(chr).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
+                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
 
             chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
             CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','10')", chr->GetGUIDLow(), Scale);

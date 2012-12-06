@@ -20,6 +20,7 @@
 #include "ObjectMgr.h"
 #include "AuctionHouseMgr.h"
 #include "AuctionHouseBot.h"
+#include "Player.h"
 #include <vector>
 
 using namespace std;
