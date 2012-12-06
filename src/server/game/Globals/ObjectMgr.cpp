@@ -16,39 +16,40 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AccountMgr.h"
+#include "AchievementMgr.h"
+#include "ArenaTeam.h"
+#include "ArenaTeamMgr.h"
+#include "Chat.h"
 #include "Common.h"
 #include "DatabaseEnv.h"
+#include "DisableMgr.h"
+#include "GameEventMgr.h"
+#include "GossipDef.h"
+#include "GroupMgr.h"
+#include "GuildMgr.h"
+#include "InstanceSaveMgr.h"
+#include "Language.h"
+#include "LFGMgr.h"
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
-#include "ArenaTeamMgr.h"
-#include "GuildMgr.h"
-#include "GroupMgr.h"
-#include "SpellMgr.h"
-#include "UpdateMask.h"
-#include "World.h"
-#include "ArenaTeam.h"
-#include "Transport.h"
-#include "Language.h"
-#include "GameEventMgr.h"
-#include "Spell.h"
-#include "Chat.h"
-#include "AccountMgr.h"
-#include "InstanceSaveMgr.h"
-#include "SpellAuras.h"
-#include "Util.h"
-#include "WaypointManager.h"
-#include "GossipDef.h"
-#include "Vehicle.h"
-#include "AchievementMgr.h"
-#include "DisableMgr.h"
-#include "ScriptMgr.h"
-#include "SpellScript.h"
+#include "Pet.h"
 #include "PoolMgr.h"
-#include "LFGMgr.h"
+#include "ReputationMgr.h"
+#include "ScriptMgr.h"
+#include "SpellAuras.h"
+#include "Spell.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
+#include "Transport.h"
+#include "UpdateMask.h"
+#include "Util.h"
+#include "Vehicle.h"
+#include "WaypointManager.h"
+#include "World.h"
 
 ScriptMapMap sQuestEndScripts;
-ScriptMapMap sQuestStartScripts;
 ScriptMapMap sSpellScripts;
 ScriptMapMap sGameObjectScripts;
 ScriptMapMap sEventScripts;
@@ -60,7 +61,6 @@ std::string GetScriptsTableNameByType(ScriptsType type)
     switch (type)
     {
         case SCRIPTS_QUEST_END:     res = "quest_end_scripts";  break;
-        case SCRIPTS_QUEST_START:   res = "quest_start_scripts";break;
         case SCRIPTS_SPELL:         res = "spell_scripts";      break;
         case SCRIPTS_GAMEOBJECT:    res = "gameobject_scripts"; break;
         case SCRIPTS_EVENT:         res = "event_scripts";      break;
@@ -76,7 +76,6 @@ ScriptMapMap* GetScriptsMapByType(ScriptsType type)
     switch (type)
     {
         case SCRIPTS_QUEST_END:     res = &sQuestEndScripts;    break;
-        case SCRIPTS_QUEST_START:   res = &sQuestStartScripts;  break;
         case SCRIPTS_SPELL:         res = &sSpellScripts;       break;
         case SCRIPTS_GAMEOBJECT:    res = &sGameObjectScripts;  break;
         case SCRIPTS_EVENT:         res = &sEventScripts;       break;
@@ -262,16 +261,20 @@ ObjectMgr::~ObjectMgr()
     // free only if loaded
     for (int class_ = 0; class_ < MAX_CLASSES; ++class_)
     {
-        delete[] _playerClassInfo[class_]->levelInfo;
+        if (_playerClassInfo[class_])
+            delete[] _playerClassInfo[class_]->levelInfo;
         delete _playerClassInfo[class_];
     }
 
     for (int race = 0; race < MAX_RACES; ++race)
+    {
         for (int class_ = 0; class_ < MAX_CLASSES; ++class_)
         {
-            delete[] _playerInfo[race][class_]->levelInfo;
+            if (_playerInfo[race][class_])
+                delete[] _playerInfo[race][class_]->levelInfo;
             delete _playerInfo[race][class_];
         }
+    }
 
     for (CacheVendorItemContainer::iterator itr = _cacheVendorItemStore.begin(); itr != _cacheVendorItemStore.end(); ++itr)
         itr->second.Clear();
@@ -3683,8 +3686,8 @@ void ObjectMgr::LoadQuests()
         "DetailsEmote1, DetailsEmote2, DetailsEmote3, DetailsEmote4, DetailsEmoteDelay1, DetailsEmoteDelay2, DetailsEmoteDelay3, DetailsEmoteDelay4, EmoteOnIncomplete, EmoteOnComplete, "
         //      136                 137                 138               139                  140                     141                     142                      143
         "OfferRewardEmote1, OfferRewardEmote2, OfferRewardEmote3, OfferRewardEmote4, OfferRewardEmoteDelay1, OfferRewardEmoteDelay2, OfferRewardEmoteDelay3, OfferRewardEmoteDelay4, "
-        //    144           145           146
-        "StartScript, CompleteScript, WDBVerified"
+        //    144           145
+        "CompleteScript, WDBVerified"
         " FROM quest_template");
     if (!result)
     {
@@ -3747,6 +3750,15 @@ void ObjectMgr::LoadQuests()
             if (!(qinfo->Flags & QUEST_TRINITY_FLAGS_REPEATABLE))
             {
                 sLog->outError(LOG_FILTER_SQL, "Weekly Quest %u not marked as repeatable in `SpecialFlags`, added.", qinfo->GetQuestId());
+                qinfo->Flags |= QUEST_TRINITY_FLAGS_REPEATABLE;
+            }
+        }
+
+        if (qinfo->Flags & QUEST_TRINITY_FLAGS_MONTHLY)
+        {
+            if (!(qinfo->Flags & QUEST_TRINITY_FLAGS_REPEATABLE))
+            {
+                sLog->outError(LOG_FILTER_SQL, "Monthly quest %u not marked as repeatable in `SpecialFlags`, added.", qinfo->GetQuestId());
                 qinfo->Flags |= QUEST_TRINITY_FLAGS_REPEATABLE;
             }
         }
@@ -4708,18 +4720,6 @@ void ObjectMgr::LoadQuestEndScripts()
     {
         if (!GetQuestTemplate(itr->first))
             sLog->outError(LOG_FILTER_SQL, "Table `quest_end_scripts` has not existing quest (Id: %u) as script id", itr->first);
-    }
-}
-
-void ObjectMgr::LoadQuestStartScripts()
-{
-    LoadScripts(SCRIPTS_QUEST_START);
-
-    // check ids
-    for (ScriptMapMap::const_iterator itr = sQuestStartScripts.begin(); itr != sQuestStartScripts.end(); ++itr)
-    {
-        if (!GetQuestTemplate(itr->first))
-            sLog->outError(LOG_FILTER_SQL, "Table `quest_start_scripts` has not existing quest (Id: %u) as script id", itr->first);
     }
 }
 
@@ -6039,7 +6039,7 @@ void ObjectMgr::LoadAccessRequirements()
 
         if (ar->achievement)
         {
-            if (!sAchievementStore.LookupEntry(ar->achievement))
+            if (!sAchievementMgr->GetAchievement(ar->achievement))
             {
                 sLog->outError(LOG_FILTER_SQL, "Required Achievement %u not exist for map %u difficulty %u, remove quest done requirement.", ar->achievement, mapid, difficulty);
                 ar->achievement = 0;
@@ -6673,13 +6673,11 @@ void ObjectMgr::LoadReputationRewardRate()
 
     _repRewardRateStore.clear();                             // for reload case
 
-    uint32 count = 0; //                                0          1            2             3
-    QueryResult result = WorldDatabase.Query("SELECT faction, quest_rate, creature_rate, spell_rate FROM reputation_reward_rate");
-
+    uint32 count = 0; //                                0          1             2                  3                  4                 5             6
+    QueryResult result = WorldDatabase.Query("SELECT faction, quest_rate, quest_daily_rate, quest_weekly_rate, quest_monthly_rate, creature_rate, spell_rate FROM reputation_reward_rate");
     if (!result)
     {
         sLog->outError(LOG_FILTER_SQL, ">> Loaded `reputation_reward_rate`, table is empty!");
-
         return;
     }
 
@@ -6687,13 +6685,16 @@ void ObjectMgr::LoadReputationRewardRate()
     {
         Field* fields = result->Fetch();
 
-        uint32 factionId        = fields[0].GetUInt32();
+        uint32 factionId            = fields[0].GetUInt32();
 
         RepRewardRate repRate;
 
-        repRate.quest_rate      = fields[1].GetFloat();
-        repRate.creature_rate   = fields[2].GetFloat();
-        repRate.spell_rate      = fields[3].GetFloat();
+        repRate.questRate           = fields[1].GetFloat();
+        repRate.questDailyRate      = fields[2].GetFloat();
+        repRate.questWeeklyRate     = fields[3].GetFloat();
+        repRate.questMonthlyRate    = fields[4].GetFloat();
+        repRate.creatureRate        = fields[5].GetFloat();
+        repRate.spellRate           = fields[6].GetFloat();
 
         FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionId);
         if (!factionEntry)
@@ -6702,21 +6703,39 @@ void ObjectMgr::LoadReputationRewardRate()
             continue;
         }
 
-        if (repRate.quest_rate < 0.0f)
+        if (repRate.questRate < 0.0f)
         {
-            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has quest_rate with invalid rate %f, skipping data for faction %u", repRate.quest_rate, factionId);
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has quest_rate with invalid rate %f, skipping data for faction %u", repRate.questRate, factionId);
             continue;
         }
 
-        if (repRate.creature_rate < 0.0f)
+        if (repRate.questDailyRate < 0.0f)
         {
-            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has creature_rate with invalid rate %f, skipping data for faction %u", repRate.creature_rate, factionId);
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has quest_daily_rate with invalid rate %f, skipping data for faction %u", repRate.questDailyRate, factionId);
             continue;
         }
 
-        if (repRate.spell_rate < 0.0f)
+        if (repRate.questWeeklyRate < 0.0f)
         {
-            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has spell_rate with invalid rate %f, skipping data for faction %u", repRate.spell_rate, factionId);
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has quest_weekly_rate with invalid rate %f, skipping data for faction %u", repRate.questWeeklyRate, factionId);
+            continue;
+        }
+
+        if (repRate.questMonthlyRate < 0.0f)
+        {
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has quest_monthly_rate with invalid rate %f, skipping data for faction %u", repRate.questMonthlyRate, factionId);
+            continue;
+        }
+
+        if (repRate.creatureRate < 0.0f)
+        {
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has creature_rate with invalid rate %f, skipping data for faction %u", repRate.creatureRate, factionId);
+            continue;
+        }
+
+        if (repRate.spellRate < 0.0f)
+        {
+            sLog->outError(LOG_FILTER_SQL, "Table reputation_reward_rate has spell_rate with invalid rate %f, skipping data for faction %u", repRate.spellRate, factionId);
             continue;
         }
 
@@ -8574,9 +8593,9 @@ void ObjectMgr::LoadFactionChangeAchievements()
         uint32 alliance = fields[0].GetUInt32();
         uint32 horde = fields[1].GetUInt32();
 
-        if (!sAchievementStore.LookupEntry(alliance))
+        if (!sAchievementMgr->GetAchievement(alliance))
             sLog->outError(LOG_FILTER_SQL, "Achievement %u referenced in `player_factionchange_achievement` does not exist, pair skipped!", alliance);
-        else if (!sAchievementStore.LookupEntry(horde))
+        else if (!sAchievementMgr->GetAchievement(horde))
             sLog->outError(LOG_FILTER_SQL, "Achievement %u referenced in `player_factionchange_achievement` does not exist, pair skipped!", horde);
         else
             FactionChange_Achievements[alliance] = horde;

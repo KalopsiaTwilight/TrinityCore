@@ -29,7 +29,7 @@
 #include "AuctionHouseMgr.h"
 #include "Item.h"
 #include "Language.h"
-#include "Logging/Log.h"
+#include "Log.h"
 #include <vector>
 
 enum eAuctionHouse
@@ -89,7 +89,7 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
 //does not clear ram
 void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, SQLTransaction& trans)
 {
-    Item* pItem = GetAItem(auction->item_guidlow);
+    Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
 
@@ -143,7 +143,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction, SQLTransaction& 
 
         if (bidder)
         {
-            bidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, bidder_guid, 0, 0, auction->item_template);
+            bidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, bidder_guid, 0, 0, auction->itemEntry);
             // FIXME: for offline player need also
             bidder->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WON_AUCTIONS, 1);
         }
@@ -195,7 +195,7 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry* auction, SQLTransa
 void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry* auction, SQLTransaction& trans)
 {
     //return an item in auction to its owner by mail
-    Item* pItem = GetAItem(auction->item_guidlow);
+    Item* pItem = GetAItem(auction->itemGUIDLow);
     if (!pItem)
         return;
 
@@ -231,7 +231,7 @@ void AuctionHouseMgr::SendAuctionOutbiddedMail(AuctionEntry* auction, uint32 new
             oldBidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, auctionbot.GetAHBplayerGUID(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
 
         if (oldBidder && newBidder)
-            oldBidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, newBidder->GetGUID(), newPrice, auction->GetAuctionOutBid(), auction->item_template);
+            oldBidder->GetSession()->SendAuctionBidderNotification(auction->GetHouseId(), auction->Id, newBidder->GetGUID(), newPrice, auction->GetAuctionOutBid(), auction->itemEntry);
 
         MailDraft(auction->BuildAuctionMailSubject(AUCTION_OUTBIDDED), AuctionEntry::BuildAuctionMailBody(auction->owner, auction->bid, auction->buyout, auction->deposit, auction->GetAuctionCut()))
             .AddMoney(auction->bid)
@@ -278,17 +278,17 @@ void AuctionHouseMgr::LoadAuctionItems()
         Field* fields = result->Fetch();
 
         uint32 item_guid        = fields[11].GetUInt32();
-        uint32 item_template    = fields[12].GetUInt32();
+        uint32 itemEntry    = fields[12].GetUInt32();
 
-        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(item_template);
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemEntry);
         if (!proto)
         {
-            sLog->outError(LOG_FILTER_GENERAL, "AuctionHouseMgr::LoadAuctionItems: Unknown item (GUID: %u id: #%u) in auction, skipped.", item_guid, item_template);
+            sLog->outError(LOG_FILTER_GENERAL, "AuctionHouseMgr::LoadAuctionItems: Unknown item (GUID: %u id: #%u) in auction, skipped.", item_guid, itemEntry);
             continue;
         }
 
         Item* item = NewItemOrBag(proto);
-        if (!item->LoadFromDB(item_guid, 0, fields, item_template))
+        if (!item->LoadFromDB(item_guid, 0, fields, itemEntry))
         {
             delete item;
             continue;
@@ -415,9 +415,9 @@ void AuctionHouseObject::AddAuction(AuctionEntry* auction)
     auctionbot.IncrementItemCounts(auction);
 }
 
-bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction, uint32 item_template)
+bool AuctionHouseObject::RemoveAuction(AuctionEntry* auction, uint32 itemEntry)
 {
-    auctionbot.DecrementItemCounts(auction, item_template);
+    auctionbot.DecrementItemCounts(auction, itemEntry);
     bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
 
     sScriptMgr->OnAuctionRemove(this, auction);
@@ -470,14 +470,14 @@ void AuctionHouseObject::Update()
             sScriptMgr->OnAuctionSuccessful(this, auction);
         }
 
-        uint32 item_template = auction->item_template;
+        uint32 itemEntry = auction->itemEntry;
 
         ///- In any case clear the auction
         auction->DeleteFromDB(trans);
         CharacterDatabase.CommitTransaction(trans);
 
-        RemoveAuction(auction, item_template);
-        sAuctionMgr->RemoveAItem(auction->item_guidlow);
+        RemoveAuction(auction, itemEntry);
+        sAuctionMgr->RemoveAItem(auction->itemGUIDLow);
     }
     while (result->NextRow());
 }
@@ -523,7 +523,7 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
     for (AuctionEntryMap::const_iterator itr = AuctionsMap.begin(); itr != AuctionsMap.end(); ++itr)
     {
         AuctionEntry* Aentry = itr->second;
-        Item* item = sAuctionMgr->GetAItem(Aentry->item_guidlow);
+        Item* item = sAuctionMgr->GetAItem(Aentry->itemGUIDLow);
         if (!item)
             continue;
 
@@ -575,7 +575,6 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
                 if (itemRandProp)
                 {
                     char* const* temp = itemRandProp->nameSuffix;
-                    //char* temp = itemRandProp->nameSuffix;
 
                     // dbc local name
                     if (temp)
@@ -606,10 +605,10 @@ void AuctionHouseObject::BuildListAuctionItems(WorldPacket& data, Player* player
 //this function inserts to WorldPacket auction's data
 bool AuctionEntry::BuildAuctionInfo(WorldPacket& data) const
 {
-    Item* item = sAuctionMgr->GetAItem(item_guidlow);
+    Item* item = sAuctionMgr->GetAItem(itemGUIDLow);
     if (!item)
     {
-        sLog->outError(LOG_FILTER_GENERAL, "AuctionEntry::BuildAuctionInfo: Auction %u has a non-existent item: %u", Id, item_guidlow);
+        sLog->outError(LOG_FILTER_GENERAL, "AuctionEntry::BuildAuctionInfo: Auction %u has a non-existent item: %u", Id, itemGUIDLow);
         return false;
     }
     data << uint32(Id);
@@ -663,7 +662,7 @@ void AuctionEntry::SaveToDB(SQLTransaction& trans) const
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_AUCTION);
     stmt->setUInt32(0, Id);
     stmt->setUInt32(1, auctioneer);
-    stmt->setUInt32(2, item_guidlow);
+    stmt->setUInt32(2, itemGUIDLow);
     stmt->setUInt32(3, owner);
     stmt->setInt32 (4, int32(buyout));
     stmt->setUInt64(5, uint64(expire_time));
@@ -678,8 +677,8 @@ bool AuctionEntry::LoadFromDB(Field* fields)
 {
     Id = fields[0].GetUInt32();
     auctioneer = fields[1].GetUInt32();
-    item_guidlow = fields[2].GetUInt32();
-    item_template = fields[3].GetUInt32();
+    itemGUIDLow = fields[2].GetUInt32();
+    itemEntry = fields[3].GetUInt32();
     itemCount = fields[4].GetUInt32();
     owner = fields[5].GetUInt32();
     buyout = fields[6].GetUInt32();
@@ -712,10 +711,10 @@ bool AuctionEntry::LoadFromDB(Field* fields)
     }
 
     // check if sold item exists for guid
-    // and item_template in fact (GetAItem will fail if problematic in result check in AuctionHouseMgr::LoadAuctionItems)
-    if (!sAuctionMgr->GetAItem(item_guidlow))
+    // and itemEntry in fact (GetAItem will fail if problematic in result check in AuctionHouseMgr::LoadAuctionItems)
+    if (!sAuctionMgr->GetAItem(itemGUIDLow))
     {
-        sLog->outError(LOG_FILTER_GENERAL, "Auction %u has not a existing item : %u", Id, item_guidlow);
+        sLog->outError(LOG_FILTER_GENERAL, "Auction %u has not a existing item : %u", Id, itemGUIDLow);
         return false;
     }
     return true;
@@ -800,8 +799,8 @@ bool AuctionEntry::LoadFromFieldList(Field* fields)
 
     Id = fields[0].GetUInt32();
     auctioneer = fields[1].GetUInt32();
-    item_guidlow = fields[2].GetUInt32();
-    item_template = fields[3].GetUInt32();
+    itemGUIDLow = fields[2].GetUInt32();
+    itemEntry = fields[3].GetUInt32();
     itemCount = fields[4].GetUInt32();
     owner = fields[5].GetUInt32();
     buyout = fields[6].GetUInt32();
@@ -840,7 +839,7 @@ bool AuctionEntry::LoadFromFieldList(Field* fields)
 std::string AuctionEntry::BuildAuctionMailSubject(MailAuctionAnswers response) const
 {
     std::ostringstream strm;
-    strm << item_template << ":0:" << response << ':' << Id << ':' << itemCount;
+    strm << itemEntry << ":0:" << response << ':' << Id << ':' << itemCount;
     return strm.str();
 }
 

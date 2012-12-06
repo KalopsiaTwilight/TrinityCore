@@ -16,16 +16,18 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AccountMgr.h"
+#include "CalendarMgr.h"
+#include "Chat.h"
+#include "Config.h"
 #include "DatabaseEnv.h"
 #include "Guild.h"
 #include "GuildMgr.h"
-#include "ScriptMgr.h"
-#include "Chat.h"
-#include "Config.h"
-#include "SocialMgr.h"
+#include "Language.h"
 #include "Log.h"
-#include "AccountMgr.h"
-#include "CalendarMgr.h"
+#include "ScriptMgr.h"
+#include "SocialMgr.h"
+#include "Opcodes.h"
 
 #define MAX_GUILD_BANK_TAB_TEXT_LEN 500
 #define EMBLEM_PRICE 10 * GOLD
@@ -247,7 +249,7 @@ void Guild::BankEventLogEntry::WritePacket(WorldPacket& data) const
             data << uint8(m_destTabId);
             break;
         default:
-            data << uint64(m_itemOrMoney);
+            data << uint32(m_itemOrMoney);
     }
 
     data << uint32(time(NULL) - m_timestamp);
