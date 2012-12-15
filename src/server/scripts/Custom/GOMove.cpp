@@ -1,5 +1,7 @@
 #include "ScriptPCH.h"
 #include "MapManager.h"
+#include "Language.h"
+#include "Opcodes.h"
 
 /*
 struct GOMove_Data
@@ -247,7 +249,6 @@ public:
         GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player->GetSession()));
         if (!object)
             return;
-        //sWorld->SendGlobalText("asd", player->GetSession());
         uint64 ownerGuid = object->GetOwnerGUID();
         if (ownerGuid)
         {

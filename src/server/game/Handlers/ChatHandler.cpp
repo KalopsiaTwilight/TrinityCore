@@ -269,9 +269,6 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 return;
             }
 
-            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
-                break;
-
             if (!normalizePlayerName(to))
             {
                 if (lang != LANG_ADDON)
@@ -404,8 +401,6 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
         } break;
         case CHAT_MSG_BATTLEGROUND:
         {
-            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
-                break;
             //battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group* group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup())
@@ -419,8 +414,6 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
         } break;
         case CHAT_MSG_BATTLEGROUND_LEADER:
         {
-            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
-                break;
             // battleground raid is always in Player->GetGroup(), never in GetOriginalGroup()
             Group* group = GetPlayer()->GetGroup();
             if (!group || !group->isBGGroup() || !group->IsLeader(GetPlayer()->GetGUID()))
@@ -443,17 +436,17 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 }
             }
 
-            if (ChatHandler(this).ParseCommands(msg.c_str()) > 0)
-                break;
-
             if (ChannelMgr* cMgr = ChannelMgr::forTeam(_player->GetTeam()))
             {
                 if (Channel* chn = cMgr->GetChannel(channel, _player))
                 {
-                    if (channel == "gmc" && AccountMgr::IsModeratorAccount(GetSecurity()))
+                    if (channel == "gmc" || channel == "GMC")
                     {
-                        std::string name = _player->GetSession()->GetPlayer()->GetName();
-                        sWorld->SendGMText(LANG_GM_ANNOUNCE_COLOR, name.c_str(), msg.c_str());
+                        if (AccountMgr::IsModeratorAccount(GetSecurity()))
+                        {
+                            std::string name = _player->GetSession()->GetPlayer()->GetName();
+                            sWorld->SendGMText(LANG_GM_ANNOUNCE_COLOR, name.c_str(), msg.c_str());
+                        }
                         break;
                     }
                     sScriptMgr->OnPlayerChat(_player, type, lang, msg, chn);
