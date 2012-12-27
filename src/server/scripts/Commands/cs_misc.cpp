@@ -127,6 +127,7 @@ public:
             { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
             { "masssummon",         SEC_GAMEMASTER,         false, &HandleMassSummonCommand,            "", NULL },
             { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
+            { "gmbindsight",        SEC_ADMINISTRATOR,      false, &HandleGMBindSightCommand,           "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -3185,6 +3186,31 @@ public:
     static bool HandleGuildBankCommand(ChatHandler* handler, char const* /*args*/)
     {
         handler->GetSession()->SendShowBank(handler->GetSession()->GetPlayer()->GetGUID());
+        return true;
+    }
+
+    static bool HandleGMBindSightCommand(ChatHandler* handler, char const* args)
+    {
+
+        Player* caster = handler->GetSession()->GetPlayer();
+        
+        if (!*args)
+            caster->SetViewpoint(caster, false);
+            return true;
+
+        char* player = strtok(NULL, " ");
+        if (!player)
+            return false;
+
+        Player* target = ObjectAccessor::FindPlayerByName(player);
+        if (!target)
+        {
+            handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        caster->ToPlayer()->SetViewpoint(target, true);
         return true;
     }
 

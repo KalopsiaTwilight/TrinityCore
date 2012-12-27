@@ -373,11 +373,11 @@ public:
 
         Player* target = ObjectAccessor::FindPlayerByName(player);
         if (!target)
-            {
-                handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
-                handler->SetSentErrorMessage(true);
-                return false;
-            }
+        {
+            handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
 
         char* triggeredStr = strtok(NULL, " ");
         if (triggeredStr)

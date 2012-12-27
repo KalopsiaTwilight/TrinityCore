@@ -5572,44 +5572,14 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                 // Shadow's Fate (Shadowmourne questline)
                 case 71169:
                 {
-                    bool ok = false;
-                    if (GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_NORMAL || GetMap()->GetDifficulty() == RAID_DIFFICULTY_25MAN_HEROIC)
+                    Unit* caster = triggeredByAura->GetCaster();
+                    if (caster && caster->GetTypeId() == TYPEID_PLAYER && caster->ToPlayer()->GetQuestStatus(24547) == QUEST_STATUS_INCOMPLETE)
                     {
-                        uint32 spellId = 0;
-
-                        switch (GetEntry())
-                        {
-                            case 36678:                 // NPC:     Professor Putricide
-                                spellId = 71518;        // Spell:   Unholy Infusion Credit
-                                break;
-                            case 37955:                 // NPC:     Blood-Queen Lana'thel
-                                spellId = 72934;        // Spell:   Quest Credit
-                                break;
-                            case 36853:                 // NPC:     Sindragosa <Queen of the Frostbrood>
-                                spellId = 72289;        // Spell:   Frost Infusion Quest Credit
-                                break;
-                            default:
-                                break;
-                        }
-
-                        if (spellId)
-                            CastSpell((Unit*)NULL, spellId, true);
-
-                        ok = true;
+                        CastSpell(caster, 71203, true);
+                        return true;
                     }
-
-                    // The spell usually only hits one target, but it should hit every player
-                    // which applied Shadows Fate at least once to the victim.
-                    if (target->GetTypeId() == TYPEID_PLAYER && target->ToPlayer()->GetQuestStatus(24547) == QUEST_STATUS_INCOMPLETE)
-                    {
-                        triggered_spell_id = 71203;
-                        ok = true;
-                    }
-
-                    if (!ok)
+                    else
                         return false;
-
-                    break;
                 }
                 // Essence of the Blood Queen
                 case 70871:
@@ -9055,7 +9025,7 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
         case 71169:
         {
             // Victim needs more checks so bugs, rats or summons can not be affected by the proc.
-            if (GetTypeId() != TYPEID_PLAYER || victim->GetTypeId() != TYPEID_UNIT || victim->GetCreatureType() == CREATURE_TYPE_CRITTER)
+            if (GetTypeId() != TYPEID_PLAYER || !victim || victim->GetTypeId() != TYPEID_UNIT || victim->GetCreatureType() == CREATURE_TYPE_CRITTER)
                 return false;
 
             Player* player = ToPlayer();
@@ -12136,7 +12106,10 @@ void Unit::CombatStart(Unit* target, bool initialAggro)
         if (!target->isInCombat() && target->GetTypeId() != TYPEID_PLAYER
             && !target->ToCreature()->HasReactState(REACT_PASSIVE) && target->ToCreature()->IsAIEnabled)
         {
-            target->ToCreature()->AI()->AttackStart(this);
+            if (target->isPet())
+                target->ToCreature()->AI()->AttackedBy(this); // PetAI has special handler before AttackStart()
+            else
+                target->ToCreature()->AI()->AttackStart(this);
         }
 
         SetInCombatWith(target);
@@ -17094,7 +17067,7 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
             }
 
             if (IsInMap(caster))
-                caster->CastCustomSpell(itr->second.spellId, SpellValueMod(SPELLVALUE_BASE_POINT0+i), seatId+1, target, GetVehicleKit() ? TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE : TRIGGERED_NONE, NULL, NULL, origCasterGUID);
+                caster->CastCustomSpell(itr->second.spellId, SpellValueMod(SPELLVALUE_BASE_POINT0+i), seatId, target, GetVehicleKit() ? TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE : TRIGGERED_NONE, NULL, NULL, origCasterGUID);
             else    // This can happen during Player::_LoadAuras
             {
                 int32 bp0 = seatId;
@@ -17124,7 +17097,7 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
 
 void Unit::EnterVehicle(Unit* base, int8 seatId)
 {
-    CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, seatId+1, base, TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE);
+    CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, seatId, base, TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE);
 }
 
 void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* aurApp)
@@ -17354,9 +17327,27 @@ void Unit::NearTeleportTo(float x, float y, float z, float orientation, bool cas
         ToPlayer()->TeleportTo(GetMapId(), x, y, z, orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | (casting ? TELE_TO_SPELL : 0));
     else
     {
+        Position pos = {x, y, z, orientation};
+        SendTeleportPacket(pos);
         UpdatePosition(x, y, z, orientation, true);
-        SendMovementFlagUpdate();
+        UpdateObjectVisibility();
     }
+}
+
+void Unit::SendTeleportPacket(Position& pos)
+{
+    Position oldPos = { GetPositionX(), GetPositionY(), GetPositionZMinusOffset(), GetOrientation() };
+    if (GetTypeId() == TYPEID_UNIT)
+        Relocate(&pos);
+
+    WorldPacket data2(MSG_MOVE_TELEPORT, 38);
+    data2.append(GetPackGUID());
+    BuildMovementPacket(&data2);
+    if (GetTypeId() == TYPEID_UNIT)
+        Relocate(&oldPos);
+    if (GetTypeId() == TYPEID_PLAYER)
+        Relocate(&pos);
+    SendMessageToSet(&data2, true);
 }
 
 bool Unit::UpdatePosition(float x, float y, float z, float orientation, bool teleport)
