@@ -46,11 +46,12 @@ public:
             { "walk",           SEC_MODERATOR,      false, &HandleModifySpeedCommand,         "", NULL },
             { "backwalk",       SEC_MODERATOR,      false, &HandleModifyBWalkCommand,         "", NULL },
             { "swim",           SEC_MODERATOR,      false, &HandleModifySwimCommand,          "", NULL },
-            { "",               SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
+            { "",               SEC_MODERATOR,      false, &HandleModifySpeedCommand,         "", NULL },
             { NULL,             0,                  false, NULL,                              "", NULL }
         };
         static ChatCommand modifyCommandTable[] =
         {
+            { "speed",          SEC_MODERATOR,      false, NULL,           "", modifyspeedCommandTable },
             { "hp",             SEC_MODERATOR,      false, &HandleModifyHPCommand,            "", NULL },
             { "mana",           SEC_MODERATOR,      false, &HandleModifyManaCommand,          "", NULL },
             { "rage",           SEC_MODERATOR,      false, &HandleModifyRageCommand,          "", NULL },
@@ -70,7 +71,6 @@ public:
             { "phase",          SEC_ADMINISTRATOR,  false, &HandleModifyPhaseCommand,         "", NULL },
             { "gender",         SEC_GAMEMASTER,     false, &HandleModifyGenderCommand,        "", NULL },
             { "currency",       SEC_GAMEMASTER,     false, &HandleModifyCurrencyCommand,      "", NULL },
-            { "speed",          SEC_MODERATOR,      false, NULL,           "", modifyspeedCommandTable },
             { NULL,             0,                  false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
