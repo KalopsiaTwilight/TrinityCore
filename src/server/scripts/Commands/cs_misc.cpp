@@ -1231,14 +1231,14 @@ public:
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
         {
-            if (itemId == 1312 || itemId == 12183 || itemId == 13262 || itemId == 17142 || itemId == 17182 || itemId == 17204 || 
-            itemId == 17782 || itemId == 18563 || itemId == 18564 || itemId == 18565 || itemId == 19016 || itemId == 19018 || itemId == 19019 ||
-            itemId == 21176 || itemId == 22589 || itemId == 22630 || itemId == 22631 || itemId == 22632 || itemId == 22726 || itemId == 22727 ||
-            itemId == 22736 || itemId == 22737 || itemId == 23051 || itemId == 25596 || itemId == 30311 || itemId == 30312 || itemId == 30313 ||
-            itemId == 30314 || itemId == 30316 || itemId == 30317 || itemId == 30318 || itemId == 30319 || itemId == 30320 || itemId == 32837 ||
-            itemId == 32838 || itemId == 34334 || itemId == 42624 || itemId == 45038 || itemId == 45039 || itemId == 45896 || itemId == 45897 ||
-            itemId == 46017 || itemId == 49623 || itemId == 50274 || itemId == 17 || itemId == 12947 || itemId == 18582 || itemId == 18583 ||
-            itemId == 18584 || itemId == 20880 || itemId == 32824 || itemId == 100250 || itemId == 5417 || itemId == 5418)
+            if (itemId == 1312 || itemId == 12183 || itemId == 13262 || itemId == 17142 || itemId == 17182 || itemId == 17204 || // 1312-Doomhammer, 12183-Doomhammer, 13262-Ashbringer, 17142-Shard of the Defiler, 17182-Sulfuras, 17204-Eye of Sulfuras
+            itemId == 17782 || itemId == 18563 || itemId == 18564 || itemId == 18565 || itemId == 19016 || itemId == 19018 || itemId == 19019 || // 17782-Talisman of Binding Shard, 18563-Bindings of the Windseeker, 18564-BotW, 18565-Vessel of Rebirth DEP, 19016-Vessel of Rebirth, 19018-Dormant Wind Kissed Blade, 19019-Thunderfury
+            itemId == 21176 || itemId == 22589 || itemId == 22630 || itemId == 22631 || itemId == 22632 || itemId == 22726 || itemId == 22727 || // 21176-Black Qiraji, 22589-Atiesh, 22630-Atiesh, 22631-Atiesh, 22632-Atiesh, 22726-Splinter of Atiesh, 22727-Frame of Atiesh
+            itemId == 22736 || itemId == 22737 || itemId == 23051 || itemId == 25596 || itemId == 30311 || itemId == 30312 || itemId == 30313 || // 22736-Andonisus, 22737-Atiesh, 23051-Glaive of the Defender, 25596-Peep's Whistle, 30311-Warp Slicer, 30312-Infinity Blade, 30313-Staff of Disintegration
+            itemId == 30314 || itemId == 30316 || itemId == 30317 || itemId == 30318 || itemId == 30319 || itemId == 30320 || itemId == 32837 || // 30314-Phaseshift Bulwark, 30316-Devastation, 30317-Cosmic Infuser, 30318-Netherstrand Longbow, 30319-Nether Spike, 30320-Bundle of Nether Spikes, 32837-Warglaive of Azzinoth
+            itemId == 32838 || itemId == 34334 || itemId == 42624 || itemId == 45038 || itemId == 45039 || itemId == 45896 || itemId == 45897 || // 32838-Warglaive of Azzinoth, 34334-Thori'dal, 42624-Battered Storm Hammer, 45038-Fragment of Val'anyr, 45039-Shattered Fragments of Val'anyr, 45896-Unbound Fragments of Val, 45897-Reforged Hammer of Ancient Kings
+            itemId == 46017 || itemId == 49623 || itemId == 50274 || itemId == 17 || itemId == 12947 || itemId == 18582 || itemId == 18583 || // 46017-Val'anyr, 49623-Shadowmourne, 50274-Shadowfrost Shard, 17-Martin Fury, 12947-Alex's Ring, 18582-Twin Blades of Azzinoth, 18583-Warglaive (Right)
+            itemId == 18584 || itemId == 20880 || itemId == 32824 || itemId == 33475 || itemId == 5417 || itemId == 5418) // 18584-Warglaive (Left), 20880-Golden Token, 32824-Tigole's Trashbringer, 33475-Frostmourne, 5417-Weapon of Massive Destruction, 5418-Weapon of Mass Destruction
             {
                 handler->PSendSysMessage(LANG_RESTRICTED_ITEM, itemId);
                 handler->SetSentErrorMessage(true);
