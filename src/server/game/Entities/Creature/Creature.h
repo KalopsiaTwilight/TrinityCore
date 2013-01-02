@@ -272,6 +272,8 @@ struct CreatureAddon
     uint32 bytes2;
     uint32 emote;
     std::vector<uint32> auras;
+    float scale;
+    uint32 faction;
 };
 
 typedef UNORDERED_MAP<uint32, CreatureAddon> CreatureAddonContainer;
@@ -479,10 +481,10 @@ class Creature : public Unit, public GridObject<Creature>, public MapCreature
         {
             if (isTotem() || isTrigger() || GetCreatureType() == CREATURE_TYPE_CRITTER || isSpiritService())
                 SetReactState(REACT_PASSIVE);
+            else if (isCivilian())
+                SetReactState(REACT_DEFENSIVE);
             else
                 SetReactState(REACT_AGGRESSIVE);
-            /*else if (isCivilian())
-            SetReactState(REACT_DEFENSIVE);*/;
         }
 
         ///// TODO RENAME THIS!!!!!

@@ -63,6 +63,8 @@ public:
             { "rename",         SEC_GAMEMASTER,     true,  &HandleCharacterRenameCommand,          "", NULL },
             { "reputation",     SEC_GAMEMASTER,     true,  &HandleCharacterReputationCommand,      "", NULL },
             { "titles",         SEC_GAMEMASTER,     true,  &HandleCharacterTitlesCommand,          "", NULL },
+            { "faction",        SEC_GAMEMASTER,     true,  &HandleCharacterFactionCommand,         "", NULL },
+            { "factionperm",    SEC_GAMEMASTER,     true,  &HandleCharacterFactionPermCommand,     "", NULL },
             { NULL,             0,                  false, NULL,                                   "", NULL }
         };
 
@@ -362,7 +364,10 @@ public:
         if (newlevel < 1)
             return false;                                       // invalid level
 
-        if (newlevel > STRONG_MAX_LEVEL)                         // hardcoded maximum level
+        if (newlevel > DEFAULT_MAX_LEVEL && handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR) //  Only admins can go above default max level
+            newlevel = DEFAULT_MAX_LEVEL;
+
+        if (newlevel > STRONG_MAX_LEVEL)          // hardcoded maximum level
             newlevel = STRONG_MAX_LEVEL;
 
         HandleCharacterLevel(target, targetGuid, oldlevel, newlevel, handler);
@@ -917,6 +922,136 @@ public:
         }
 
         return true;
+    }
+
+    // CUSTOM
+    //Edit REAL Player Faction
+    static bool HandleCharacterFactionCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        char* pfactionid = handler->extractKeyFromLink((char*)args,"Hfaction");
+
+	    Player *chr = handler->getSelectedPlayer();
+
+        if (!chr)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!pfactionid)
+        {
+            if (chr)
+            {
+                uint32 factionid = chr->getFaction();
+                uint32 flag      = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
+                handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName(),factionid,flag);
+            }
+            return true;
+        }
+
+        uint32 factionid = atoi(pfactionid);
+        uint32 flag;
+
+        char *pflag = strtok(NULL, " ");
+        if (!pflag)
+            flag = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
+        else
+            flag = atoi(pflag);
+
+        if (!sFactionTemplateStore.LookupEntry(factionid))
+        {
+            handler->PSendSysMessage(LANG_WRONG_FACTION, factionid);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER, chr->GetName(),factionid,flag);
+
+        chr->setFaction(factionid);
+        chr->SetUInt32Value(UNIT_FIELD_FLAGS,flag);
+
+        return true;
+    }
+
+    //Change character faction permanent
+    static bool HandleCharacterFactionPermCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        char* pfactionid = handler->extractKeyFromLink((char*)args,"Hfaction");
+
+	    Player *chr = handler->getSelectedPlayer();
+
+        if (!chr)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!pfactionid)
+        {
+            if (chr)
+            {
+                uint32 factionid = chr->getFaction();
+                handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName(),factionid);
+            }
+            return true;
+        }
+
+        // check online security
+        if (handler->HasLowerSecurity(chr, 0))
+            return false;
+
+        uint32 factionid = atoi(pfactionid);
+
+        if (!sFactionTemplateStore.LookupEntry(factionid))
+        {
+            handler->PSendSysMessage(LANG_WRONG_FACTION, factionid);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        QueryResult result = CharacterDatabase.PQuery("SELECT faction FROM characters_addon WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
+	    if(result)
+	    {
+            //Field* fields = result->Fetch();
+            //uint16 customFaction = fields[0].GetUInt16();
+
+            if (factionid > 2)
+            {
+                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+
+                chr->setFaction(factionid);
+                QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET faction='%u' WHERE guid='%u'", factionid, handler->getSelectedPlayer()->GetGUIDLow());
+
+                return true;
+            }
+            else
+            {
+                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+
+                chr->setFaction(factionid);
+                QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET faction='0' WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
+
+                return true;
+            }
+	    }
+
+        else
+        {
+            handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+
+            chr->setFaction(factionid);
+            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,faction) VALUES ('%u','%u')", handler->getSelectedPlayer()->GetGUIDLow(), factionid);
+
+            return true;
+	    }
     }
 };
 

@@ -242,26 +242,72 @@ public:
 
         if (param == "on")
         {
-            handler->GetSession()->GetPlayer()->SetGameMaster(true);
-            handler->GetSession()->SendNotification(LANG_GM_ON);
-            handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+            if (AccountMgr::IsAdminAccount(handler->GetSession()->GetSecurity()))
+            {
+                Player* target =  handler->getSelectedPlayer();
+                if (!target)
+                    target = handler->GetSession()->GetPlayer();
+                if (AccountMgr::IsModeratorAccount(target->GetSession()->GetSecurity()))
+                {
+                    target->SetGameMaster(true);
+                    target->GetSession()->SendNotification(LANG_GM_ON);
+                    target->UpdateTriggerVisibility();
+                    return true;
+                }
+                else
+                {
+                    handler->GetSession()->GetPlayer()->SetGameMaster(true);
+                    handler->GetSession()->SendNotification(LANG_GM_ON);
+                    handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+                    return true;
+                }
+            }
+            else
+            {
+                handler->GetSession()->GetPlayer()->SetGameMaster(true);
+                handler->GetSession()->SendNotification(LANG_GM_ON);
+                handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
 #ifdef _DEBUG_VMAPS
-            VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
-            vMapManager->processCommand("stoplog");
+                VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
+                vMapManager->processCommand("stoplog");
 #endif
-            return true;
+                return true;
+            }
         }
 
         if (param == "off")
         {
-            handler->GetSession()->GetPlayer()->SetGameMaster(false);
-            handler->GetSession()->SendNotification(LANG_GM_OFF);
-            handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+            if (AccountMgr::IsAdminAccount(handler->GetSession()->GetSecurity()))
+            {
+                Player* target =  handler->getSelectedPlayer();
+                if (!target)
+                    target = handler->GetSession()->GetPlayer();
+                if (AccountMgr::IsModeratorAccount(target->GetSession()->GetSecurity()))
+                {
+                    target->SetGameMaster(false);
+                    target->GetSession()->SendNotification(LANG_GM_OFF);
+                    target->UpdateTriggerVisibility();
+                    return true;
+                }
+                else
+                {
+                    handler->GetSession()->GetPlayer()->SetGameMaster(false);
+                    handler->GetSession()->SendNotification(LANG_GM_OFF);
+                    handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
+                    return true;
+                }
+            }
+            else
+            {
+                handler->GetSession()->GetPlayer()->SetGameMaster(false);
+                handler->GetSession()->SendNotification(LANG_GM_OFF);
+                handler->GetSession()->GetPlayer()->UpdateTriggerVisibility();
 #ifdef _DEBUG_VMAPS
-            VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
-            vMapManager->processCommand("startlog");
+                VMAP::IVMapManager* vMapManager = VMAP::VMapFactory::createOrGetVMapManager();
+                vMapManager->processCommand("startlog");
 #endif
-            return true;
+                return true;
+            }
         }
 
         handler->SendSysMessage(LANG_USE_BOL);

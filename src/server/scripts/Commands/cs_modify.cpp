@@ -71,6 +71,10 @@ public:
             { "phase",          SEC_ADMINISTRATOR,  false, &HandleModifyPhaseCommand,         "", NULL },
             { "gender",         SEC_GAMEMASTER,     false, &HandleModifyGenderCommand,        "", NULL },
             { "currency",       SEC_GAMEMASTER,     false, &HandleModifyCurrencyCommand,      "", NULL },
+            { "scaleperm",      SEC_ADMINISTRATOR,  false, &HandleModifyPermScaleCommand,     "", NULL },
+            { "morphperm",      SEC_ADMINISTRATOR,  false, &HandleModifyPermMorphCommand,     "", NULL },
+            { "bytes1",         SEC_GAMEMASTER,     false, &HandleModifyBytes1Command,        "", NULL },
+            { "bytes2",         SEC_GAMEMASTER,     false, &HandleModifyBytes2Command,        "", NULL },
             { NULL,             0,                  false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1408,6 +1412,194 @@ public:
 
         target->ModifyCurrency(currencyId, amount, true, true);
 
+        return true;
+    }
+
+    // CUSTOM
+    //Permanently modify scale
+    static bool HandleModifyPermScaleCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        float Scale = (float)atof((char*)args);
+        if (Scale > 10.0f || Scale < 0.1f)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player *chr = handler->getSelectedPlayer();
+        if (chr == NULL)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // check online security
+        if (handler->HasLowerSecurity(chr, 0))
+            return false;
+
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", chr->GetGUIDLow());
+        if(result)
+        {
+            handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
+            if (handler->needReportToTarget(chr))
+                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
+
+            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+            QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f',scale_times_changed=10 WHERE guid='%u'", Scale, chr->GetGUIDLow());
+
+            return true;
+        }
+        else
+        {
+            handler->PSendSysMessage(LANG_YOU_CHANGE_SIZE_PERM, Scale, handler->GetNameLink(chr).c_str());
+            if (handler->needReportToTarget(chr))
+                ChatHandler(chr->GetSession()).PSendSysMessage(LANG_YOURS_SIZE_CHANGED_PERM, handler->GetNameLink(chr).c_str(), Scale);
+
+            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','10')", chr->GetGUIDLow(), Scale);
+
+            return true;
+        }
+    }
+
+    //permanently morph creature or player
+    static bool HandleModifyPermMorphCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint16 display_id = (uint16)atoi((char*)args);
+
+        Player* target = handler->getSelectedPlayer();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+
+        // check online security
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+            return false;
+
+        QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE guid='%u'", target->GetGUIDLow());
+        if(result)
+		{
+            if (display_id > 0)
+            {
+                target->SetDisplayId(display_id);
+                target->SetNativeDisplayId(display_id);
+                CharacterDatabase.PExecute("UPDATE characters_addon SET display='%u' WHERE guid='%u'", display_id, target->GetGUIDLow());
+            }
+            else
+            {
+                PlayerInfo const *info = sObjectMgr->GetPlayerInfo(target->getRace(), target->getClass());
+                uint8 gender = handler->getSelectedPlayer()->getGender();
+                switch(gender)
+                {
+                    case GENDER_FEMALE:
+                        target->SetDisplayId(info->displayId_f);
+                        target->SetNativeDisplayId(info->displayId_f);
+                        break;
+                    case GENDER_MALE:
+                        target->SetDisplayId(info->displayId_m);
+                        target->SetNativeDisplayId(info->displayId_m);
+                        break;
+                }
+                CharacterDatabase.PExecute("UPDATE characters_addon SET display='0' WHERE guid='%u'", target->GetGUIDLow());
+            }
+		}
+        else
+        {
+            CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,display) VALUES ('%u','%u')", target->GetGUIDLow(), display_id);
+        }
+
+        return true;
+    }
+
+    static bool HandleModifyBytes1Command(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Unit *unit = handler->getSelectedUnit();
+        if (!unit)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // check online security
+        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), 0))
+            return false;
+
+        uint32 bytes1 = (uint32)atoi(args);
+
+        unit->SetByteValue(UNIT_FIELD_BYTES_1, 0, uint8(bytes1 & 0xFF));
+        unit->SetByteValue(UNIT_FIELD_BYTES_1, 1, 0);
+        unit->SetByteValue(UNIT_FIELD_BYTES_1, 2, uint8((bytes1 >> 16) & 0xFF));
+        unit->SetByteValue(UNIT_FIELD_BYTES_1, 3, uint8((bytes1 >> 24) & 0xFF));
+
+        if (unit->GetTypeId() == TYPEID_UNIT)
+	    {
+		    uint32 lowguid = 0;
+            Creature* pCreature = handler->getSelectedCreature();
+            lowguid = pCreature->GetDBTableGUIDLow();
+
+            if (lowguid > 0)
+            {
+                QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+                if (result)
+                    WorldDatabase.PExecute("UPDATE creature_addon SET bytes1 = '%u' WHERE guid = '%u'", bytes1, lowguid);
+                else
+                    WorldDatabase.PExecute("INSERT INTO creature_addon(guid,bytes1) VALUES ('%u','%u')", lowguid, bytes1);
+            }
+	    }
+	    return true;
+    }
+
+    static bool HandleModifyBytes2Command(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Unit *unit = handler->getSelectedUnit();
+        if (!unit)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // check online security
+        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), 0))
+            return false;
+
+        uint32 bytes2 = (uint32)atoi(args);
+
+        unit->SetByteValue(UNIT_FIELD_BYTES_2, 0, uint8(bytes2 & 0xFF));
+        unit->SetByteValue(UNIT_FIELD_BYTES_2, 2, 0);
+        unit->SetByteValue(UNIT_FIELD_BYTES_2, 3, 0);
+
+        if (unit->GetTypeId() == TYPEID_UNIT)
+        {
+            uint32 lowguid = 0;
+            Creature* pCreature = handler->getSelectedCreature();
+            lowguid = pCreature->GetDBTableGUIDLow();
+
+            if (lowguid > 0)
+            {
+                QueryResult result = WorldDatabase.PQuery("SELECT guid FROM creature_addon WHERE guid = '%u'",lowguid);
+
+                if (result)
+                    WorldDatabase.PExecute("UPDATE creature_addon SET bytes2 = '%u' WHERE guid = '%u'", bytes2, lowguid);
+                else
+                    WorldDatabase.PExecute("INSERT INTO creature_addon(guid,bytes2) VALUES ('%u','%u')", lowguid, bytes2);
+            }
+        }
         return true;
     }
 };

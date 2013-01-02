@@ -81,7 +81,7 @@ public:
                 break;
 
             case CHAT_MSG_PARTY_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_PARTY))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_PARTY))
                     sLog->outDebug(LOG_FILTER_PLAYER_CHATLOG, "[PARTY] Leader %s tells group: %s",
                         player->GetName().c_str(), msg.c_str());
                 break;
@@ -96,13 +96,13 @@ public:
                 break;
 
             case CHAT_MSG_RAID_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
                     sLog->outDebug(LOG_FILTER_PLAYER_CHATLOG, "[RAID] Leader player %s tells raid: %s",
                         player->GetName().c_str(), msg.c_str());
                 break;
 
             case CHAT_MSG_RAID_WARNING:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_RAID))
                     sLog->outDebug(LOG_FILTER_PLAYER_CHATLOG, "[RAID] Leader player %s warns raid with: %s",
                         player->GetName().c_str(), msg.c_str());
                 break;
@@ -117,7 +117,7 @@ public:
                 break;
 
             case CHAT_MSG_BATTLEGROUND_LEADER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_BGROUND))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_BGROUND))
                     sLog->outDebug(LOG_FILTER_PLAYER_CHATLOG, "[BATTLEGROUND] Leader player %s tells battleground: %s",
                         player->GetName().c_str(), msg.c_str());
                 break;
@@ -138,7 +138,7 @@ public:
                 break;
 
             case CHAT_MSG_OFFICER:
-                if (sWorld->getBoolConfig(CONFIG_CHATLOG_GUILD))
+                if (lang != LANG_ADDON && sWorld->getBoolConfig(CONFIG_CHATLOG_GUILD))
                     sLog->outDebug(LOG_FILTER_PLAYER_CHATLOG, "[OFFICER] Player %s tells guild %s officers: %s",
                         player->GetName().c_str(), guild ? guild->GetName().c_str() : "<unknown>", msg.c_str());
                 break;

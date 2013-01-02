@@ -10,6 +10,10 @@
 
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
+  Custom/GOMove.cpp
+  Custom/npc_teleport.cpp
+  Custom/sc_npc_teleport.cpp
+  Custom/sc_npc_teleport.h
 )
 
 message("  -> Prepared: Custom")

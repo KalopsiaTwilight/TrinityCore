@@ -1248,6 +1248,7 @@ public:
 #define GOSSIP_HELLO_ROGUE1 "I wish to unlearn my talents"
 #define GOSSIP_HELLO_ROGUE2 "<Take the letter>"
 #define GOSSIP_HELLO_ROGUE3 "Purchase a Dual Talent Specialization."
+#define DUAL_SPEC_COST      10 // 10c; normally 1000 00 00 (1000g)
 
 class npc_rogue_trainer : public CreatureScript
 {
@@ -1297,7 +1298,7 @@ public:
             case GOSSIP_OPTION_LEARNDUALSPEC:
                 if (player->GetSpecsCount() == 1 && !(player->getLevel() < sWorld->getIntConfig(CONFIG_MIN_DUALSPEC_LEVEL)))
                 {
-                    if (!player->HasEnoughMoney(uint64(10000000)))
+                    if (!player->HasEnoughMoney(uint64(DUAL_SPEC_COST)))
                     {
                         player->SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, 0, 0, 0);
                         player->PlayerTalkClass->SendCloseGossip();
@@ -1305,7 +1306,7 @@ public:
                     }
                     else
                     {
-                        player->ModifyMoney(int64(-10000000));
+                        player->ModifyMoney(-int64(DUAL_SPEC_COST));
 
                         // Cast spells that teach dual spec
                         // Both are also ImplicitTarget self and must be cast by player
@@ -2524,7 +2525,7 @@ public:
 ## npc_experience
 ######*/
 
-#define EXP_COST                100000 //10 00 00 copper (10golds)
+#define EXP_COST                10 //10c, normally 10 00 00 copper (10golds)
 #define GOSSIP_TEXT_EXP         14736
 #define GOSSIP_XP_OFF           "I no longer wish to gain experience."
 #define GOSSIP_XP_ON            "I wish to start gaining experience again."

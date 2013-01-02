@@ -42,6 +42,8 @@ public:
             { "self",           SEC_ADMINISTRATOR,  false, &HandleCastSelfCommand,              "", NULL },
             { "target",         SEC_ADMINISTRATOR,  false, &HandleCastTargetCommad,             "", NULL },
             { "dest",           SEC_ADMINISTRATOR,  false, &HandleCastDestCommand,              "", NULL },
+            { "player",         SEC_ADMINISTRATOR,  false, &HandleCastPlayerCommand,            "", NULL },
+            { "all",            SEC_ADMINISTRATOR,  false, &HandleCastAllCommand,               "", NULL },
             { "",               SEC_ADMINISTRATOR,  false, &HandleCastCommand,                  "", NULL },
             { NULL,             0,                  false, NULL,                                "", NULL }
         };
@@ -303,6 +305,91 @@ public:
 
         caster->CastSpell(x, y, z, spellId, triggered);
 
+        return true;
+    }
+
+    // CUSTOM
+    static bool HandleCastAllCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spell = handler->extractSpellIdFromLink((char*)args);
+        if (!spell)
+            return false;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
+        if (!spellInfo)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!SpellMgr::IsSpellValid(spellInfo, handler->GetSession()->GetPlayer()))
+        {
+            handler->PSendSysMessage(LANG_COMMAND_SPELL_BROKEN, spell);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* trig_str = strtok(NULL, " ");
+        if (trig_str)
+        {
+            int l = strlen(trig_str);
+            if (strncmp(trig_str, "triggered", l) != 0)
+                return false;
+        }
+
+        bool triggered = (trig_str != NULL);
+    
+        sWorld->CastAll(spell, triggered);
+
+        return true;
+    }
+
+    static bool HandleCastPlayerCommand(ChatHandler* handler, char const* args)
+    {
+        Unit* caster = handler->getSelectedUnit();
+        if (!caster)
+        {
+            handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId || !sSpellMgr->GetSpellInfo(spellId))
+        {
+            handler->PSendSysMessage(LANG_COMMAND_NOSPELLFOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* player = strtok(NULL, " ");
+        if (!player)
+            return false;
+
+        Player* target = ObjectAccessor::FindPlayerByName(player);
+        if (!target)
+        {
+            handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* triggeredStr = strtok(NULL, " ");
+        if (triggeredStr)
+        {
+            int l = strlen(triggeredStr);
+            if (strncmp(triggeredStr, "triggered", l) != 0)
+                return false;
+        }
+
+        bool triggered = (triggeredStr != NULL);
+        caster->CastSpell(target, spellId, triggered);
         return true;
     }
 };

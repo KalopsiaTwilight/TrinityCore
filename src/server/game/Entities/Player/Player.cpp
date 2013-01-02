@@ -2918,8 +2918,8 @@ void Player::SetGMVisible(bool on)
     {
         m_ExtraFlags |= PLAYER_EXTRA_GM_INVISIBLE;          //add flag
 
-        SetAcceptWhispers(false);
-        SetGameMaster(true);
+        //SetAcceptWhispers(false);
+        //SetGameMaster(true);
 
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GM, GetSession()->GetSecurity());
     }
@@ -3222,7 +3222,14 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(PLAYER_FIELD_MOD_RANGED_HASTE, 1.0f);
 
     // reset size before reapply auras
-    SetObjectScale(1.0f);
+    QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
+    {
+        float scale = (*result)[0].GetFloat();
+        SetObjectScale(scale);
+    }
+    else
+        SetObjectScale(1.0f);
 
     // save base values (bonuses already included in stored stats
     for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -4975,6 +4982,10 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             stmt->setUInt32(0, guid);
             trans->Append(stmt);
 
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_ADDON);
+            stmt->setUInt32(0, guid);
+            trans->Append(stmt);
+
             CharacterDatabase.CommitTransaction(trans);
             break;
         }
@@ -5527,6 +5538,10 @@ void Player::RepopAtGraveyard()
 
 bool Player::CanJoinConstantChannelInZone(ChatChannelsEntry const* channel, AreaTableEntry const* zone)
 {
+    // Player can join LFG anywhere
+    if (channel->flags & CHANNEL_DBC_FLAG_LFG)
+        return true;
+
     if (channel->flags & CHANNEL_DBC_FLAG_ZONE_DEP && zone->flags & AREA_FLAG_ARENA_INSTANCE)
         return false;
 
@@ -16867,7 +16882,16 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
 
     //Need to call it to initialize m_team (m_team can be calculated from race)
     //Other way is to saves m_team into characters table.
-    setFactionForRace(getRace());
+    QueryResult resultFaction = CharacterDatabase.PQuery("SELECT faction FROM characters_addon WHERE faction>0 AND guid='%u'", guid);
+    if(resultFaction)
+    {
+        uint32 cfaction = (*resultFaction)[0].GetUInt32();
+        setFaction(cfaction);
+    }
+    else
+    {
+        setFactionForRace(getRace());
+    }
 
     // load home bind and check in same time class/race pair, it used later for restore broken positions
     if (!_LoadHomeBind(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_HOME_BIND)))
@@ -21293,20 +21317,30 @@ void Player::InitDisplayIds()
         return;
     }
 
-    uint8 gender = getGender();
-    switch (gender)
+    QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE display>'0' AND guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if(result)
     {
-        case GENDER_FEMALE:
-            SetDisplayId(info->displayId_f);
-            SetNativeDisplayId(info->displayId_f);
-            break;
-        case GENDER_MALE:
-            SetDisplayId(info->displayId_m);
-            SetNativeDisplayId(info->displayId_m);
-            break;
-        default:
-            sLog->outError(LOG_FILTER_PLAYER, "Invalid gender %u for player", gender);
-            return;
+        uint32 display = (*result)[0].GetUInt32();
+        SetDisplayId(display);
+        SetNativeDisplayId(display);
+    }
+    else
+    {
+        uint8 gender = getGender();
+        switch (gender)
+        {
+            case GENDER_FEMALE:
+                SetDisplayId(info->displayId_f);
+                SetNativeDisplayId(info->displayId_f);
+                break;
+            case GENDER_MALE:
+                SetDisplayId(info->displayId_m);
+                SetNativeDisplayId(info->displayId_m);
+                break;
+            default:
+                sLog->outError(LOG_FILTER_PLAYER, "Invalid gender %u for player", gender);
+                return;
+        }
     }
 }
 

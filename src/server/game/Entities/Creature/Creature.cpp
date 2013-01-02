@@ -1495,6 +1495,7 @@ bool Creature::canStartAttack(Unit const* who, bool force) const
 float Creature::GetAttackDistance(Unit const* player) const
 {
     float aggroRate = sWorld->getRate(RATE_CREATURE_AGGRO);
+    float maxAggroRange = sWorld->getFloatConfig(CONFIG_MAX_AGRO_RANGE);
     if (aggroRate == 0)
         return 0.0f;
 
@@ -1526,6 +1527,10 @@ float Creature::GetAttackDistance(Unit const* player) const
     // "Minimum Aggro Radius for a mob seems to be combat range (5 yards)"
     if (RetDistance < 5)
         RetDistance = 5;
+
+    // "If aggro radius config is lower than returned value, set to config value"
+    if (maxAggroRange < RetDistance)
+        RetDistance = maxAggroRange;
 
     return (RetDistance*aggroRate);
 }
@@ -2165,6 +2170,12 @@ bool Creature::LoadCreaturesAddon(bool reload)
             sLog->outDebug(LOG_FILTER_UNITS, "Spell: %u added to creature (GUID: %u Entry: %u)", *itr, GetGUIDLow(), GetEntry());
         }
     }
+
+    if (cainfo->scale != 0)
+        SetObjectScale(cainfo->scale);
+
+    if (cainfo->faction > 2)
+        setFaction(cainfo->faction);
 
     return true;
 }

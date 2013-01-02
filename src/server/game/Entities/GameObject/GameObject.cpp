@@ -160,7 +160,7 @@ void GameObject::RemoveFromWorld()
     }
 }
 
-bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit)
+bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMask, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 animprogress, GOState go_state, uint32 artKit, float scale)
 {
     ASSERT(map);
     SetMap(map);
@@ -204,7 +204,11 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
 
     UpdateRotationFields(rotation2, rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
-    SetObjectScale(goinfo->size);
+    GameObjectData const* data = sObjectMgr->GetGOData(guidlow);
+    if (scale > 0)
+        SetObjectScale(scale);
+    else
+        SetObjectScale(goinfo->size);
 
     SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
     SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
@@ -650,10 +654,14 @@ void GameObject::SaveToDB()
         return;
     }
 
-    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask);
+    float scale = GetObjectScale();
+    if (scale == m_goInfo->size)
+        scale = 0.0f;
+    
+    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask, scale);
 }
 
-void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
+void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask, float scale)
 {
     const GameObjectTemplate* goI = GetGOInfo();
 
@@ -682,6 +690,7 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
+    data.scale = scale;
 
     // Update in DB
     SQLTransaction trans = WorldDatabase.BeginTransaction();
@@ -712,6 +721,17 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
     trans->Append(stmt);
 
     WorldDatabase.CommitTransaction(trans);
+
+    if (scale > 0)
+    {
+        QueryResult result = WorldDatabase.PQuery("SELECT guid FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
+        if (result)
+            WorldDatabase.PExecute("UPDATE gameobject_addon SET scale = '%f' WHERE guid = '%u'", scale, m_DBTableGuid);
+        else
+            WorldDatabase.PExecute("INSERT INTO gameobject_addon(guid,scale) VALUES ('%u','%f')", m_DBTableGuid, scale);
+    }
+    else
+        WorldDatabase.PExecute("DELETE FROM gameobject_addon WHERE guid = '%u'", m_DBTableGuid);
 }
 
 bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
@@ -740,11 +760,12 @@ bool GameObject::LoadGameObjectFromDB(uint32 guid, Map* map, bool addToMap)
     uint32 animprogress = data->animprogress;
     GOState go_state = data->go_state;
     uint32 artKit = data->artKit;
+    float scale = data->scale;
 
     m_DBTableGuid = guid;
     if (map->GetInstanceId() != 0) guid = sObjectMgr->GenerateLowGuid(HIGHGUID_GAMEOBJECT);
 
-    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit))
+    if (!Create(guid, entry, map, phaseMask, x, y, z, ang, rotation0, rotation1, rotation2, rotation3, animprogress, go_state, artKit, scale))
         return false;
 
     if (data->spawntimesecs >= 0)
@@ -797,6 +818,12 @@ void GameObject::DeleteFromDB()
     WorldDatabase.Execute(stmt);
 
     stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_EVENT_GAMEOBJECT);
+
+    stmt->setUInt32(0, m_DBTableGuid);
+
+    WorldDatabase.Execute(stmt);
+
+    stmt = WorldDatabase.GetPreparedStatement(WORLD_DEL_GAMEOBJECT_ADDON);
 
     stmt->setUInt32(0, m_DBTableGuid);
 
@@ -1621,6 +1648,37 @@ void GameObject::Use(Unit* user)
             }
             break;
         }
+
+        case GAMEOBJECT_TYPE_MINI_GAME:                      //27
+        {
+            if (user->GetTypeId() != TYPEID_PLAYER)
+                return;
+                
+            GameObjectTemplate const* info = GetGOInfo();
+            if (!info)
+                return;
+
+            Player* player = user->ToPlayer();
+            
+            if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
+                {
+                    AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
+                    if (!at)
+                    {
+                        sLog->outError(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        return;
+                    }
+
+                    player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+                    if (info->miniGame.phase != 0)
+                        player->SetPhaseMask(info->miniGame.phase,true);
+                }
+                else if (info->miniGame.requiredLevel != 0)
+                {
+                }
+            return;
+        }
+
         case GAMEOBJECT_TYPE_BARBER_CHAIR:                  //32
         {
             GameObjectTemplate const* info = GetGOInfo();

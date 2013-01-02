@@ -86,6 +86,7 @@ public:
             { "restart",        SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverRestartCommandTable },
             { "shutdown",       SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverShutdownCommandTable },
             { "set",            SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverSetCommandTable },
+            { "emote",          SEC_MODERATOR,      true,  &HandleServerEmoteCommand,               "", NULL },
             { NULL,             0,                  false, NULL,                                    "", NULL }
         };
 
@@ -412,6 +413,17 @@ public:
         sWorld->SetRecordDiffInterval(newTime);
         printf("Record diff every %u ms\n", newTime);
 
+        return true;
+    }
+
+    // CUSTOM
+    // World emote
+    static bool HandleServerEmoteCommand(ChatHandler* /*handler*/, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        sWorld->SendServerMessage(SERVER_MSG_STRING, args);
         return true;
     }
 };

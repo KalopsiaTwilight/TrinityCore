@@ -33,6 +33,8 @@
 #include "Player.h"
 #include "WorldPacket.h"
 
+#include "../Custom/sc_npc_teleport.h"
+
 // This is the global static registry of scripts.
 template<class TScript>
 class ScriptRegistry
@@ -176,6 +178,7 @@ void ScriptMgr::Initialize()
     uint32 oldMSTime = getMSTime();
 
     LoadDatabase();
+    LoadNpcTele();
 
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, "Loading C++ scripts");
 

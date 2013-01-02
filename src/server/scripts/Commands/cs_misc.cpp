@@ -97,6 +97,7 @@ public:
             { "maxskill",           SEC_ADMINISTRATOR,      false, &HandleMaxSkillCommand,              "", NULL },
             { "setskill",           SEC_ADMINISTRATOR,      false, &HandleSetSkillCommand,              "", NULL },
             { "pinfo",              SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
+            { "playerinfo",         SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
             { "respawn",            SEC_ADMINISTRATOR,      false, &HandleRespawnCommand,               "", NULL },
             { "send",               SEC_MODERATOR,          true,  NULL,                                "", sendCommandTable },
             { "pet",                SEC_GAMEMASTER,         false, NULL,                                "", petCommandTable },
@@ -116,6 +117,17 @@ public:
             { "bindsight",          SEC_ADMINISTRATOR,      false, HandleBindSightCommand,              "", NULL },
             { "unbindsight",        SEC_ADMINISTRATOR,      false, HandleUnbindSightCommand,            "", NULL },
             { "playall",            SEC_GAMEMASTER,         false, HandlePlayAllCommand,                "", NULL },
+            // Custom stuff
+            { "addrpitem",          SEC_PLAYER,             false, &HandleAddRPItemCommand,             "", NULL },
+            { "taxi",               SEC_PLAYER,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
+            { "scale",              SEC_PLAYER,             false, &HandleSelfScaleCommand,             "", NULL },
+            { "playlocal",          SEC_GAMEMASTER,         false, &HandlePlayLocalCommand,             "", NULL },
+            { "morph",              SEC_GAMEMASTER,         false, &HandleSelfMorphCommand,             "", NULL },
+            { "additemall",         SEC_ADMINISTRATOR,      false, &HandleAddItemAllCommand,            "", NULL },
+            { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
+            { "masssummon",         SEC_GAMEMASTER,         false, &HandleMassSummonCommand,            "", NULL },
+            { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
+            { "gmbindsight",        SEC_ADMINISTRATOR,      false, &HandleGMBindSightCommand,           "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -686,7 +698,13 @@ public:
 
     static bool HandleDismountCommand(ChatHandler* handler, char const* /*args*/)
     {
-        Player* player = handler->GetSession()->GetPlayer();
+        //Player* player = handler->GetSession()->GetPlayer();
+        Player* player = handler->GetSession()->GetPlayer()->GetSelectedPlayer();
+
+        if (!player)
+            player = handler->GetSession()->GetPlayer();
+        else if (handler->HasLowerSecurity(player, 0)) // check online security
+            return false;
 
         // If player is not mounted, so go out :)
         if (!player->IsMounted())
@@ -1210,6 +1228,23 @@ public:
             if (!id)
                 return false;
             itemId = uint32(atol(id));
+        }
+
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            if (itemId == 1312 || itemId == 12183 || itemId == 13262 || itemId == 17142 || itemId == 17182 || itemId == 17204 || // 1312-Doomhammer, 12183-Doomhammer, 13262-Ashbringer, 17142-Shard of the Defiler, 17182-Sulfuras, 17204-Eye of Sulfuras
+            itemId == 17782 || itemId == 18563 || itemId == 18564 || itemId == 18565 || itemId == 19016 || itemId == 19018 || itemId == 19019 || // 17782-Talisman of Binding Shard, 18563-Bindings of the Windseeker, 18564-BotW, 18565-Vessel of Rebirth DEP, 19016-Vessel of Rebirth, 19018-Dormant Wind Kissed Blade, 19019-Thunderfury
+            itemId == 21176 || itemId == 22589 || itemId == 22630 || itemId == 22631 || itemId == 22632 || itemId == 22726 || itemId == 22727 || // 21176-Black Qiraji, 22589-Atiesh, 22630-Atiesh, 22631-Atiesh, 22632-Atiesh, 22726-Splinter of Atiesh, 22727-Frame of Atiesh
+            itemId == 22736 || itemId == 22737 || itemId == 23051 || itemId == 25596 || itemId == 30311 || itemId == 30312 || itemId == 30313 || // 22736-Andonisus, 22737-Atiesh, 23051-Glaive of the Defender, 25596-Peep's Whistle, 30311-Warp Slicer, 30312-Infinity Blade, 30313-Staff of Disintegration
+            itemId == 30314 || itemId == 30316 || itemId == 30317 || itemId == 30318 || itemId == 30319 || itemId == 30320 || itemId == 32837 || // 30314-Phaseshift Bulwark, 30316-Devastation, 30317-Cosmic Infuser, 30318-Netherstrand Longbow, 30319-Nether Spike, 30320-Bundle of Nether Spikes, 32837-Warglaive of Azzinoth
+            itemId == 32838 || itemId == 34334 || itemId == 42624 || itemId == 45038 || itemId == 45039 || itemId == 45896 || itemId == 45897 || // 32838-Warglaive of Azzinoth, 34334-Thori'dal, 42624-Battered Storm Hammer, 45038-Fragment of Val'anyr, 45039-Shattered Fragments of Val'anyr, 45896-Unbound Fragments of Val, 45897-Reforged Hammer of Ancient Kings
+            itemId == 46017 || itemId == 49623 || itemId == 50274 || itemId == 17 || itemId == 12947 || itemId == 18582 || itemId == 18583 || // 46017-Val'anyr, 49623-Shadowmourne, 50274-Shadowfrost Shard, 17-Martin Fury, 12947-Alex's Ring, 18582-Twin Blades of Azzinoth, 18583-Warglaive (Right)
+            itemId == 18584 || itemId == 20880 || itemId == 32824 || itemId == 33475 || itemId == 5417 || itemId == 5418) // 18584-Warglaive (Left), 20880-Golden Token, 32824-Tigole's Trashbringer, 33475-Frostmourne, 5417-Weapon of Massive Destruction, 5418-Weapon of Mass Destruction
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_ITEM, itemId);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
         }
 
         char const* ccount = strtok(NULL, " ");
@@ -1992,6 +2027,8 @@ public:
         char const* newFlagStr = strtok((char*)args, " ");
         if (!newFlagStr)
             return false;
+            
+        uint32 newFlags = (uint32)strtoul(newFlagStr, NULL, 0);
 
         Creature* caster = handler->getSelectedCreature();
         if (!caster)
@@ -2003,6 +2040,7 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
 
+        caster->SetUnitMovementFlags(newFlags);
         caster->GetMotionMaster()->MovePoint(0, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
 
         return true;
@@ -2748,20 +2786,26 @@ public:
     static bool HandlePossessCommand(ChatHandler* handler, char const* /*args*/)
     {
         Unit* unit = handler->getSelectedUnit();
+        uint32 faction = unit->getFaction();
         if (!unit)
             return false;
 
         handler->GetSession()->GetPlayer()->CastSpell(unit, 530, true);
+        unit->setFaction(faction);
         return true;
     }
 
     static bool HandleUnPossessCommand(ChatHandler* handler, char const* /*args*/)
     {
         Unit* unit = handler->getSelectedUnit();
-        if (!unit)
+        Creature* creature = handler->getSelectedCreature();
+        if (!unit && !creature)
             unit = handler->GetSession()->GetPlayer();
 
         unit->RemoveCharmAuras();
+
+        if (creature)
+		    creature->AI()->EnterEvadeMode();
 
         return true;
     }
@@ -2786,6 +2830,391 @@ public:
         player->StopCastingBindSight();
         return true;
     }
+    
+    static bool HandleAddRPItemCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 itemId = 0;
+
+        if (args[0] == '[')                                        // [name] manual form
+        {
+            char* citemName = strtok((char*)args, "]");
+
+            if (citemName && citemName[0])
+            {
+                std::string itemName = citemName+1;
+                WorldDatabase.EscapeString(itemName);
+                QueryResult result = WorldDatabase.PQuery("SELECT entry FROM item_template WHERE entry>200000 AND name = '%s'", itemName.c_str());
+                if (!result)
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, citemName+1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+                itemId = result->Fetch()->GetUInt16();
+            }
+            else
+                return false;
+        }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char* cId = handler->extractKeyFromLink((char*)args,"Hitem");
+            if (!cId)
+                return false;
+            itemId = atol(cId);
+        }
+
+        if (itemId <200000)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_RPITEMTOOLOW, itemId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* ccount = strtok(NULL, " ");
+
+        int32 count = 1;
+
+        if (ccount)
+            count = strtol(ccount, NULL, 10);
+
+        if (count == 0)
+            count = 1;
+
+        Player* pl = handler->GetSession()->GetPlayer();
+
+        ItemTemplate const *pProto = sObjectMgr->GetItemTemplate(itemId);
+        if (!pProto)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_RPITEMIDINVALID, itemId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        //Subtract
+        if (count < 0)
+        {
+            pl->DestroyItemCount(itemId, -count, true, false);
+            handler->PSendSysMessage(LANG_REMOVERPITEM, itemId, -count, handler->GetNameLink(pl).c_str());
+            return true;
+        }
+
+        //Adding items
+        uint32 noSpaceForCount = 0;
+
+        // check space and find places
+        ItemPosCountVec dest;
+        uint8 msg = pl->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, count, &noSpaceForCount);
+        if (msg != EQUIP_ERR_OK)                               // convert to possible store amount
+            count -= noSpaceForCount;
+
+        if (count == 0 || dest.empty())                         // can't add any
+        {
+            handler->PSendSysMessage(LANG_ITEM_CANNOT_CREATE, itemId, noSpaceForCount);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Item* item = pl->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+
+        if (count > 0 && item)
+        {
+            pl->SendNewItem(item,count,false,true);
+        }
+
+        if (noSpaceForCount > 0)
+            handler->PSendSysMessage(LANG_ITEM_CANNOT_CREATE, itemId, noSpaceForCount);
+
+        return true;
+    }
+
+    static bool HandleSelfScaleCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        float Scale = (float)atof((char*)args);
+        if (Scale > 1.15f || Scale < 0.85f)
+        {
+            handler->SendSysMessage(LANG_BAD_VALUE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
+        if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
+        {
+            handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
+            handler->SetSentErrorMessage(true);
+        }
+
+        uint8 chrLevel = handler->GetSession()->GetPlayer()->getLevel();
+
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+        if(result)
+        {
+            Field* fields = result->Fetch();
+
+            float customScale = fields[0].GetFloat();
+            uint8 scaleTimesChanged = fields[1].GetUInt8();
+            uint8 scaleUnlocked = fields[2].GetUInt8();
+
+            if (scaleTimesChanged < 10)
+            {
+                //if ((scaleUnlocked == 0 && Scale > 1.1f) || (scaleUnlocked == 0 && Scale < 0.9f))
+                if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+                {
+                    handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+
+                else
+                {
+                    Player *chr = handler->GetSession()->GetPlayer();
+		            uint8 scaleChangesRemaining = (10 - (scaleTimesChanged + 1));
+                    handler->PSendSysMessage(LANG_CUSTOM_SCALE_CHANGE, customScale, Scale, scaleChangesRemaining);
+                    chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+
+                    QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f', scale_times_changed=(`scale_times_changed`+1) WHERE guid='%u'", Scale, chr->GetGUIDLow());
+                    return true;
+                }
+	        }
+
+            else
+            {
+                handler->SendSysMessage(LANG_SCALE_NO_MORE_CHANGES);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+	    }
+
+        else
+	    {
+            //if ((Scale > 1.1f) || (Scale < 0.9f))
+            if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+                {
+                    handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+            else
+            {
+                Player *chr = handler->GetSession()->GetPlayer();
+
+                uint8 scaleChangesRemaining = 9;
+                handler->PSendSysMessage(LANG_CUSTOM_SCALE_CREATE, Scale, scaleChangesRemaining);
+                chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
+                CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,scale,scale_times_changed) VALUES ('%u','%f','1')", chr->GetGUIDLow(), Scale);
+
+                return true;
+            }
+	    }
+    }
+
+    static bool HandleSelfTaxiCheatCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* chr = handler->GetSession()->GetPlayer();
+
+        if (!chr->isTaxiCheater())
+        {
+            chr->SetTaxiCheater(true);
+            handler->PSendSysMessage(LANG_SELFTAXIS_UNL);
+
+            return true;
+        }
+        else
+        {
+            handler->SendSysMessage(LANG_SELFTAXIS_ALREADYON);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+    }
+
+    static bool HandleSelfMorphCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint16 display_id = (uint16)atoi((char*)args);
+
+	    Player *chr = handler->GetSession()->GetPlayer();
+
+        chr->SetDisplayId(display_id);
+        handler->PSendSysMessage(LANG_SELF_MORPH, display_id);
+
+        return true;
+    }
+
+    static bool HandleAddItemAllCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 itemId = 0;
+
+        if (args[0] == '[')                                        // [name] manual form
+        {
+            char* citemName = strtok((char*)args, "]");
+
+            if (citemName && citemName[0])
+            {
+                std::string itemName = citemName+1;
+                WorldDatabase.EscapeString(itemName);
+
+                PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_ITEM_TEMPLATE_BY_NAME);
+                stmt->setString(0, itemName);
+                PreparedQueryResult result = WorldDatabase.Query(stmt);
+
+                if (!result)
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, citemName+1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+                itemId = result->Fetch()->GetUInt16();
+            }
+            else
+                return false;
+        }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char* cId = handler->extractKeyFromLink((char*)args, "Hitem");
+            if (!cId)
+                return false;
+            itemId = atol(cId);
+        }
+
+        char* ccount = strtok(NULL, " ");
+
+        int32 count = 1;
+
+        if (ccount)
+            count = strtol(ccount, NULL, 10);
+
+        if (count == 0)
+            count = 1;
+
+        ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(itemId);
+        if (!pProto)
+        {
+            handler->PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, itemId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        sWorld->AddItemAll(itemId, count);
+
+        //Subtract
+        if (count < 0)
+        {
+            handler->PSendSysMessage(LANG_REMOVEITEM_ALL, itemId, -count);
+            return true;
+        }
+        else
+        {
+            handler->PSendSysMessage(LANG_ADDITEM_ALL, itemId, count);
+            return true;
+        }
+    
+        return true;
+    }
+
+    static bool HandlePlayLocalCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 soundId = atoi((char*)args);
+
+        if (!sSoundEntriesStore.LookupEntry(soundId))
+        {
+            handler->PSendSysMessage(LANG_SOUND_NOT_EXIST, soundId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        WorldPacket data(SMSG_PLAY_SOUND, 4);
+        data << uint32(soundId);
+        handler->GetSession()->GetPlayer()->Player::SendMessageToSetInRange(&data, MAX_VISIBILITY_DISTANCE, true);
+
+        handler->PSendSysMessage(LANG_COMMAND_PLAYED_LOCALLY, soundId);
+        return true;
+    }
+
+    static bool HandleUnAuraAllCommand(ChatHandler* handler, char const* args)
+    {
+        std::string argstr = args;
+        if (argstr == "all")
+        {
+            sWorld->MassUnauraAll();
+            return true;
+        }
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId)
+            return false;
+
+        sWorld->MassUnaura(spellId);
+
+        return true;
+    }
+
+    static bool HandleMassSummonCommand(ChatHandler* handler, char const* args)
+    {
+        Player* target = handler->GetSession()->GetPlayer();
+        uint64 guid = target->GetGUID();
+        float x, y, z;
+        target->GetPosition(x, y, z);
+        uint32 mapId = target->GetMapId();
+        uint32 zone = target->GetZoneId();
+        float orient = target->GetOrientation();
+        uint32 phase = target->GetPhaseMask();
+
+        //handler->GetSession()->GetPlayer()->GetClosePoint(x, y, z, target->GetObjectSize());
+        //target->TeleportTo(handler->GetSession()->GetPlayer()->GetMapId(), x, y, z, target->GetOrientation());
+        //target->SetPhaseMask(handler->GetSession()->GetPlayer()->GetPhaseMask(), true);
+
+        sWorld->MassSummon(guid, mapId, x, y, z, zone, orient, phase);
+
+        return true;
+    }
+
+    static bool HandleGuildBankCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        handler->GetSession()->SendShowBank(handler->GetSession()->GetPlayer()->GetGUID());
+        return true;
+    }
+
+    // WIP
+    static bool HandleGMBindSightCommand(ChatHandler* handler, char const* args)
+    {
+
+        Player* caster = handler->GetSession()->GetPlayer();
+        
+        if (!*args)
+            caster->SetViewpoint(caster, false);
+            return true;
+
+        char* player = strtok(NULL, " ");
+        if (!player)
+            return false;
+
+        Player* target = ObjectAccessor::FindPlayerByName(player);
+        if (!target)
+        {
+            handler->PSendSysMessage(LANG_NON_EXIST_CHARACTER);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        caster->ToPlayer()->SetViewpoint(target, true);
+        return true;
+    }
+
 };
 
 void AddSC_misc_commandscript()

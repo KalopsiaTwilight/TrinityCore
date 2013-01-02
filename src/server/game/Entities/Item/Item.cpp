@@ -1266,6 +1266,10 @@ bool Item::CanTransmogrifyItemWithItem(Item const* transmogrified, Item const* t
         proto1->InventoryType == INVTYPE_QUIVER)
         return false;
 
+    // For RP!  Let armor be transmogged at or less than same type (eg, mail->leather) (may not be able to implement - client restrictions?)
+    //if ((proto1->SubClass != ITEM_CLASS_ARMOR && proto2->SubClass != ITEM_CLASS_ARMOR) && !(proto1->SubClass <= proto2->SubClass))
+    //    return false;
+
     if (proto1->SubClass != proto2->SubClass && (proto1->Class != ITEM_CLASS_WEAPON || !proto2->IsRangedWeapon() || !proto1->IsRangedWeapon()))
         return false;
 

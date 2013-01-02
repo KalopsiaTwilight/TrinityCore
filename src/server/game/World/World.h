@@ -188,6 +188,7 @@ enum WorldFloatConfigs
     CONFIG_CREATURE_FAMILY_FLEE_ASSISTANCE_RADIUS,
     CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_THREAT_RADIUS,
+    CONFIG_MAX_AGRO_RANGE,
     CONFIG_CHANCE_OF_GM_SURVEY,
     FLOAT_CONFIG_VALUE_COUNT
 };
@@ -760,6 +761,13 @@ class World
         void   ResetEventSeasonalQuests(uint16 event_id);
 
         void UpdatePhaseDefinitions();
+        
+        //Custom
+        void CastAll(uint32 spell, bool triggered);
+        void AddItemAll(uint32 itemId, int32 count);
+        void MassUnaura(uint32 spellId);
+        void MassUnauraAll();
+        void MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone, float orient, uint32 phase);
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters

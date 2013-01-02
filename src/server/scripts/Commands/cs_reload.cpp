@@ -40,6 +40,8 @@ EndScriptData */
 #include "WardenCheckMgr.h"
 #include "WaypointManager.h"
 
+#include "../Custom/sc_npc_teleport.h"
+
 class reload_commandscript : public CommandScript
 {
 public:
@@ -152,6 +154,7 @@ public:
             { "waypoint_data",                SEC_ADMINISTRATOR, true,  &HandleReloadWpCommand,                         "", NULL },
             { "vehicle_accessory",            SEC_ADMINISTRATOR, true,  &HandleReloadVehicleAccessoryCommand,           "", NULL },
             { "vehicle_template_accessory",   SEC_ADMINISTRATOR, true,  &HandleReloadVehicleTemplateAccessoryCommand,   "", NULL },
+            { "npc_tele",                     SEC_ADMINISTRATOR, true,  &HandleReloadNPCTeleCommand,                    "", NULL },
             { NULL,                           0,                 false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1216,6 +1219,14 @@ public:
         sObjectMgr->LoadPhaseDefinitions();
         sWorld->UpdatePhaseDefinitions();
         handler->SendGlobalGMSysMessage("Phase Definitions reloaded.");
+        return true;
+    }
+	
+	static bool HandleReloadNPCTeleCommand(ChatHandler* handler, const char* /*args*/)
+	{
+        sLog->outInfo(LOG_FILTER_GENERAL, "Reloading NPC teleport tables...");
+        LoadNpcTele();
+        handler->SendGlobalGMSysMessage("NPC teleport tables reloaded.");
         return true;
     }
 };
