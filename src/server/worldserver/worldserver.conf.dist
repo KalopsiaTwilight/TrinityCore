@@ -1007,6 +1007,14 @@ MaxRecruitAFriendBonusDistance = 100
 MailDeliveryDelay = 3600
 
 #
+#    MailLoadAccountwide
+#        Description: Should mail be loaded at a character level, or accountwide?
+#        Default:     0 - Character
+#                     1 - Account
+
+MailLoadAccountwide = 0
+
+#
 #    SkillChance.Prospecting
 #        Description: Allow skill increase from prospecting.
 #        Default:     0 - (Disabled)
@@ -1700,6 +1708,7 @@ GM.TicketSystem.ChanceOfGMSurvey = 50
 #        Default:     1 - (Raid)
 #                     0 - (Party)
 #                     2 - (Faction)
+#                     3 - (All [Testing])
 
 Visibility.GroupMode = 1
 

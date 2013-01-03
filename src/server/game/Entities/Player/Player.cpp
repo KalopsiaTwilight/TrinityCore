@@ -2937,6 +2937,7 @@ bool Player::IsGroupVisibleFor(Player const* p) const
         default: return IsInSameGroupWith(p);
         case 1:  return IsInSameRaidWith(p);
         case 2:  return GetTeam() == p->GetTeam();
+        case 3:  return true;
     }
 }
 
@@ -18054,10 +18055,20 @@ void Player::_LoadMailInit(PreparedQueryResult resultUnread, PreparedQueryResult
 void Player::_LoadMail()
 {
     m_mail.clear();
+    PreparedQueryResult result;
 
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL);
-    stmt->setUInt32(0, GetGUIDLow());
-    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+    if (!sWorld->getBoolConfig(CONFIG_MAIL_LOAD_ACCOUNTWIDE))
+    {
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL);
+        stmt->setUInt32(0, GetGUIDLow());
+        result = CharacterDatabase.Query(stmt);
+    }
+    else
+    {
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL_ACCOUNTWIDE);
+        stmt->setUInt32(0, GetSession()->GetAccountId());
+        result = CharacterDatabase.Query(stmt);
+    }
 
     if (result)
     {
@@ -22246,8 +22257,16 @@ bool Player::IsAlwaysDetectableFor(WorldObject const* seer) const
         return true;
 
     if (const Player* seerPlayer = seer->ToPlayer())
+    {
         if (IsGroupVisibleFor(seerPlayer))
             return true;
+
+        if (IsGroupVisibleFor(seerPlayer) && IsHostileTo(seerPlayer) && HasStealthAura() && !seer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP) && !seerPlayer->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP))
+            return true;
+
+        if (IsGroupVisibleFor(seerPlayer) && !IsHostileTo(seerPlayer) && HasStealthAura())
+            return true;
+    }
 
      return false;
  }
