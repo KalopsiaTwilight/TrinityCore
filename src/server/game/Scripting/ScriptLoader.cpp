@@ -193,6 +193,7 @@ void AddSC_boss_lorekeeperpolkelt();
 void AddSC_boss_rasfrost();
 void AddSC_boss_theravenian();
 void AddSC_boss_vectus();
+void AddSC_boss_kirtonos_the_herald();
 void AddSC_instance_scholomance();
 void AddSC_shadowfang_keep();                //Shadowfang keep
 void AddSC_instance_shadowfang_keep();
@@ -332,6 +333,9 @@ void AddSC_instance_zulfarrak();            //Zul'Farrak instance script
 void AddSC_instance_halls_of_origination();
 void AddSC_boss_temple_guardian_anhuur();
 void AddSC_boss_earthrager_ptah();
+void AddSC_boss_anraphet();
+void AddSC_instance_firelands();
+void AddSC_boss_alysrazor();
 
 void AddSC_ashenvale();
 void AddSC_azshara();
@@ -823,6 +827,7 @@ void AddEasternKingdomsScripts()
     AddSC_boss_rasfrost();
     AddSC_boss_theravenian();
     AddSC_boss_vectus();
+    AddSC_boss_kirtonos_the_herald();
     AddSC_instance_scholomance();
     AddSC_shadowfang_keep();                //Shadowfang keep
     AddSC_instance_shadowfang_keep();
@@ -991,6 +996,10 @@ void AddKalimdorScripts()
     AddSC_instance_halls_of_origination();
     AddSC_boss_temple_guardian_anhuur();
     AddSC_boss_earthrager_ptah();
+    AddSC_boss_anraphet();
+
+    AddSC_instance_firelands();
+    AddSC_boss_alysrazor();
 #endif
 }
 
