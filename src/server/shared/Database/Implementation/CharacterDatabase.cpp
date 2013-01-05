@@ -610,8 +610,8 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_DEL_CHAR_PET_BY_SLOT, "DELETE FROM character_pet WHERE owner = ? AND (slot = ? OR slot > ?)", CONNECTION_ASYNC);
 	
 	// CUSTOM
-    PREPARE_STATEMENT(CHAR_DEL_CHARACTER_ADDON, "DELETE FROM characters_addon WHERE guid = ?", CONNECTION_ASYNC);
-    PREPARE_STATEMENT(CHAR_SEL_MAIL_ACCOUNTWIDE, "SELECT id, messageType, sender, receiver, subject, body, has_items, expire_time, deliver_time, money, cod, checked, stationery, mailTemplateId FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) ORDER BY id DESC", CONNECTION_SYNCH);
-    PREPARE_STATEMENT(CHAR_SEL_CHARACTER_MAILCOUNT_ACCOUNTWIDE, "SELECT COUNT(id) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0 AND deliver_time <= ?", CONNECTION_ASYNC)
-    PREPARE_STATEMENT(CHAR_SEL_CHARACTER_MAILDATE_ACCOUNTWIDE, "SELECT MIN(deliver_time) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0", CONNECTION_ASYNC)
+    PrepareStatement(CHAR_DEL_CHARACTER_ADDON, "DELETE FROM characters_addon WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_SEL_MAIL_ACCOUNTWIDE, "SELECT id, messageType, sender, receiver, subject, body, has_items, expire_time, deliver_time, money, cod, checked, stationery, mailTemplateId FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) ORDER BY id DESC", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_CHARACTER_MAILCOUNT_ACCOUNTWIDE, "SELECT COUNT(id) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0 AND deliver_time <= ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_SEL_CHARACTER_MAILDATE_ACCOUNTWIDE, "SELECT MIN(deliver_time) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0", CONNECTION_ASYNC);
 }

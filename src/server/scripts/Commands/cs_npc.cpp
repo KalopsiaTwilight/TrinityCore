@@ -101,6 +101,7 @@ public:
             { "delete",         SEC_GAMEMASTER,     false, NULL,              "", npcDeleteCommandTable },
             { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
             { "set",            SEC_GAMEMASTER,     false, NULL,                 "", npcSetCommandTable },
+            { "return",         SEC_GAMEMASTER,     false, &HandleNpcReturnCommand,            "", NULL },
             { "scale",          SEC_GAMEMASTER,     false, &HandleNpcCustScaleCommand,         "", NULL },
             { "faction",        SEC_GAMEMASTER,     false, &HandleNpcCustFactCommand,          "", NULL },
             { "attack",         SEC_GAMEMASTER,     false, &HandleNpcAttackCommand,            "", NULL },
