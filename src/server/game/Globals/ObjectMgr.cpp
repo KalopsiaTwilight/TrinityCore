@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -50,7 +50,6 @@
 #include "World.h"
 
 ScriptMapMap sSpellScripts;
-ScriptMapMap sGameObjectScripts;
 ScriptMapMap sEventScripts;
 ScriptMapMap sWaypointScripts;
 
@@ -60,7 +59,6 @@ std::string GetScriptsTableNameByType(ScriptsType type)
     switch (type)
     {
         case SCRIPTS_SPELL:         res = "spell_scripts";      break;
-        case SCRIPTS_GAMEOBJECT:    res = "gameobject_scripts"; break;
         case SCRIPTS_EVENT:         res = "event_scripts";      break;
         case SCRIPTS_WAYPOINT:      res = "waypoint_scripts";   break;
         default: break;
@@ -74,7 +72,6 @@ ScriptMapMap* GetScriptsMapByType(ScriptsType type)
     switch (type)
     {
         case SCRIPTS_SPELL:         res = &sSpellScripts;       break;
-        case SCRIPTS_GAMEOBJECT:    res = &sGameObjectScripts;  break;
         case SCRIPTS_EVENT:         res = &sEventScripts;       break;
         case SCRIPTS_WAYPOINT:      res = &sWaypointScripts;    break;
         default: break;
@@ -118,7 +115,7 @@ std::string GetScriptCommandName(ScriptCommands command)
         default:
         {
             char sz[32];
-            sprintf(sz, "Unknown command: %u", command);
+            sprintf(sz, "Unknown command: %d", command);
             res = sz;
             break;
         }
@@ -4333,7 +4330,7 @@ void ObjectMgr::LoadQuestLocales()
 
     _questLocaleStore.clear();                                // need for reload case
 
-    QueryResult result = WorldDatabase.Query("SELECT entry, "
+    QueryResult result = WorldDatabase.Query("SELECT Id, "
         "Title_loc1, Details_loc1, Objectives_loc1, OfferRewardText_loc1, RequestItemsText_loc1, EndText_loc1, CompletedText_loc1, ObjectiveText1_loc1, ObjectiveText2_loc1, ObjectiveText3_loc1, ObjectiveText4_loc1, "
         "Title_loc2, Details_loc2, Objectives_loc2, OfferRewardText_loc2, RequestItemsText_loc2, EndText_loc2, CompletedText_loc2, ObjectiveText1_loc2, ObjectiveText2_loc2, ObjectiveText3_loc2, ObjectiveText4_loc2, "
         "Title_loc3, Details_loc3, Objectives_loc3, OfferRewardText_loc3, RequestItemsText_loc3, EndText_loc3, CompletedText_loc3, ObjectiveText1_loc3, ObjectiveText2_loc3, ObjectiveText3_loc3, ObjectiveText4_loc3, "
@@ -4692,18 +4689,6 @@ void ObjectMgr::LoadScripts(ScriptsType type)
     while (result->NextRow());
 
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u script definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-}
-
-void ObjectMgr::LoadGameObjectScripts()
-{
-    LoadScripts(SCRIPTS_GAMEOBJECT);
-
-    // check ids
-    for (ScriptMapMap::const_iterator itr = sGameObjectScripts.begin(); itr != sGameObjectScripts.end(); ++itr)
-    {
-        if (!GetGOData(itr->first))
-            sLog->outError(LOG_FILTER_SQL, "Table `gameobject_scripts` has not existing gameobject (GUID: %u) as script id", itr->first);
-    }
 }
 
 void ObjectMgr::LoadSpellScripts()
@@ -5188,7 +5173,7 @@ void ObjectMgr::LoadNpcTextLocales()
 
     _npcTextLocaleStore.clear();                              // need for reload case
 
-    QueryResult result = WorldDatabase.Query("SELECT entry, "
+    QueryResult result = WorldDatabase.Query("SELECT ID, "
         "Text0_0_loc1, Text0_1_loc1, Text1_0_loc1, Text1_1_loc1, Text2_0_loc1, Text2_1_loc1, Text3_0_loc1, Text3_1_loc1, Text4_0_loc1, Text4_1_loc1, Text5_0_loc1, Text5_1_loc1, Text6_0_loc1, Text6_1_loc1, Text7_0_loc1, Text7_1_loc1, "
         "Text0_0_loc2, Text0_1_loc2, Text1_0_loc2, Text1_1_loc2, Text2_0_loc2, Text2_1_loc2, Text3_0_loc2, Text3_1_loc1, Text4_0_loc2, Text4_1_loc2, Text5_0_loc2, Text5_1_loc2, Text6_0_loc2, Text6_1_loc2, Text7_0_loc2, Text7_1_loc2, "
         "Text0_0_loc3, Text0_1_loc3, Text1_0_loc3, Text1_1_loc3, Text2_0_loc3, Text2_1_loc3, Text3_0_loc3, Text3_1_loc1, Text4_0_loc3, Text4_1_loc3, Text5_0_loc3, Text5_1_loc3, Text6_0_loc3, Text6_1_loc3, Text7_0_loc3, Text7_1_loc3, "
@@ -5684,12 +5669,11 @@ WorldSafeLocsEntry const* ObjectMgr::GetClosestGraveYard(float x, float y, float
     //     then check faction
     //   if mapId != graveyard.mapId (ghost in instance) and search any graveyard associated
     //     then check faction
-    GraveYardContainer::const_iterator graveLow  = GraveYardStore.lower_bound(zoneId);
-    GraveYardContainer::const_iterator graveUp   = GraveYardStore.upper_bound(zoneId);
+    GraveYardMapBounds range = GraveYardStore.equal_range(zoneId);
     MapEntry const* map = sMapStore.LookupEntry(MapId);
-    // not need to check validity of map object; MapId _MUST_ be valid here
 
-    if (graveLow == graveUp && !map->IsBattleArena())
+    // not need to check validity of map object; MapId _MUST_ be valid here
+    if (range.first == range.second && !map->IsBattleArena())
     {
         sLog->outError(LOG_FILTER_SQL, "Table `game_graveyard_zone` incomplete: Zone %u Team %u does not have a linked graveyard.", zoneId, team);
         return GetDefaultGraveYard(team);
@@ -5710,9 +5694,9 @@ WorldSafeLocsEntry const* ObjectMgr::GetClosestGraveYard(float x, float y, float
 
     MapEntry const* mapEntry = sMapStore.LookupEntry(MapId);
 
-    for (GraveYardContainer::const_iterator itr = graveLow; itr != graveUp; ++itr)
+    for (; range.first != range.second; ++range.first)
     {
-        GraveYardData const& data = itr->second;
+        GraveYardData const& data = range.first->second;
 
         WorldSafeLocsEntry const* entry = sWorldSafeLocsStore.LookupEntry(data.safeLocId);
         if (!entry)
@@ -5790,15 +5774,13 @@ WorldSafeLocsEntry const* ObjectMgr::GetClosestGraveYard(float x, float y, float
 
 GraveYardData const* ObjectMgr::FindGraveYardData(uint32 id, uint32 zoneId)
 {
-    GraveYardContainer::const_iterator graveLow  = GraveYardStore.lower_bound(zoneId);
-    GraveYardContainer::const_iterator graveUp   = GraveYardStore.upper_bound(zoneId);
-
-    for (GraveYardContainer::const_iterator itr = graveLow; itr != graveUp; ++itr)
+    GraveYardMapBounds range = GraveYardStore.equal_range(zoneId);
+    for (; range.first != range.second; ++range.first)
     {
-        if (itr->second.safeLocId == id)
-            return &itr->second;
+        GraveYardData const& data = range.first->second;
+        if (data.safeLocId == id)
+            return &data;
     }
-
     return NULL;
 }
 
@@ -5831,9 +5813,8 @@ bool ObjectMgr::AddGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool per
 
 void ObjectMgr::RemoveGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool persist /*= false*/)
 {
-    GraveYardContainer::iterator graveLow  = GraveYardStore.lower_bound(zoneId);
-    GraveYardContainer::iterator graveUp   = GraveYardStore.upper_bound(zoneId);
-    if (graveLow == graveUp)
+    GraveYardMapBoundsNonConst range = GraveYardStore.equal_range(zoneId);
+    if (range.first == range.second)
     {
         //sLog->outError(LOG_FILTER_SQL, "Table `game_graveyard_zone` incomplete: Zone %u Team %u does not have a linked graveyard.", zoneId, team);
         return;
@@ -5841,11 +5822,10 @@ void ObjectMgr::RemoveGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool 
 
     bool found = false;
 
-    GraveYardContainer::iterator itr;
 
-    for (itr = graveLow; itr != graveUp; ++itr)
+    for (; range.first != range.second; ++range.first)
     {
-        GraveYardData & data = itr->second;
+        GraveYardData & data = range.first->second;
 
         // skip not matching safezone id
         if (data.safeLocId != id)
@@ -5865,7 +5845,7 @@ void ObjectMgr::RemoveGraveYardLink(uint32 id, uint32 zoneId, uint32 team, bool 
         return;
 
     // remove from links
-    GraveYardStore.erase(itr);
+    GraveYardStore.erase(range.first);
 
     // remove link from DB
     if (persist)
@@ -8232,7 +8212,7 @@ void ObjectMgr::AddVendorItem(uint32 entry, uint32 item, int32 maxcount, uint32 
 
     if (persist)
     {
-        PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_INS_NPC_VENODR);
+        PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_INS_NPC_VENDOR);
 
         stmt->setUInt32(0, entry);
         stmt->setUInt32(1, item);
