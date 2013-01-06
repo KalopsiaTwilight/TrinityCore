@@ -96,6 +96,7 @@ public:
             { "wchange",            SEC_ADMINISTRATOR,      false, &HandleChangeWeather,                "", NULL },
             { "maxskill",           SEC_ADMINISTRATOR,      false, &HandleMaxSkillCommand,              "", NULL },
             { "setskill",           SEC_ADMINISTRATOR,      false, &HandleSetSkillCommand,              "", NULL },
+            { "pinfo",              SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
             { "playerinfo",         SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
             { "respawn",            SEC_ADMINISTRATOR,      false, &HandleRespawnCommand,               "", NULL },
             { "send",               SEC_MODERATOR,          true,  NULL,                                "", sendCommandTable },

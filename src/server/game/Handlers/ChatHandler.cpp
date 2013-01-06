@@ -291,7 +291,8 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             if (!sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT) && senderIsPlayer && receiverIsPlayer)
                 if (GetPlayer()->GetTeam() != receiver->GetTeam())
                 {
-                    SendWrongFactionNotice();
+                    if (lang != LANG_ADDON)
+                        SendWrongFactionNotice();
                     return;
                 }
 

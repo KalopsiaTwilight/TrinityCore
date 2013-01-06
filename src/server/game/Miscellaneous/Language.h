@@ -1097,6 +1097,8 @@ enum TrinityStrings
     // Use for custom patches             11000-11999
     LANG_AUTO_BROADCAST                 = 11000,
     LANG_INVALID_REALMID                = 11001,
+
+    // CUSTOM
     LANG_COMMAND_RPITEMIDINVALID        = 11900,
     LANG_REMOVERPITEM                   = 11901,
     LANG_ADDRPITEM                      = 11902,

@@ -380,14 +380,21 @@ public:
         if (!handler->extractPlayerTarget(nameStr, &target, &targetGuid, &targetName))
             return false;
 
+        // check online security
+        if (handler->HasLowerSecurity(target, 0))
+            return false;
+
         int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(targetGuid);
         int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
         if (newlevel < 1)
             return false;                                       // invalid level
 
-        if (newlevel > 80)                                      // GM level command - only up to 80
-            newlevel = 80;
+        if (newlevel > DEFAULT_MAX_LEVEL && handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR) // Only admins can go above default max level
+            newlevel = DEFAULT_MAX_LEVEL;
+
+        if (newlevel > STRONG_MAX_LEVEL)          // hardcoded maximum level
+            newlevel = STRONG_MAX_LEVEL;
 
         HandleCharacterLevel(target, targetGuid, oldlevel, newlevel, handler);
         if (!handler->GetSession() || handler->GetSession()->GetPlayer() != target)      // including player == NULL

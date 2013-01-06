@@ -77,7 +77,6 @@ public:
         static ChatCommand serverCommandTable[] =
         {
             { "corpses",        SEC_GAMEMASTER,     true,  &HandleServerCorpsesCommand,             "", NULL },
-            { "emote",          SEC_MODERATOR,      true,  &HandleServerEmoteCommand,               "", NULL },
             { "exit",           SEC_CONSOLE,        true,  &HandleServerExitCommand,                "", NULL },
             { "idlerestart",    SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverIdleRestartCommandTable },
             { "idleshutdown",   SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverIdleShutdownCommandTable },
@@ -87,6 +86,7 @@ public:
             { "restart",        SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverRestartCommandTable },
             { "shutdown",       SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverShutdownCommandTable },
             { "set",            SEC_ADMINISTRATOR,  true,  NULL,                                    "", serverSetCommandTable },
+            { "emote",          SEC_MODERATOR,      true,  &HandleServerEmoteCommand,               "", NULL },
             { NULL,             0,                  false, NULL,                                    "", NULL }
         };
 
