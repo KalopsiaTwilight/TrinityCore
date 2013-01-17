@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,12 +15,12 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* ScriptData
-SDName: Boss_the_ravenian
-SD%Complete: 100
-SDComment:
-SDCategory: Scholomance
-EndScriptData */
+/*
+Name: Boss_the_ravenian
+%Complete: 100
+Comment:
+Category: Scholomance
+*/
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
@@ -43,7 +42,6 @@ enum Events
     EVENT_KNOCKAWAY                 = 4
 };
 
-
 class boss_the_ravenian : public CreatureScript
 {
     public: boss_the_ravenian() : CreatureScript("boss_the_ravenian") { }
@@ -52,25 +50,9 @@ class boss_the_ravenian : public CreatureScript
         {
             boss_theravenianAI(Creature* creature) : BossAI(creature, DATA_THERAVENIAN) {}
 
-            void Reset() {}
-
-            void JustDied(Unit* /*killer*/)
-            {
-                InstanceScript* instance = me->GetInstanceScript();
-                if (instance)
-                {
-                    instance->SetData(DATA_THERAVENIAN, DONE);
-
-                    if (instance->GetData(TYPE_GANDLING) == IN_PROGRESS)
-                    {
-                        instance->SetData(TYPE_GANDLING, IN_PROGRESS);
-                        me->SummonCreature(1853, 180.73f, -9.43856f, 75.507f, 1.61399f, TEMPSUMMON_DEAD_DESPAWN, 0);
-                    }
-                }
-            }
-
             void EnterCombat(Unit* /*who*/)
             {
+                _EnterCombat();
                 events.ScheduleEvent(EVENT_TRAMPLE, 24000);
                 events.ScheduleEvent(EVENT_CLEAVE, 15000);
                 events.ScheduleEvent(EVENT_SUNDERINCLEAVE, 40000);

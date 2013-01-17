@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,27 +57,14 @@ class boss_instructor_malicia : public CreatureScript
 
             void Reset()
             {
+                _Reset();
                 FlashCounter = 0;
                 TouchCounter = 0;
             }
 
-            void JustDied(Unit* /*killer*/)
-            {
-                InstanceScript* instance = me->GetInstanceScript();
-                if (instance)
-                {
-                    instance->SetData(DATA_INSTRUCTORMALICIA, DONE);
-
-                    if (instance->GetData(TYPE_GANDLING) == IN_PROGRESS)
-                    {
-                        instance->SetData(TYPE_GANDLING, IN_PROGRESS);
-                        me->SummonCreature(1853, 180.73f, -9.43856f, 75.507f, 1.61399f, TEMPSUMMON_DEAD_DESPAWN, 0);
-                    }
-                }
-            }
-
             void EnterCombat(Unit* /*who*/)
             {
+                _EnterCombat();
                 events.ScheduleEvent(EVENT_CALLOFGRAVES, 4000);
                 events.ScheduleEvent(EVENT_CORRUPTION, 8000);
                 events.ScheduleEvent(EVENT_RENEW, 32000);
@@ -105,7 +91,7 @@ class boss_instructor_malicia : public CreatureScript
                             events.ScheduleEvent(EVENT_CALLOFGRAVES, 65000);
                             break;
                         case EVENT_CORRUPTION:
-                            DoCast(SelectTarget(SELECT_TARGET_RANDOM,0, 100, true),SPELL_CORRUPTION,true);
+                            DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true), SPELL_CORRUPTION, true);
                             events.ScheduleEvent(EVENT_CORRUPTION, 24000);
                             break;
                         case EVENT_RENEW:

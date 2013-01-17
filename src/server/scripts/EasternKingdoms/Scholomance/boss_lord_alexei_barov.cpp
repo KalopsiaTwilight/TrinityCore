@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,26 +48,13 @@ class boss_lord_alexei_barov : public CreatureScript
 
             void Reset()
             {
+                _Reset();
                 me->LoadCreaturesAddon();
-            }
-
-            void JustDied(Unit* /*killer*/)
-            {
-                InstanceScript* instance = me->GetInstanceScript();
-                if (instance)
-                {
-                    instance->SetData(DATA_LORDALEXEIBAROV, DONE);
-
-                    if (instance->GetData(TYPE_GANDLING) == IN_PROGRESS)
-                    {
-                        instance->SetData(TYPE_GANDLING, IN_PROGRESS);
-                        me->SummonCreature(1853, 180.73f, -9.43856f, 75.507f, 1.61399f, TEMPSUMMON_DEAD_DESPAWN, 0);
-                    }
-                }
             }
 
             void EnterCombat(Unit* /*who*/)
             {
+                _EnterCombat();
                 events.ScheduleEvent(EVENT_IMMOLATE, 7000);
                 events.ScheduleEvent(EVENT_VEILOFSHADOW, 15000);
             }
@@ -88,7 +74,7 @@ class boss_lord_alexei_barov : public CreatureScript
                     switch (eventId)
                     {
                         case EVENT_IMMOLATE:
-                            DoCast(SelectTarget(SELECT_TARGET_RANDOM,0, 100, true),SPELL_IMMOLATE,true);
+                            DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true), SPELL_IMMOLATE, true);
                             events.ScheduleEvent(EVENT_IMMOLATE, 12000);
                             break;
                         case EVENT_VEILOFSHADOW:
