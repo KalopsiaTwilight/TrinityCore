@@ -380,10 +380,6 @@ public:
         if (!handler->extractPlayerTarget(nameStr, &target, &targetGuid, &targetName))
             return false;
 
-        // check online security
-        if (handler->HasLowerSecurity(target, 0))
-            return false;
-
         int32 oldlevel = target ? target->getLevel() : Player::GetLevelFromDB(targetGuid);
         int32 newlevel = levelStr ? atoi(levelStr) : oldlevel;
 
