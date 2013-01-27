@@ -2115,7 +2115,7 @@ void FillItemDamageFields(float* minDamage, float* maxDamage, float* dps, uint32
     *dps = damageInfo->DPS[quality];
     float avgDamage = *dps * delay * 0.001f;
     *minDamage = (statScalingFactor * -0.5f + 1.0f) * avgDamage;
-    *maxDamage = floor(float(avgDamage * (statScalingFactor * 0.5f + 1.0f) + 0.5f));
+    *maxDamage = floor(float(avgDamage* (statScalingFactor * 0.5f + 1.0f) + 0.5f));
 }
 
 uint32 FillItemArmor(uint32 itemlevel, uint32 itemClass, uint32 itemSubclass, uint32 quality, uint32 inventoryType)
@@ -2861,33 +2861,23 @@ void ObjectMgr::PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint3
         if (count < -1)
             sLog->outError(LOG_FILTER_SQL, "Invalid count %i specified on item %u be removed from original player create info (use -1)!", count, itemId);
 
-        uint32 RaceClass = (race_) | (class_ << 8);
-        bool doneOne = false;
-        for (uint32 i = 1; i < sCharStartOutfitStore.GetNumRows(); ++i)
+        for (uint32 gender = 0; gender < GENDER_NONE; ++gender)
         {
-            if (CharStartOutfitEntry const* entry = sCharStartOutfitStore.LookupEntry(i))
+            if (CharStartOutfitEntry const* entry = GetCharStartOutfitEntry(race_, class_, gender))
             {
-                if (entry->RaceClassGender == RaceClass || entry->RaceClassGender == (RaceClass | (1 << 16)))
+                bool found = false;
+                for (uint8 x = 0; x < MAX_OUTFIT_ITEMS; ++x)
                 {
-                    bool found = false;
-                    for (uint8 x = 0; x < MAX_OUTFIT_ITEMS; ++x)
+                    if (entry->ItemId[x] > 0 && uint32(entry->ItemId[x]) == itemId)
                     {
-                        if (entry->ItemId[x] > 0 && uint32(entry->ItemId[x]) == itemId)
-                        {
-                            found = true;
-                            const_cast<CharStartOutfitEntry*>(entry)->ItemId[x] = 0;
-                            break;
-                        }
-                    }
-
-                    if (!found)
-                        sLog->outError(LOG_FILTER_SQL, "Item %u specified to be removed from original create info not found in dbc!", itemId);
-
-                    if (!doneOne)
-                        doneOne = true;
-                    else
+                        found = true;
+                        const_cast<CharStartOutfitEntry*>(entry)->ItemId[x] = 0;
                         break;
+                    }
                 }
+
+                if (!found)
+                    sLog->outError(LOG_FILTER_SQL, "Item %u specified to be removed from original create info not found in dbc!", itemId);
             }
         }
     }
@@ -3094,10 +3084,10 @@ void ObjectMgr::LoadPlayerInfo()
                     uint32 max_class = current_class ? current_class + 1 : MAX_CLASSES;
                     for (uint32 r = min_race; r < max_race; ++r)
                         for (uint32 c = min_class; c < max_class; ++c)
-                            if (PlayerInfo * info = _playerInfo[r][c])
+                            if (PlayerInfo* info = _playerInfo[r][c])
                                 info->spell.push_back(fields[2].GetUInt32());
                 }
-                else if (PlayerInfo * info = _playerInfo[current_race][current_class])
+                else if (PlayerInfo* info = _playerInfo[current_race][current_class])
                     info->spell.push_back(fields[2].GetUInt32());
                 else
                 {
@@ -8734,7 +8724,7 @@ void ObjectMgr::LoadPhaseDefinitions()
 
     do
     {
-        Field *fields = result->Fetch();
+        Field* fields = result->Fetch();
 
         PhaseDefinition PhaseDefinition;
 
@@ -8779,7 +8769,7 @@ void ObjectMgr::LoadSpellPhaseInfo()
     uint32 count = 0;
     do
     {
-        Field *fields = result->Fetch();
+        Field* fields = result->Fetch();
 
         SpellPhaseInfo spellPhaseInfo;
         spellPhaseInfo.spellId                = fields[0].GetUInt32();

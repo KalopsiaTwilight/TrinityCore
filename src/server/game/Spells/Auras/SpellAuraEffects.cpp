@@ -1086,6 +1086,16 @@ void AuraEffect::UpdatePeriodic(Unit* caster)
                         case 49472: // Drink Coffee
                         case 57073:
                         case 61830:
+                        case 69176:
+                        case 72623:
+                        case 80166:
+                        case 80167:
+                        case 87958:
+                        case 87959:
+                        case 92736:
+                        case 92797:
+                        case 92800:
+                        case 92803:
                             if (!caster || caster->GetTypeId() != TYPEID_PLAYER)
                                 return;
                             // Get SPELL_AURA_MOD_POWER_REGEN aura from spell
@@ -1260,7 +1270,10 @@ void AuraEffect::PeriodicTick(AuraApplication * aurApp, Unit* caster) const
 
 void AuraEffect::HandleProc(AuraApplication* aurApp, ProcEventInfo& eventInfo)
 {
-    // TODO: effect script handlers here
+    bool prevented = GetBase()->CallScriptEffectProcHandlers(const_cast<AuraEffect const*>(this), const_cast<AuraApplication const*>(aurApp), eventInfo);
+    if (prevented)
+        return;
+
     switch (GetAuraType())
     {
         case SPELL_AURA_PROC_TRIGGER_SPELL:
@@ -1281,6 +1294,8 @@ void AuraEffect::HandleProc(AuraApplication* aurApp, ProcEventInfo& eventInfo)
         default:
             break;
     }
+
+    GetBase()->CallScriptAfterEffectProcHandlers(const_cast<AuraEffect const*>(this), const_cast<AuraApplication const*>(aurApp), eventInfo);
 }
 
 void AuraEffect::CleanupTriggeredSpells(Unit* target)
@@ -1833,7 +1848,7 @@ void AuraEffect::HandlePhase(AuraApplication const* aurApp, uint8 mode, bool app
 
     // call functions which may have additional effects after chainging state of unit
     // phase auras normally not expected at BG but anyway better check
-    if (apply && (mode & AURA_EFFECT_HANDLE_REAL))
+    if (apply)
     {
         // drop flag at invisibiliy in bg
         target->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_IMMUNE_OR_LOST_SELECTION);
@@ -2759,6 +2774,8 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
     if (apply)
     {
         uint32 creatureEntry = GetMiscValue();
+        uint32 displayId = 0;
+        uint32 vehicleId = 0;
 
         // Festive Holiday Mount
         if (target->HasAura(62061))
@@ -2769,30 +2786,28 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
                 creatureEntry = 15665;
         }
 
-        CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(creatureEntry);
-        if (!ci)
+        if (CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(creatureEntry))
         {
-            sLog->outError(LOG_FILTER_SQL, "AuraMounted: `creature_template`='%u' not found in database (only need its modelid)", GetMiscValue());
-            return;
+            uint32 team = 0;
+            if (target->GetTypeId() == TYPEID_PLAYER)
+                team = target->ToPlayer()->GetTeam();
+
+            displayId = ObjectMgr::ChooseDisplayId(team, ci);
+            sObjectMgr->GetCreatureModelRandomGender(&displayId);
+
+            vehicleId = ci->VehicleId;
+
+            //some spell has one aura of mount and one of vehicle
+            for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                if (GetSpellInfo()->Effects[i].Effect == SPELL_EFFECT_SUMMON
+                    && GetSpellInfo()->Effects[i].MiscValue == GetMiscValue())
+                    displayId = 0;
         }
 
-        uint32 team = 0;
-        if (target->GetTypeId() == TYPEID_PLAYER)
-            team = target->ToPlayer()->GetTeam();
-
-        uint32 displayID = ObjectMgr::ChooseDisplayId(team, ci);
-        sObjectMgr->GetCreatureModelRandomGender(&displayID);
-
-        //some spell has one aura of mount and one of vehicle
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
-            if (GetSpellInfo()->Effects[i].Effect == SPELL_EFFECT_SUMMON
-                && GetSpellInfo()->Effects[i].MiscValue == GetMiscValue())
-                displayID = 0;
-
-        target->Mount(displayID, ci->VehicleId, GetMiscValue());
+        target->Mount(displayId, vehicleId, creatureEntry);
 
         // cast speed aura
-        if (MountCapabilityEntry const* mountCapability = target->GetMountCapability(uint32(GetMiscValueB())))
+        if (MountCapabilityEntry const* mountCapability = sMountCapabilityStore.LookupEntry(GetAmount()))
             target->CastSpell(target, mountCapability->SpeedModSpell, true);
     }
     else
@@ -5004,13 +5019,13 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     switch (GetId())
                     {
                         case 59628: //Tricks of the trade buff on rogue (6sec duration)
-                            target->SetReducedThreatPercent(0,0);
+                            target->SetReducedThreatPercent(0, 0);
                             break;
                         case 57934: //Tricks of the trade buff on rogue (30sec duration)
                             if (aurApp->GetRemoveMode() == AURA_REMOVE_BY_EXPIRE || !caster->GetMisdirectionTarget())
-                                target->SetReducedThreatPercent(0,0);
+                                target->SetReducedThreatPercent(0, 0);
                             else
-                                target->SetReducedThreatPercent(0,caster->GetMisdirectionTarget()->GetGUID());
+                                target->SetReducedThreatPercent(0, caster->GetMisdirectionTarget()->GetGUID());
                             break;
                     }
                 default:

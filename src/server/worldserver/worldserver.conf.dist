@@ -281,15 +281,6 @@ vmap.enableLOS    = 1
 vmap.enableHeight = 1
 
 #
-#    vmap.ignoreSpellIds
-#        Description: These spells are ignored for LoS calculation.
-#                     List of ids with delimiter ','.
-#        Example:     "7720,1337"
-#        Default:     "7720"
-
-vmap.ignoreSpellIds = "7720"
-
-#
 #    vmap.petLOS
 #        Description: Check line of sight for pets, to avoid them attacking through walls.
 #        Default:     1 - (Enabled, each pet attack will be checked for line of sight)
@@ -2810,6 +2801,14 @@ Logger.Opcodes=41,6,Console Server
 Loggers=Root Chat DBErrors GM RA Warden Character Load WorldServer Opcodes
 
 #
+#    Log.Async.Enable
+#        Description: Enables asyncronous message logging.
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+Log.Async.Enable = 0
+
+#
 ###################################################################################################
 
 ###################################################################################################
@@ -2875,23 +2874,8 @@ Guild.WeeklyReputationCap = 4375
 ###################################################################################################
 
 ###################################################################################################
+#
 # CURRENCIES SETTINGS
-#
-#    Currency.StartHonorPoints
-#        Amount of honor that new players will start with
-#        Default: 0 (with precision)
-#
-
-Currency.StartHonorPoints = 0
-
-#
-#    Currency.StartConquestPoints
-#        Amount of conquest points that new players will start with
-#        Default: 0 (with precision)
-#
-
-Currency.StartConquestPoints = 0
-
 #
 #    Currency.ResetInterval
 #        How often should currency week count reset (days)
@@ -2917,6 +2901,46 @@ Currency.ResetWeekDay = 3
 Currency.ResetHour = 6
 
 #
+#    Currency.StartHonorPoints
+#        Amount of honor points that new players will start with
+#        Default: 0 (with precision)
+#
+
+Currency.StartHonorPoints = 0
+
+#
+#    Currency.MaxHonorPoints
+#        Amount honor points a player can have
+#        Default: 4000
+#
+
+Currency.MaxHonorPoints = 4000
+
+#
+#    Currency.StartJusticePoints
+#        Amount of justice points that new players will start with
+#        Default: 0 (with precision)
+#
+
+Currency.StartJusticePoints = 0
+
+#
+#    Currency.MaxJusticePoints
+#        Amount justice points a player can have
+#        Default: 4000
+#
+
+Currency.MaxJusticePoints = 4000
+
+#
+#    Currency.StartConquestPoints
+#        Amount of conquest points that new players will start with
+#        Default: 0 (with precision)
+#
+
+Currency.StartConquestPoints = 0
+
+#
 #    Currency.ConquestPointsDefaultWeekCap
 #        Amount of conquest points that player can earn per week
 #        Default: 1350
@@ -2927,10 +2951,10 @@ Currency.ConquestPointsDefaultWeekCap = 1350
 #
 #    Currency.ConquestPointsArenaReward
 #        Amount of conquest points rewarded by winning arenas
-#        Default: 150
+#        Default: 180
 #
 
-Currency.ConquestPointsArenaReward = 150
+Currency.ConquestPointsArenaReward = 180
 
 #
 ###################################################################################################

@@ -98,6 +98,8 @@ void AddSC_boss_balinda();
 void AddSC_boss_drekthar();
 void AddSC_boss_galvangar();
 void AddSC_boss_vanndar();
+void AddSC_boss_alizabal();                  //Baradin Hold
+void AddSC_instance_baradin_hold();
 void AddSC_blackrock_depths();               //Blackrock Depths
 void AddSC_boss_ambassador_flamelash();
 void AddSC_boss_anubshiah();
@@ -590,6 +592,7 @@ void AddSC_boss_high_astromancer_solarian();
 void AddSC_instance_the_eye();
 void AddSC_the_eye();
 void AddSC_boss_gatewatcher_iron_hand();     //TK The Mechanar
+void AddSC_boss_gatewatcher_gyrokill();
 void AddSC_boss_nethermancer_sepethrea();
 void AddSC_boss_pathaleon_the_calculator();
 void AddSC_boss_mechano_lord_capacitus();
@@ -732,6 +735,8 @@ void AddEasternKingdomsScripts()
     AddSC_boss_drekthar();
     AddSC_boss_galvangar();
     AddSC_boss_vanndar();
+    AddSC_boss_alizabal();                  //Baradin Hold
+    AddSC_instance_baradin_hold();
     AddSC_blackrock_depths();               //Blackrock Depths
     AddSC_boss_ambassador_flamelash();
     AddSC_boss_anubshiah();
@@ -1075,6 +1080,7 @@ void AddOutlandScripts()
     AddSC_instance_the_eye();
     AddSC_the_eye();
     AddSC_boss_gatewatcher_iron_hand();     //TK The Mechanar
+    AddSC_boss_gatewatcher_gyrokill();
     AddSC_boss_nethermancer_sepethrea();
     AddSC_boss_pathaleon_the_calculator();
     AddSC_boss_mechano_lord_capacitus();

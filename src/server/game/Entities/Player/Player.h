@@ -2267,7 +2267,7 @@ class Player : public Unit, public GridObject<Player>
         bool IsAtRecruitAFriendDistance(WorldObject const* pOther) const;
         void RewardPlayerAndGroupAtKill(Unit* victim, bool isBattleGround);
         void RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource);
-        bool isHonorOrXPTarget(Unit const *victim);
+        bool isHonorOrXPTarget(Unit const* victim);
 
         bool GetsRecruitAFriendBonus(bool forXP);
         uint8 GetGrantableLevels() { return m_grantableLevels; }
@@ -2826,7 +2826,7 @@ class Player : public Unit, public GridObject<Player>
         //We allow only one timed quest active at the same time. Below can then be simple value instead of set.
         typedef std::set<uint32> QuestSet;
         typedef std::set<uint32> SeasonalQuestSet;
-        typedef UNORDERED_MAP<uint32,SeasonalQuestSet> SeasonalEventQuestMap;
+        typedef UNORDERED_MAP<uint32, SeasonalQuestSet> SeasonalEventQuestMap;
         QuestSet m_timedquests;
         QuestSet m_weeklyquests;
         QuestSet m_monthlyquests;
@@ -2934,6 +2934,14 @@ class Player : public Unit, public GridObject<Player>
           * @param  currency CurrencyTypesEntry witch should get week cap
         */
         uint32 _GetCurrencyWeekCap(const CurrencyTypesEntry* currency) const;
+
+        /*
+         * @name   _GetCurrencyTotalCap
+         * @brief  return total cap for selected currency
+
+         * @param  currency CurrencyTypesEntry witch should get week cap
+         */
+        uint32 _GetCurrencyTotalCap(const CurrencyTypesEntry* currency) const;
 
         VoidStorageItem* _voidStorageItems[VOID_STORAGE_MAX_SLOT];
 

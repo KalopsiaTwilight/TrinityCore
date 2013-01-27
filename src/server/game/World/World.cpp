@@ -808,12 +808,27 @@ void World::LoadConfigSettings(bool reload)
         sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.StartHonorPoints (%i) must be >= 0, set to default 0.", m_int_configs[CONFIG_CURRENCY_START_HONOR_POINTS]);
         m_int_configs[CONFIG_CURRENCY_START_HONOR_POINTS] = 0;
     }
-    m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS] = ConfigMgr::GetIntDefault("Currency.MaxHonorPoints", 40000);
+    m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS] = ConfigMgr::GetIntDefault("Currency.MaxHonorPoints", 4000);
     if (int32(m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS]) < 0)
     {
-        sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.MaxHonorPoints (%i) can't be negative. Set to 0.", m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS]);
-        m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS] = 0;
+        sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.MaxHonorPoints (%i) can't be negative. Set to default 4000.", m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS]);
+        m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS] = 4000;
     }
+    m_int_configs[CONFIG_CURRENCY_MAX_HONOR_POINTS] *= 100;     //precision mod
+
+    m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] = ConfigMgr::GetIntDefault("Currency.StartJusticePoints", 0);
+    if (int32(m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS]) < 0)
+    {
+        sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.StartJusticePoints (%i) must be >= 0, set to default 0.", m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS]);
+        m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] = 0;
+    }
+    m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS] = ConfigMgr::GetIntDefault("Currency.MaxJusticePoints", 4000);
+    if (int32(m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS]) < 0)
+    {
+        sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.MaxJusticePoints (%i) can't be negative. Set to default 4000.", m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS]);
+        m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS] = 4000;
+    }
+    m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS] *= 100;     //precision mod
 
     m_int_configs[CONFIG_CURRENCY_START_CONQUEST_POINTS] = ConfigMgr::GetIntDefault("Currency.StartConquestPoints", 0);
     if (int32(m_int_configs[CONFIG_CURRENCY_START_CONQUEST_POINTS]) < 0)
@@ -829,33 +844,13 @@ void World::LoadConfigSettings(bool reload)
     }
     m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_WEEK_CAP] *= 100;     //precision mod
 
-    m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD] = ConfigMgr::GetIntDefault("Currency.ConquestPointsArenaReward", 150);
+    m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD] = ConfigMgr::GetIntDefault("Currency.ConquestPointsArenaReward", 180);
     if (int32(m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD]) <= 0)
     {
         sLog->outError(LOG_FILTER_SERVER_LOADING, "Currency.ConquestPointsArenaReward (%i) must be > 0, set to default 180.", m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD]);
-        m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD] = 150;
+        m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD] = 180;
     }
     m_int_configs[CONFIG_CURRENCY_CONQUEST_POINTS_ARENA_REWARD] *= 100;     //precision mod
-
-    m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] = ConfigMgr::GetIntDefault("StartJusticePoints", 0);
-    if (int32(m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS]) < 0)
-    {
-        sLog->outError(LOG_FILTER_SERVER_LOADING, "StartJusticePoints (%i) must be in range 0..MaxJusticePoints(%u). Set to %u.",
-            m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS], m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS], 0);
-        m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] = 0;
-    }
-    else if (m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] > m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS])
-    {
-        sLog->outError(LOG_FILTER_SERVER_LOADING, "StartJusticePoints (%i) must be in range 0..MaxJusticePoints(%u). Set to %u.",
-            m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS], m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS], m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS]);
-        m_int_configs[CONFIG_CURRENCY_START_JUSTICE_POINTS] = m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS];
-    }
-    m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS] = ConfigMgr::GetIntDefault("MaxJusticePoints", 400000);
-    if (int32(m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS]) < 0)
-    {
-        sLog->outError(LOG_FILTER_SERVER_LOADING, "MaxJusticePoints (%i) can't be negative. Set to 0.", m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS]);
-        m_int_configs[CONFIG_CURRENCY_MAX_JUSTICE_POINTS] = 0;
-    }
 
     m_int_configs[CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL] = ConfigMgr::GetIntDefault("RecruitAFriend.MaxLevel", 60);
     if (m_int_configs[CONFIG_MAX_RECRUIT_A_FRIEND_BONUS_PLAYER_LEVEL] > m_int_configs[CONFIG_MAX_PLAYER_LEVEL])
@@ -1166,15 +1161,13 @@ void World::LoadConfigSettings(bool reload)
     bool enableLOS = ConfigMgr::GetBoolDefault("vmap.enableLOS", true);
     bool enableHeight = ConfigMgr::GetBoolDefault("vmap.enableHeight", true);
     bool enablePetLOS = ConfigMgr::GetBoolDefault("vmap.petLOS", true);
-    std::string ignoreSpellIds = ConfigMgr::GetStringDefault("vmap.ignoreSpellIds", "");
 
     if (!enableHeight)
         sLog->outError(LOG_FILTER_SERVER_LOADING, "VMap height checking disabled! Creatures movements and other various things WILL be broken! Expect no support.");
 
     VMAP::VMapFactory::createOrGetVMapManager()->setEnableLineOfSightCalc(enableLOS);
     VMAP::VMapFactory::createOrGetVMapManager()->setEnableHeightCalc(enableHeight);
-    VMAP::VMapFactory::preventSpellsFromBeingTestedForLoS(ignoreSpellIds.c_str());
-    sLog->outInfo(LOG_FILTER_SERVER_LOADING, "VMap support included. LineOfSight:%i, getHeight:%i, indoorCheck:%i PetLOS:%i", enableLOS, enableHeight, enableIndoor, enablePetLOS);
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, "VMap support included. LineOfSight: %i, getHeight: %i, indoorCheck: %i PetLOS: %i", enableLOS, enableHeight, enableIndoor, enablePetLOS);
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, "VMap data directory is: %svmaps", m_dataPath.c_str());
 
     m_int_configs[CONFIG_MAX_WHO] = ConfigMgr::GetIntDefault("MaxWhoListReturns", 49);
@@ -1840,7 +1833,9 @@ void World::SetInitialWorldSettings()
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);
 
     sLog->outInfo(LOG_FILTER_WORLDSERVER, "World initialized in %u minutes %u seconds", (startupDuration / 60000), ((startupDuration % 60000) / 1000));
-    sLog->EnableDBAppenders();
+
+    if (uint32 realmId = ConfigMgr::GetIntDefault("RealmID", 0)) // 0 reserved for auth
+        sLog->SetRealmId(realmId);
 }
 
 void World::DetectDBCLang()
@@ -2998,7 +2993,7 @@ void World::ResetMonthlyQuests()
 void World::ResetEventSeasonalQuests(uint16 event_id)
 {
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_QUEST_STATUS_SEASONAL);
-    stmt->setUInt16(0,event_id);
+    stmt->setUInt16(0, event_id);
     CharacterDatabase.Execute(stmt);
 
     for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)

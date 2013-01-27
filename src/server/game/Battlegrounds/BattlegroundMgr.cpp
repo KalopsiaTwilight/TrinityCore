@@ -148,7 +148,7 @@ void BattlegroundMgr::Update(uint32 diff)
     }
 }
 
-void BattlegroundMgr::BuildBattlegroundStatusPacket(WorldPacket *data, Battleground *bg, Player * player, uint8 QueueSlot, uint8 StatusID, uint32 Time1, uint32 Time2, uint8 arenatype)
+void BattlegroundMgr::BuildBattlegroundStatusPacket(WorldPacket* data, Battleground* bg, Player* player, uint8 QueueSlot, uint8 StatusID, uint32 Time1, uint32 Time2, uint8 arenatype)
 {
     ObjectGuid playerGuid = player->GetGUID();
     ObjectGuid bgGuid;
@@ -299,7 +299,7 @@ void BattlegroundMgr::BuildBattlegroundStatusPacket(WorldPacket *data, Battlegro
             data->WriteBit(bgGuid[7]);
             data->WriteBit(bgGuid[1]);
             data->WriteBit(playerGuid[5]);
-            data->WriteBit(player->GetBGTeam() == TEAM_ALLIANCE);       // Battlefield Faction ( 0 horde, 1 alliance )
+            data->WriteBit(player->GetBGTeam() == HORDE ? 0 : 1);
             data->WriteBit(bgGuid[0]);
             data->WriteBit(playerGuid[1]);
             data->WriteBit(bgGuid[3]);
@@ -399,7 +399,7 @@ void BattlegroundMgr::BuildPvpLogDataPacket(WorldPacket* data, Battleground* bg)
         data->WriteBit(playerGUID[5]);
         data->WriteBit(playerGUID[1]);
         data->WriteBit(playerGUID[6]);
-        data->WriteBit(player->GetBGTeam() == TEAM_ALLIANCE);
+        data->WriteBit(player->GetBGTeam() == HORDE ? 0 : 1);
         data->WriteBit(playerGUID[7]);
 
         buff << uint32(itr->second->HealingDone);             // healing done

@@ -45,14 +45,14 @@ enum Spells
     SPELL_RAGING_SMASH              = 83650,
     SPELL_FLAME_BOLT                = 77370,
     SPELL_EARTH_SPIKE_WARN          = 94974,
-    
+
     SPELL_PTAH_EXPLOSION            = 75519,
     SPELL_SANDSTORM                 = 75491,
-    
+
     SPELL_SUMMON_QUICKSAND          = 75550, // Spell not in DBC, no SMSG_SPELL_START/GO for it
 
     SPELL_BEETLE_BURROW             = 75463,
-    
+
     SPELL_SUMMON_JEWELED_SCARAB     = 75462,
     SPELL_SUMMON_DUSTBONE_HORROR    = 75521,
 };
@@ -76,7 +76,7 @@ class SummonScarab : public BasicEvent
 public:
     SummonScarab(Unit* owner, InstanceScript* instance) : _owner(owner), _instance(instance) { }
 
-    bool Execute(uint64 execTime, uint32 /*diff*/)
+    bool Execute(uint64 /*execTime*/, uint32 /*diff*/)
     {
         if (!_instance || _instance->GetBossState(DATA_EARTHRAGER_PTAH) != IN_PROGRESS)
             return true;    // delete event
@@ -150,19 +150,19 @@ public:
             {
                 events.SetPhase(PHASE_DISPERSE);
                 _hasDispersed = true;
-                
+
                 me->AttackStop();
                 DoCast(me, SPELL_SANDSTORM);
                 SendWeather(WEATHER_STATE_LIGHT_SANDSTORM, 1.0f);
                 events.ScheduleEvent(EVENT_PTAH_EXPLODE, 6000, 0, PHASE_DISPERSE);
                 events.ScheduleEvent(EVENT_QUICKSAND, 10000, 0, PHASE_DISPERSE);
-                
+
                 std::list<Creature*> stalkers;
                 GetCreatureListWithEntryInGrid(stalkers, me, NPC_BEETLE_STALKER, 100.0f);
                 std::list<Creature*> beetlers = stalkers;
-                
+
                 Trinity::Containers::RandomResizeList(beetlers, 9); // Holds the summoners of Jeweled Scarab
-               
+
                 for (std::list<Creature*>::iterator itr = beetlers.begin(); itr != beetlers.end(); ++itr)
                 {
                     stalkers.remove((*itr)); // Remove it to prevent a single trigger from spawning multiple npcs.
@@ -172,13 +172,13 @@ public:
                 }
 
                 Trinity::Containers::RandomResizeList(stalkers, 2); // Holds the summoners of Dustbone Horror
-                
+
                 for (std::list<Creature*>::iterator itr = stalkers.begin(); itr != stalkers.end(); ++itr)
                     (*itr)->CastSpell((*itr), SPELL_SUMMON_DUSTBONE_HORROR);
             }
         }
 
-        void SetData(uint32 index, uint32 value)
+        void SetData(uint32 index, uint32 /*value*/)
         {
             if (index == DATA_SUMMON_DEATHS)
             {
@@ -194,7 +194,7 @@ public:
                 }
             }
         }
-        
+
         void EnterCombat(Unit* /*who*/)
         {
             instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 1);
@@ -221,12 +221,12 @@ public:
         {
             if (!UpdateVictim() || !CheckInRoom())
                 return;
-            
+
             events.Update(diff);
-            
+
             if (me->HasUnitState(UNIT_STATE_CASTING))
                 return;
-            
+
             while (uint32 eventId = events.ExecuteEvent())
             {
                 switch (eventId)
@@ -256,11 +256,11 @@ public:
                         break;
                 }
             }
-            
+
             if (events.GetPhaseMask() & PHASE_MASK_NORMAL) // Do not melee in the disperse phase
                 DoMeleeAttackIfReady();
         }
-        
+
     protected:
         bool _hasDispersed;
         uint8 _summonDeaths;
@@ -311,7 +311,7 @@ public:
         {
             if (Unit* ptah = GetCaster())
             {
-                ptah->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_UNK_29 | UNIT_FLAG_UNK_31);
+                ptah->SetFlag(UNIT_FIELD_FLAGS, uint32(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_UNK_29 | UNIT_FLAG_UNK_31));
                 ptah->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             }
         }
@@ -320,7 +320,7 @@ public:
         {
             if (Unit* ptah = GetCaster())
             {
-                ptah->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_UNK_29 | UNIT_FLAG_UNK_31);
+                ptah->RemoveFlag(UNIT_FIELD_FLAGS, uint32(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_UNK_29 | UNIT_FLAG_UNK_31));
                 ptah->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             }
         }

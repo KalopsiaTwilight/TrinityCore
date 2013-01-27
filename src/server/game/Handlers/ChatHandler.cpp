@@ -45,7 +45,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
     uint32 type = 0;
     uint32 lang;
 
-    switch(recvData.GetOpcode())
+    switch (recvData.GetOpcode())
     {
         case CMSG_MESSAGECHAT_SAY:
             type = CHAT_MSG_SAY;
@@ -599,10 +599,10 @@ void WorldSession::HandleAddonMessagechatOpcode(WorldPacket& recvData)
         case CHAT_MSG_GUILD:
         case CHAT_MSG_BATTLEGROUND:
         {
-            uint32 prefixLen = recvData.ReadBits(5);
             uint32 msgLen = recvData.ReadBits(9);
-            prefix = recvData.ReadString(prefixLen);
+            uint32 prefixLen = recvData.ReadBits(5);
             message = recvData.ReadString(msgLen);
+            prefix = recvData.ReadString(prefixLen);
             break;
         }
         default:

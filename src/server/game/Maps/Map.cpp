@@ -312,7 +312,7 @@ void Map::DeleteFromWorld(Player* player)
 
 void Map::EnsureGridCreated(const GridCoord &p)
 {
-    TRINITY_GUARD(ACE_Thread_Mutex, Lock);
+    TRINITY_GUARD(ACE_Thread_Mutex, GridLock);
     EnsureGridCreated_i(p);
 }
 

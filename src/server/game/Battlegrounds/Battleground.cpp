@@ -298,7 +298,7 @@ void Battleground::Update(uint32 diff)
     }
 
     // Update start time and reset stats timer
-    m_StartTime += diff;
+    SetElapsedTime(GetElapsedTime() + diff);
     if (GetStatus() == STATUS_WAIT_JOIN)
     {
         m_ResetStatTimer += diff;
@@ -484,7 +484,7 @@ inline void Battleground::_ProcessJoin(uint32 diff)
 
         WorldPacket data(SMSG_START_TIMER, 4+4+4);
         data << uint32(0); // unk
-        data << uint32(countdownMaxForBGType - (m_CountdownTimer / 1000));
+        data << uint32(countdownMaxForBGType - (GetElapsedTime() / 1000));
         data << uint32(countdownMaxForBGType);
 
         for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end(); ++itr)
@@ -597,8 +597,8 @@ inline void Battleground::_ProcessJoin(uint32 diff)
         }
     }
 
-    if (m_EndTime > 0 && (m_EndTime -= diff) > 0)
-        m_EndTime -= diff;
+    if (GetRemainingTime() > 0 && (m_EndTime -= diff) > 0)
+        SetRemainingTime(GetRemainingTime() - diff);
 }
 
 inline void Battleground::_ProcessLeave(uint32 diff)
@@ -607,10 +607,10 @@ inline void Battleground::_ProcessLeave(uint32 diff)
     // ***           BATTLEGROUND ENDING SYSTEM              ***
     // *********************************************************
     // remove all players from battleground after 2 minutes
-    m_EndTime -= diff;
-    if (m_EndTime <= 0)
+    SetRemainingTime(GetRemainingTime() - diff);
+    if (GetRemainingTime() <= 0)
     {
-        m_EndTime = 0;
+        SetRemainingTime(0);
         BattlegroundPlayerMap::iterator itr, next;
         for (itr = m_Players.begin(); itr != m_Players.end(); itr = next)
         {
@@ -938,13 +938,13 @@ void Battleground::EndBattleground(uint32 winner)
                 UpdatePlayerScore(player, SCORE_BONUS_HONOR, GetBonusHonorFromKill(winner_kills));
                 if (!player->GetRandomWinner())
                 {
-                    // 100cp awarded for the first rated battleground won each day
-                    player->ModifyCurrency(CURRENCY_TYPE_CONQUEST_META_BG, BG_REWARD_WINNER_CONQUEST_FIRST);
+                    // 100cp awarded for the first random battleground won each day
+                    player->ModifyCurrency(CURRENCY_TYPE_CONQUEST_META_ARENA, BG_REWARD_WINNER_CONQUEST_FIRST);
                     player->SetRandomWinner(true);
                 }
             }
             else // 50cp awarded for each non-rated battleground won
-                player->ModifyCurrency(CURRENCY_TYPE_CONQUEST_META_BG, BG_REWARD_WINNER_CONQUEST_LAST );
+                player->ModifyCurrency(CURRENCY_TYPE_CONQUEST_META_ARENA, BG_REWARD_WINNER_CONQUEST_LAST);
 
             player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_WIN_BG, 1);
             if (!guildAwarded)
@@ -1244,7 +1244,16 @@ void Battleground::AddPlayer(Player* player)
     else
     {
         if (GetStatus() == STATUS_WAIT_JOIN)                 // not started yet
+        {
             player->CastSpell(player, SPELL_PREPARATION, true);   // reduces all mana cost of spells.
+
+            int32 countdownMaxForBGType = isArena() ? ARENA_COUNTDOWN_MAX : BATTLEGROUND_COUNTDOWN_MAX;
+            WorldPacket data(SMSG_START_TIMER, 4+4+4);
+            data << uint32(0); // unk
+            data << uint32(countdownMaxForBGType - (GetElapsedTime() / 1000));
+            data << uint32(countdownMaxForBGType);
+            player->GetSession()->SendPacket(&data);
+        }
     }
 
     player->ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, ACHIEVEMENT_CRITERIA_CONDITION_BG_MAP, GetMapId(), true);
@@ -1746,7 +1755,7 @@ void Battleground::SendWarningToAll(int32 entry, ...)
     if (!entry)
         return;
 
-    char const *format = sObjectMgr->GetTrinityStringForDBCLocale(entry);
+    char const* format = sObjectMgr->GetTrinityStringForDBCLocale(entry);
 
     char str[1024];
     va_list ap;

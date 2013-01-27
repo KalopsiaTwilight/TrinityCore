@@ -1734,7 +1734,7 @@ void Spell::SelectImplicitTrajTargets()
         m_targets.ModDst(trajDst);
     }
 
-    if (Vehicle * veh = m_caster->GetVehicleKit())
+    if (Vehicle* veh = m_caster->GetVehicleKit())
         veh->SetLastShootPos(*m_targets.GetDstPos());
 }
 
@@ -1866,7 +1866,7 @@ void Spell::SearchTargets(SEARCHER& searcher, uint32 containerMask, Unit* refere
     bool searchInWorld = containerMask & (GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER | GRID_MAP_TYPE_MASK_CORPSE);
     if (searchInGrid || searchInWorld)
     {
-        float x,y;
+        float x, y;
         x = pos->GetPositionX();
         y = pos->GetPositionY();
 
@@ -1884,7 +1884,7 @@ void Spell::SearchTargets(SEARCHER& searcher, uint32 containerMask, Unit* refere
         if (searchInGrid)
         {
             TypeContainerVisitor<SEARCHER, GridTypeMapContainer >  grid_object_notifier(searcher);
-            cell.Visit(p, grid_object_notifier, map, radius, x , y);
+            cell.Visit(p, grid_object_notifier, map, radius, x, y);
         }
     }
 }
@@ -4944,7 +4944,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 return SPELL_FAILED_NOT_INFRONT;
 
             if (m_caster->GetEntry() != WORLD_TRIGGER) // Ignore LOS for gameobjects casts (wrongly casted by a trigger)
-                if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOSInMap(target))
+                if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && !DisableMgr::IsDisabledFor(DISABLE_TYPE_SPELL, m_spellInfo->Id, NULL, SPELL_DISABLE_LOS) && !m_caster->IsWithinLOSInMap(target))
                     return SPELL_FAILED_LINE_OF_SIGHT;
         }
     }
@@ -4955,7 +4955,7 @@ SpellCastResult Spell::CheckCast(bool strict)
         float x, y, z;
         m_targets.GetDstPos()->GetPosition(x, y, z);
 
-        if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && VMAP::VMapFactory::checkSpellForLoS(m_spellInfo->Id) && !m_caster->IsWithinLOS(x, y, z))
+        if (!(m_spellInfo->AttributesEx2 & SPELL_ATTR2_CAN_TARGET_NOT_IN_LOS) && !DisableMgr::IsDisabledFor(DISABLE_TYPE_SPELL, m_spellInfo->Id, NULL, SPELL_DISABLE_LOS) && !m_caster->IsWithinLOS(x, y, z))
             return SPELL_FAILED_LINE_OF_SIGHT;
     }
 
@@ -4981,7 +4981,7 @@ SpellCastResult Spell::CheckCast(bool strict)
             return SPELL_FAILED_ONLY_BATTLEGROUNDS;
 
     // do not allow spells to be cast in arenas or rated battlegrounds
-    if (Player * player = m_caster->ToPlayer())
+    if (Player* player = m_caster->ToPlayer())
         if (player->InArena()/* || player->InRatedBattleGround() NYI*/)
         {
             SpellCastResult castResult = CheckArenaAndRatedBattlegroundCastRules();
@@ -5065,17 +5065,6 @@ SpellCastResult Spell::CheckCast(bool strict)
         {
             hasNonDispelEffect = true;
             break;
-        }
-    }
-
-    if (!hasNonDispelEffect && !hasDispellableAura && dispelMask && !IsTriggered())
-    {
-        if (Unit* target = m_targets.GetUnitTarget())
-        {
-            DispelChargesList dispelList;
-            target->GetDispellableAuraList(m_caster, dispelMask, dispelList);
-            if (dispelList.empty())
-                return SPELL_FAILED_NOTHING_TO_DISPEL;
         }
     }
 

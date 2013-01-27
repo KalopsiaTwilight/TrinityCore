@@ -150,7 +150,7 @@ public:
             {
                 // Set to combat automatically, Brann's event won't repeat
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                events.SetPhase(PHASE_COMBAT); 
+                events.SetPhase(PHASE_COMBAT);
                 ScheduleCombatEvents();
                 me->SetHomePosition(AnraphetActivatePos);
             }
@@ -167,7 +167,7 @@ public:
         {
             instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
             Talk(ANRAPHET_SAY_DEATH);
-            
+
             if (Creature* brann = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_BRANN_0_GUID)))
                 brann->AI()->DoAction(ACTION_ANRAPHET_DIED);
 
@@ -209,12 +209,12 @@ public:
         {
             if ((events.GetPhaseMask() & PHASE_MASK_COMBAT) && (!UpdateVictim() || !CheckInRoom()))
                 return;
-            
+
             events.Update(diff);
-            
+
             if (me->HasUnitState(UNIT_STATE_CASTING))
                 return;
-            
+
             while (uint32 eventId = events.ExecuteEvent())
             {
                 switch (eventId)
@@ -302,7 +302,7 @@ class npc_alpha_beam : public CreatureScript
         {
             npc_alpha_beamAI(Creature* creature) : ScriptedAI(creature), _instance(creature->GetInstanceScript()) { }
 
-            void IsSummonedBy(Unit* summoner)
+            void IsSummonedBy(Unit* /*summoner*/)
             {
                 if (Creature* anraphet = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_ANRAPHET_GUID)))
                     anraphet->CastSpell(me, SPELL_ALPHA_BEAMS_BACK_CAST);
@@ -313,7 +313,7 @@ class npc_alpha_beam : public CreatureScript
             private:
                 InstanceScript* _instance;
         };
-        
+
         CreatureAI* GetAI(Creature* creature) const
         {
             return GetHallsOfOriginationAI<npc_alpha_beamAI>(creature);
@@ -538,7 +538,7 @@ public:
             Unit* caster = GetCaster();
             float angle = float(rand_norm()) * static_cast<float>(2 * M_PI);
             uint32 dist = caster->GetObjectSize() + GetSpellInfo()->Effects[effIndex].CalcRadius(GetCaster()) * (float)rand_norm();
-            
+
             float x = caster->GetPositionX() + dist * std::cos(angle);
             float y = caster->GetPositionY() + dist * std::sin(angle);
             float z = caster->GetMap()->GetHeight(x, y, caster->GetPositionZ());

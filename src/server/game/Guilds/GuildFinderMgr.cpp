@@ -142,15 +142,14 @@ void GuildFinderMgr::RemoveAllMembershipRequestsFromPlayer(uint32 playerId)
     for (MembershipRequestStore::iterator itr = _membershipRequests.begin(); itr != _membershipRequests.end(); ++itr)
     {
         std::vector<MembershipRequest>::iterator itr2 = itr->second.begin();
-        for(; itr2 != itr->second.end(); ++itr2)
+        for (; itr2 != itr->second.end(); ++itr2)
             if (itr2->GetPlayerGUID() == playerId)
                 break;
 
         if (itr2 == itr->second.end())
-            return;
+            continue;
 
         SQLTransaction trans = CharacterDatabase.BeginTransaction();
-
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GUILD_FINDER_APPLICANT);
         stmt->setUInt32(0, itr2->GetGuildId());
         stmt->setUInt32(1, itr2->GetPlayerGUID());
@@ -168,7 +167,7 @@ void GuildFinderMgr::RemoveAllMembershipRequestsFromPlayer(uint32 playerId)
 void GuildFinderMgr::RemoveMembershipRequest(uint32 playerId, uint32 guildId)
 {
     std::vector<MembershipRequest>::iterator itr = _membershipRequests[guildId].begin();
-    for(; itr != _membershipRequests[guildId].end(); ++itr)
+    for (; itr != _membershipRequests[guildId].end(); ++itr)
         if (itr->GetPlayerGUID() == playerId)
             break;
 
@@ -303,11 +302,12 @@ void GuildFinderMgr::DeleteGuild(uint32 guildId)
         trans->Append(stmt);
 
         CharacterDatabase.CommitTransaction(trans);
-        _membershipRequests[guildId].erase(itr);
 
         // Notify the applicant his submition has been removed
         if (Player* player = ObjectAccessor::FindPlayer(MAKE_NEW_GUID(applicant, 0, HIGHGUID_PLAYER)))
             SendMembershipRequestListUpdate(*player);
+
+        ++itr;
     }
 
     _membershipRequests.erase(guildId);
