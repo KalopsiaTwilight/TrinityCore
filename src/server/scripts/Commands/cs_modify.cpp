@@ -71,6 +71,7 @@ public:
             { "phase",          SEC_ADMINISTRATOR,  false, &HandleModifyPhaseCommand,         "", NULL },
             { "gender",         SEC_GAMEMASTER,     false, &HandleModifyGenderCommand,        "", NULL },
             { "currency",       SEC_GAMEMASTER,     false, &HandleModifyCurrencyCommand,      "", NULL },
+            { "morph",          SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,         "", NULL },
             { "scaleperm",      SEC_ADMINISTRATOR,  false, &HandleModifyPermScaleCommand,     "", NULL },
             { "morphperm",      SEC_ADMINISTRATOR,  false, &HandleModifyPermMorphCommand,     "", NULL },
             { "bytes1",         SEC_GAMEMASTER,     false, &HandleModifyBytes1Command,        "", NULL },
