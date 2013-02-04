@@ -5955,10 +5955,6 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     break;
                 }
             }
-
-            switch (dummySpell->Id)
-            {
-            }
             break;
         }
         case SPELLFAMILY_PALADIN:
@@ -9228,7 +9224,7 @@ int32 Unit::SpellBaseDamageBonusDone(SpellSchoolMask schoolMask)
         DoneAdvertisedBenefit += ToPlayer()->GetBaseSpellPowerBonus();
 
         // Check if we are ever using mana - PaperDollFrame.lua
-        if (GetPowerIndexByClass(POWER_MANA, getClass()) != MAX_POWERS)
+        if (GetPowerIndex(POWER_MANA) != MAX_POWERS)
             DoneAdvertisedBenefit += std::max(0, int32(GetStat(STAT_INTELLECT)) - 10);  // spellpower from intellect
 
         // Damage bonus from stats
@@ -9751,7 +9747,7 @@ int32 Unit::SpellBaseHealingBonusDone(SpellSchoolMask schoolMask)
         AdvertisedBenefit += ToPlayer()->GetBaseSpellPowerBonus();
 
         // Check if we are ever using mana - PaperDollFrame.lua
-        if (GetPowerIndexByClass(POWER_MANA, getClass()) != MAX_POWERS)
+        if (GetPowerIndex(POWER_MANA) != MAX_POWERS)
             AdvertisedBenefit += std::max(0, int32(GetStat(STAT_INTELLECT)) - 10);  // spellpower from intellect
 
         // Healing bonus from stats
@@ -12371,7 +12367,7 @@ void Unit::SetMaxHealth(uint32 val)
 
 int32 Unit::GetPower(Powers power) const
 {
-    uint32 powerIndex = GetPowerIndexByClass(power, getClass());
+    uint32 powerIndex = GetPowerIndex(power);
     if (powerIndex == MAX_POWERS)
         return 0;
 
@@ -12380,7 +12376,7 @@ int32 Unit::GetPower(Powers power) const
 
 int32 Unit::GetMaxPower(Powers power) const
 {
-    uint32 powerIndex = GetPowerIndexByClass(power, getClass());
+    uint32 powerIndex = GetPowerIndex(power);
     if (powerIndex == MAX_POWERS)
         return 0;
 
@@ -12389,7 +12385,7 @@ int32 Unit::GetMaxPower(Powers power) const
 
 void Unit::SetPower(Powers power, int32 val)
 {
-    uint32 powerIndex = GetPowerIndexByClass(power, getClass());
+    uint32 powerIndex = GetPowerIndex(power);
     if (powerIndex == MAX_POWERS)
         return;
 
@@ -12428,7 +12424,7 @@ void Unit::SetPower(Powers power, int32 val)
 
 void Unit::SetMaxPower(Powers power, int32 val)
 {
-    uint32 powerIndex = GetPowerIndexByClass(power, getClass());
+    uint32 powerIndex = GetPowerIndex(power);
     if (powerIndex == MAX_POWERS)
         return;
 
@@ -12453,6 +12449,19 @@ void Unit::SetMaxPower(Powers power, int32 val)
 
     if (val < cur_power)
         SetPower(power, val);
+}
+
+uint32 Unit::GetPowerIndex(uint32 powerType) const
+{
+    /// This is here because hunter pets are of the warrior class.
+    /// With the current implementation, the core only gives them
+    /// POWER_RAGE, so we enforce the class to hunter so that they
+    /// effectively get focus power.
+    uint32 classId = getClass();
+    if (ToPet() && ToPet()->getPetType() == HUNTER_PET)
+        classId = CLASS_HUNTER;
+
+    return GetPowerIndexByClass(powerType, classId);
 }
 
 int32 Unit::GetCreatePowers(Powers power) const
@@ -14541,15 +14550,32 @@ void Unit::SetControlled(bool apply, UnitState state)
     {
         switch (state)
         {
-            case UNIT_STATE_STUNNED: if (HasAuraType(SPELL_AURA_MOD_STUN))    return;
-                                    else    SetStunned(false);    break;
-            case UNIT_STATE_ROOT:    if (HasAuraType(SPELL_AURA_MOD_ROOT) || GetVehicle())    return;
-                                    else    SetRooted(false);     break;
-            case UNIT_STATE_CONFUSED:if (HasAuraType(SPELL_AURA_MOD_CONFUSE)) return;
-                                    else    SetConfused(false);   break;
-            case UNIT_STATE_FLEEING: if (HasAuraType(SPELL_AURA_MOD_FEAR))    return;
-                                    else    SetFeared(false);     break;
-            default: return;
+            case UNIT_STATE_STUNNED:
+                if (HasAuraType(SPELL_AURA_MOD_STUN))
+                    return;
+
+                SetStunned(false);
+                break;
+            case UNIT_STATE_ROOT:
+                if (HasAuraType(SPELL_AURA_MOD_ROOT) || GetVehicle())
+                    return;
+
+                SetRooted(false);
+                break;
+            case UNIT_STATE_CONFUSED:
+                if (HasAuraType(SPELL_AURA_MOD_CONFUSE))
+                    return;
+
+                SetConfused(false);
+                break;
+            case UNIT_STATE_FLEEING:
+                if (HasAuraType(SPELL_AURA_MOD_FEAR))
+                    return;
+
+                SetFeared(false);
+                break;
+            default:
+                return;
         }
 
         ClearUnitState(state);
