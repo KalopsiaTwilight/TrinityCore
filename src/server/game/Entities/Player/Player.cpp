@@ -1575,7 +1575,9 @@ void Player::Update(uint32 p_time)
         GetSession()->m_muteTime = 0;
         PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_MUTE_TIME);
         stmt->setInt64(0, 0); // Set the mute time to 0
-        stmt->setUInt32(1, GetSession()->GetAccountId());
+        stmt->setString(1, "");
+        stmt->setString(2, "");
+        stmt->setUInt32(3, GetSession()->GetAccountId());
         LoginDatabase.Execute(stmt);
     }
 
@@ -7386,6 +7388,9 @@ uint32 Player::GetZoneIdFromDB(uint64 guid)
         float posx = fields[1].GetFloat();
         float posy = fields[2].GetFloat();
         float posz = fields[3].GetFloat();
+
+        if (!sMapStore.LookupEntry(map))
+            return 0;
 
         zone = sMapMgr->GetZoneId(map, posx, posy, posz);
 
@@ -25528,7 +25533,7 @@ bool Player::AddItem(uint32 itemId, uint32 count)
     ItemPosCountVec dest;
     InventoryResult msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, count, &noSpaceForCount);
     if (msg != EQUIP_ERR_OK)
-        count = noSpaceForCount;
+        count -= noSpaceForCount;
 
     if (count == 0 || dest.empty())
     {
