@@ -74,6 +74,11 @@ public:
                     case Z: SpawnObject(player,x,y,player->GetPositionZ(),o,p,true,objectGUIDLow);      break;
                     case O: SpawnObject(player,x,y,z,player->GetOrientation(),p,true,objectGUIDLow);    break;
                     case GOTO: player->TeleportTo(target->GetMapId(), x,y,z,o);                         break;
+                    case RESPAWN:
+                        {
+                            if(GameObject* gob = SpawnObject(player,x,y,z,o,p,false,target->GetEntry()))
+                                SendSelectionInfo(player, gob->GetGUIDLow(), true);
+                        } break;
                     case GROUND:
                         {
                             float ground = target->GetMap()->GetHeight(target->GetPhaseMask(), x, y, MAX_HEIGHT);
@@ -191,7 +196,6 @@ public:
         O,
         GROUND,
         GOTO,
-        //      RESPAWN,
         FACE,
 
         SPAWN,
@@ -210,6 +214,7 @@ public:
         PHASE,
         SELECTALLNEAR,
         SPAWNSPELL,
+        RESPAWN,
     };
 
     static GameObject* GetObjectByGUIDLow(uint32 guidLow, ChatHandler* handler)
