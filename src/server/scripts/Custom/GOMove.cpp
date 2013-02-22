@@ -1,7 +1,6 @@
 #include "ScriptPCH.h"
 #include "MapManager.h"
 #include "Language.h"
-#include "Opcodes.h"
 
 /*
 struct GOMove_Data
@@ -58,7 +57,7 @@ public:
         {
             if (ID >= DELET && ID <= GOTO)
             {
-                GameObject* target = GetObjectByGUIDLow(objectGUIDLow, handler);
+                GameObject* target = GetObjectByGUIDLow(objectGUIDLow, player);
                 if (!target)
                     ChatHandler(player->GetSession()).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
                 else
@@ -74,6 +73,11 @@ public:
                     case Z: SpawnObject(player,x,y,player->GetPositionZ(),o,p,true,objectGUIDLow);      break;
                     case O: SpawnObject(player,x,y,z,player->GetOrientation(),p,true,objectGUIDLow);    break;
                     case GOTO: player->TeleportTo(target->GetMapId(), x,y,z,o);                         break;
+                    case RESPAWN:
+                        {
+                            if(GameObject* gob = SpawnObject(player,x,y,z,o,p,false,target->GetEntry()))
+                                SendSelectionInfo(player, gob->GetGUIDLow(), true);
+                        } break;
                     case GROUND:
                         {
                             float ground = target->GetMap()->GetHeight(target->GetPhaseMask(), x, y, MAX_HEIGHT);
@@ -107,7 +111,7 @@ public:
         {
             if (ID >= NORTH && ID <= PHASE)
             {
-                GameObject* target = GetObjectByGUIDLow(objectGUIDLow, handler);
+                GameObject* target = GetObjectByGUIDLow(objectGUIDLow, player);
                 if (!target)
                     ChatHandler(player->GetSession()).PSendSysMessage("Object GUID: %u not found", objectGUIDLow);
                 else
@@ -139,7 +143,7 @@ public:
                 {
                 case SPAWN:
                     {
-                        if (GameObject* object = SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, ARG, true))
+                        if (GameObject* object = SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMaskForSpawn(), false, ARG, true))
                         {
                             SpawnQue[player->GetGUID()] = ARG;
                             SendSelectionInfo(player, object->GetGUIDLow(), true);
@@ -164,7 +168,7 @@ public:
                                 Field* fields   = result->Fetch();
                                 uint32 guidLow     = fields[0].GetUInt32();
 
-                                if (GameObject* object = GetObjectByGUIDLow(guidLow, handler))
+                                if (GameObject* object = GetObjectByGUIDLow(guidLow, player))
                                 {
                                     SendSelectionInfo(player, guidLow, true);
                                 }
@@ -190,8 +194,8 @@ public:
         Z,
         O,
         GROUND,
+        RESPAWN,
         GOTO,
-        //      RESPAWN,
         FACE,
 
         SPAWN,
@@ -212,11 +216,11 @@ public:
         SPAWNSPELL,
     };
 
-    static GameObject* GetObjectByGUIDLow(uint32 guidLow, ChatHandler* handler)
+    static GameObject* GetObjectByGUIDLow(uint32 guidLow, Player* player)
     {
         if (GameObjectData const* gameObjectData = sObjectMgr->GetGOData(guidLow))
-            if (GameObject* object = handler->GetObjectGlobalyWithGuidOrNearWithDbGuid(guidLow, gameObjectData->id))
-                if(object->GetMapId() == handler->GetSession()->GetPlayer()->GetMapId()) // cant move objects on different maps
+            if (GameObject* object = ChatHandler(player->GetSession()).GetObjectGlobalyWithGuidOrNearWithDbGuid(guidLow, gameObjectData->id))
+                if(object->GetMapId() == ChatHandler(player->GetSession()).GetSession()->GetPlayer()->GetMapId()) // cant move objects on different maps
                     return object;
         return NULL;
     }
@@ -231,7 +235,7 @@ public:
             snprintf(msg, 250, "GOMOVE REMOVE %u  0", guidLow);
         else
         {
-            GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player->GetSession()));
+            GameObject* object = GetObjectByGUIDLow(guidLow, player);
             if(!object)
                 return;
             snprintf(msg, 250, "GOMOVE ADD %u %s %u", guidLow, object->GetName(), object->GetEntry());
@@ -246,7 +250,7 @@ public:
     {
         if (!player || !guidLow)
             return;
-        GameObject* object = GetObjectByGUIDLow(guidLow, &ChatHandler(player->GetSession()));
+        GameObject* object = GetObjectByGUIDLow(guidLow, player);
         if (!object)
             return;
         uint64 ownerGuid = object->GetOwnerGUID();
@@ -278,7 +282,7 @@ public:
         if (move)
         {
             oldGuidLow = e;
-            GameObject* object = GetObjectByGUIDLow(oldGuidLow, &ChatHandler(player->GetSession()));
+            GameObject* object = GetObjectByGUIDLow(oldGuidLow, player);
             if (!object)
                 return NULL;
             e = object->GetEntry();
@@ -286,7 +290,7 @@ public:
         }
 
         if (p < 1)
-            p = player->GetPhaseMgr().GetPhaseMaskForSpawn();
+            p = player->GetPhaseMaskForSpawn();
 
         const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(e);
         if (!objectInfo)
@@ -297,7 +301,7 @@ public:
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            sLog->outError(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
+            sLog->outError(LOG_FILTER_GENERAL, "Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
             ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
             ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             return NULL;
@@ -353,7 +357,7 @@ public:
             WorldLocation summonPos = *GetExplTargetDest();
             if(SpawnQue.find(player->GetGUID()) != SpawnQue.end())
             {
-                if(GameObject* object = GOMove_commandscript::SpawnObject(player, summonPos.GetPositionX(), summonPos.GetPositionY(), summonPos.GetPositionZ(), player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, SpawnQue[player->GetGUID()], true))
+                if(GameObject* object = GOMove_commandscript::SpawnObject(player, summonPos.GetPositionX(), summonPos.GetPositionY(), summonPos.GetPositionZ(), player->GetOrientation(), player->GetPhaseMaskForSpawn(), false, SpawnQue[player->GetGUID()], true))
                     GOMove_commandscript::SendSelectionInfo(player, object->GetGUIDLow(), true);
             }
         }
