@@ -763,6 +763,8 @@ class World
         void   ResetEventSeasonalQuests(uint16 event_id);
 
         void UpdatePhaseDefinitions();
+        void ReloadRBAC();
+
         
         //Custom
         void CastAll(uint32 spell, bool triggered);

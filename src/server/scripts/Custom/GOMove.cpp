@@ -143,7 +143,7 @@ public:
                 {
                 case SPAWN:
                     {
-                        if (GameObject* object = SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMaskForSpawn(), false, ARG, true))
+                        if (GameObject* object = SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, ARG, true))
                         {
                             SpawnQue[player->GetGUID()] = ARG;
                             SendSelectionInfo(player, object->GetGUIDLow(), true);
@@ -290,7 +290,7 @@ public:
         }
 
         if (p < 1)
-            p = player->GetPhaseMaskForSpawn();
+            p = player->GetPhaseMgr().GetPhaseMaskForSpawn();
 
         const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(e);
         if (!objectInfo)
@@ -357,7 +357,7 @@ public:
             WorldLocation summonPos = *GetExplTargetDest();
             if(SpawnQue.find(player->GetGUID()) != SpawnQue.end())
             {
-                if(GameObject* object = GOMove_commandscript::SpawnObject(player, summonPos.GetPositionX(), summonPos.GetPositionY(), summonPos.GetPositionZ(), player->GetOrientation(), player->GetPhaseMaskForSpawn(), false, SpawnQue[player->GetGUID()], true))
+                if(GameObject* object = GOMove_commandscript::SpawnObject(player, summonPos.GetPositionX(), summonPos.GetPositionY(), summonPos.GetPositionZ(), player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, SpawnQue[player->GetGUID()], true))
                     GOMove_commandscript::SendSelectionInfo(player, object->GetGUIDLow(), true);
             }
         }
