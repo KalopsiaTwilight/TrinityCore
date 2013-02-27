@@ -743,6 +743,9 @@ class World
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
         void   ResetEventSeasonalQuests(uint16 event_id);
 
+        void ReloadRBAC();
+
+
         //Custom
         void CastAll(uint32 spell, bool triggered);
         void AddItemAll(uint32 itemId, int32 count);
