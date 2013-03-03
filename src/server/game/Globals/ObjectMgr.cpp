@@ -423,11 +423,11 @@ void ObjectMgr::LoadCreatureTemplates()
                                              "dynamicflags, family, trainer_type, trainer_class, trainer_race, minrangedmg, maxrangedmg, rangedattackpower, type, "
     //                                            44           45        46         47            48          49          50           51           52           53         54
                                              "type_flags, type_flags2, lootid, pickpocketloot, skinloot, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6, "
-    //                                          55      56      59      60      61      62      63      64       65               66       67       68       69         70
+    //                                          55      56      57      58      59      60      61      62          63           64        65       66       67         68
                                              "spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8, PetSpellDataId, VehicleId, mingold, maxgold, AIName, MovementType, "
-    //                                             71          72         73         74            75            76          77           78          79          80           81          82
+    //                                             69          70         71         72            73            74          75           76          77          78           79          80
                                              "InhabitType, HoverHeight, Health_mod, Mana_mod, Mana_mod_extra, Armor_mod, RacialLeader, questItem1, questItem2, questItem3, questItem4, questItem5, "
-    //                                            83           84          85               86                87           88
+    //                                            81           82          83               84                85           86
                                              " questItem6, movementId, RegenHealth, mechanic_immune_mask, flags_extra, ScriptName "
                                              "FROM creature_template;");
 
