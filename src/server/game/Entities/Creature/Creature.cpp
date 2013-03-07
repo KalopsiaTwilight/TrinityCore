@@ -866,10 +866,10 @@ void Creature::InitializeReactState()
 {
     if (isTotem() || isTrigger() || GetCreatureType() == CREATURE_TYPE_CRITTER || isSpiritService())
         SetReactState(REACT_PASSIVE);
+    else if (isCivilian())
+        SetReactState(REACT_DEFENSIVE);
     else
         SetReactState(REACT_AGGRESSIVE);
-    /*else if (isCivilian())
-    SetReactState(REACT_DEFENSIVE);*/;
 }
 
 bool Creature::isCanTrainingOf(Player* player, bool msg) const
