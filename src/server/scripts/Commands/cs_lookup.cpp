@@ -72,6 +72,7 @@ public:
             { "title",          SEC_GAMEMASTER,     true,  &HandleLookupTitleCommand,           "", NULL },
             { "map",            SEC_ADMINISTRATOR,  true,  &HandleLookupMapCommand,             "", NULL },
             { "rpitem",         SEC_PLAYER,         true,  &HandleLookupRPItemCommand,          "", NULL },
+            { "patchobject",    SEC_ADMINISTRATOR,  true,  &HandleLookupPatchObjectCommand,     "", NULL },
             { NULL,             0,                  false, NULL,                                "", NULL }
         };
 
@@ -410,6 +411,9 @@ public:
                 }
             }
 
+            if (itr->second.ItemId >= 200000)
+			    continue;
+
             std::string name = itr->second.Name1;
             if (name.empty())
                 continue;
@@ -539,6 +543,9 @@ public:
                     }
                 }
             }
+
+            if (itr->second.entry >= 600000)
+			    continue;
 
             std::string name = itr->second.name;
             if (name.empty())
@@ -1402,6 +1409,86 @@ public:
 
         if (!found)
             handler->SendSysMessage(LANG_COMMAND_NOITEMFOUND);
+
+        return true;
+    }
+
+    static bool HandleLookupPatchObjectCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        std::string namePart = args;
+        std::wstring wNamePart;
+
+        // converting string that we try to find to lower case
+        if (!Utf8toWStr(namePart, wNamePart))
+            return false;
+
+        wstrToLower(wNamePart);
+
+        bool found = false;
+        uint32 count = 0;
+        uint32 maxResults = sWorld->getIntConfig(CONFIG_MAX_RESULTS_LOOKUP_COMMANDS);
+
+        GameObjectTemplateContainer const* gotc = sObjectMgr->GetGameObjectTemplates();
+        for (GameObjectTemplateContainer::const_iterator itr = gotc->begin(); itr != gotc->end(); ++itr)
+        {
+            uint8 localeIndex = handler->GetSessionDbLocaleIndex();
+            if (GameObjectLocale const* objectLocalte = sObjectMgr->GetGameObjectLocale(itr->second.entry))
+            {
+                if (objectLocalte->Name.size() > localeIndex && !objectLocalte->Name[localeIndex].empty())
+                {
+                    std::string name = objectLocalte->Name[localeIndex];
+
+                    if (Utf8FitTo(name, wNamePart))
+                    {
+                        if (maxResults && count++ == maxResults)
+                        {
+                            handler->PSendSysMessage(LANG_COMMAND_LOOKUP_MAX_RESULTS, maxResults);
+                            return true;
+                        }
+
+                        if (handler->GetSession())
+                            handler->PSendSysMessage(LANG_GO_ENTRY_LIST_CHAT, itr->second.entry, itr->second.entry, name.c_str());
+                        else
+                            handler->PSendSysMessage(LANG_GO_ENTRY_LIST_CONSOLE, itr->second.entry, name.c_str());
+
+                        if (!found)
+                            found = true;
+
+                        continue;
+                    }
+                }
+            }
+
+            if (itr->second.entry < 600000)
+			    continue;
+
+            std::string name = itr->second.name;
+            if (name.empty())
+                continue;
+
+            if (Utf8FitTo(name, wNamePart))
+            {
+                if (maxResults && count++ == maxResults)
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_LOOKUP_MAX_RESULTS, maxResults);
+                    return true;
+                }
+
+                if (handler->GetSession())
+                    handler->PSendSysMessage(LANG_GO_ENTRY_LIST_CHAT, itr->second.entry, itr->second.entry, name.c_str());
+                else
+                    handler->PSendSysMessage(LANG_GO_ENTRY_LIST_CONSOLE, itr->second.entry, name.c_str());
+
+                if (!found)
+                    found = true;
+            }
+        }
+
+        if (!found)
+            handler->SendSysMessage(LANG_COMMAND_NOGAMEOBJECTFOUND);
 
         return true;
     }
