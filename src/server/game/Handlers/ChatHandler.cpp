@@ -179,7 +179,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             else
             {
                 // send in universal language in two side iteration allowed mode
-                if (sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT))
+                if (HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT))
                 {
                     if (lang == LANG_ORCISH || lang == LANG_COMMON)
                         lang = LANG_UNIVERSAL;
@@ -342,10 +342,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 return;
             }
 
-            if (GetPlayer()->GetTeam() != receiver->GetTeam() &&
-                (!sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT) ||
-                !HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT) ||
-                !receiver->GetSession()->HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT)))
+            if (GetPlayer()->GetTeam() != receiver->GetTeam() && !HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT))
             {
                 SendWrongFactionNotice();
                 return;
