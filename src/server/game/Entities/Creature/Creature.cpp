@@ -397,7 +397,7 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData* data)
 
     SetMeleeDamageSchool(SpellSchools(cInfo->dmgschool));
     CreatureBaseStats const* stats = sObjectMgr->GetCreatureBaseStats(getLevel(), cInfo->unit_class);
-    float armor = (float)stats->GenerateArmor(cInfo); // TODO: Why is this treated as uint32 when it's a float?
+    float armor = (float)stats->GenerateArmor(cInfo); /// @todo Why is this treated as uint32 when it's a float?
     SetModifierValue(UNIT_MOD_ARMOR,             BASE_VALUE, armor);
     SetModifierValue(UNIT_MOD_RESISTANCE_HOLY,   BASE_VALUE, float(cInfo->resistance[SPELL_SCHOOL_HOLY]));
     SetModifierValue(UNIT_MOD_RESISTANCE_FIRE,   BASE_VALUE, float(cInfo->resistance[SPELL_SCHOOL_FIRE]));
@@ -737,7 +737,7 @@ void Creature::DoFleeToGetAssistance()
 
         if (!creature)
             //SetFeared(true, getVictim()->GetGUID(), 0, sWorld->getIntConfig(CONFIG_CREATURE_FAMILY_FLEE_DELAY));
-            //TODO: use 31365
+            /// @todo use 31365
             SetControlled(true, UNIT_STATE_FLEEING);
         else
             GetMotionMaster()->MoveSeekAssistance(creature->GetPositionX(), creature->GetPositionY(), creature->GetPositionZ());
@@ -850,7 +850,7 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
 
     LastUsedScriptID = GetCreatureTemplate()->ScriptID;
 
-    // TODO: Replace with spell, handle from DB
+    /// @todo Replace with spell, handle from DB
     if (isSpiritHealer() || isSpiritGuide())
     {
         m_serverSideVisibility.SetValue(SERVERSIDE_VISIBILITY_GHOST, GHOST_VISIBILITY_GHOST);
@@ -861,6 +861,16 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
         SetVisible(false);
 
     return true;
+}
+
+void Creature::InitializeReactState()
+{
+    if (isTotem() || isTrigger() || GetCreatureType() == CREATURE_TYPE_CRITTER || isSpiritService())
+        SetReactState(REACT_PASSIVE);
+    else if (isCivilian())
+		SetReactState(REACT_DEFENSIVE);
+    else
+        SetReactState(REACT_AGGRESSIVE);
 }
 
 bool Creature::isCanTrainingOf(Player* player, bool msg) const
@@ -1176,7 +1186,7 @@ void Creature::SelectLevel(const CreatureTemplate* cinfo)
     SetMaxPower(POWER_MANA, mana);                          //MAX Mana
     SetPower(POWER_MANA, mana);
 
-    // TODO: set UNIT_FIELD_POWER*, for some creature class case (energy, etc)
+    /// @todo set UNIT_FIELD_POWER*, for some creature class case (energy, etc)
 
     SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)health);
     SetModifierValue(UNIT_MOD_MANA, BASE_VALUE, (float)mana);
@@ -1211,6 +1221,12 @@ float Creature::_GetHealthMod(int32 Rank)
         default:
             return sWorld->getRate(RATE_CREATURE_ELITE_ELITE_HP);
     }
+}
+
+void Creature::LowerPlayerDamageReq(uint32 unDamage)
+{
+    if (m_PlayerDamageReq)
+        m_PlayerDamageReq > unDamage ? m_PlayerDamageReq -= unDamage : m_PlayerDamageReq = 0;
 }
 
 float Creature::_GetDamageMod(int32 Rank)
@@ -1278,8 +1294,8 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 vehId, uint3
     if (!UpdateEntry(Entry, team, data))
         return false;
 
-    if (vehId && !CreateVehicleKit(vehId, Entry))
-        vehId = 0;
+    if (vehId)
+        CreateVehicleKit(vehId, Entry);
 
     return true;
 }
@@ -1468,7 +1484,7 @@ bool Creature::canStartAttack(Unit const* who, bool force) const
     if (!CanFly() && (GetDistanceZ(who) > CREATURE_Z_ATTACK_RANGE + m_CombatDistance))
         //|| who->IsControlledByPlayer() && who->IsFlying()))
         // we cannot check flying for other creatures, too much map/vmap calculation
-        // TODO: should switch to range attack
+        /// @todo should switch to range attack
         return false;
 
     if (!force)
@@ -1734,6 +1750,23 @@ bool Creature::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) 
         return true;
 
     return Unit::IsImmunedToSpellEffect(spellInfo, index);
+}
+
+bool Creature::isElite() const
+{
+    if (isPet())
+        return false;
+
+    uint32 rank = GetCreatureTemplate()->rank;
+    return rank != CREATURE_ELITE_NORMAL && rank != CREATURE_ELITE_RARE;
+}
+
+bool Creature::isWorldBoss() const
+{
+    if (isPet())
+        return false;
+
+    return GetCreatureTemplate()->type_flags & CREATURE_TYPEFLAGS_BOSS;
 }
 
 SpellInfo const* Creature::reachWithSpellAttack(Unit* victim)
@@ -2229,6 +2262,11 @@ void Creature::SetInCombatWithZone()
     }
 }
 
+uint32 Creature::GetShieldBlockValue() const                  //dunno mob block value
+{
+    return (getLevel()/2 + uint32(GetStat(STAT_STRENGTH)/20));
+}
+
 void Creature::_AddCreatureSpellCooldown(uint32 spell_id, time_t end_time)
 {
     m_CreatureSpellCooldowns[spell_id] = end_time;
@@ -2264,6 +2302,13 @@ bool Creature::HasCategoryCooldown(uint32 spell_id) const
 
     CreatureSpellCooldowns::const_iterator itr = m_CreatureCategoryCooldowns.find(spellInfo->Category);
     return(itr != m_CreatureCategoryCooldowns.end() && time_t(itr->second + (spellInfo->CategoryRecoveryTime / IN_MILLISECONDS)) > time(NULL));
+}
+
+uint32 Creature::GetCreatureSpellCooldownDelay(uint32 spellId) const
+{
+    CreatureSpellCooldowns::const_iterator itr = m_CreatureSpellCooldowns.find(spellId);
+    time_t t = time(NULL);
+    return uint32(itr != m_CreatureSpellCooldowns.end() && itr->second > t ? itr->second - t : 0);
 }
 
 bool Creature::HasSpellCooldown(uint32 spell_id) const
@@ -2508,6 +2553,14 @@ void Creature::FarTeleportTo(Map* map, float X, float Y, float Z, float O)
     Relocate(X, Y, Z, O);
     SetMap(map);
     GetMap()->AddToMap(this);
+}
+
+uint32 Creature::GetPetAutoSpellOnPos(uint8 pos) const
+{
+    if (pos >= MAX_SPELL_CHARM || m_charmInfo->GetCharmSpell(pos)->GetType() != ACT_ENABLED)
+        return 0;
+    else
+        return m_charmInfo->GetCharmSpell(pos)->GetAction();
 }
 
 void Creature::SetPosition(float x, float y, float z, float o)
