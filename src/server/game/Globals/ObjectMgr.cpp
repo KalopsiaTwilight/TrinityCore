@@ -2419,7 +2419,7 @@ void ObjectMgr::LoadItemTemplates()
         itemTemplate.Class = db2Data->Class;
         itemTemplate.SubClass = db2Data->SubClass;
         itemTemplate.SoundOverrideSubclass = db2Data->SoundOverrideSubclass;
-        itemTemplate.Name1 = sparse->Name;
+        itemTemplate.Name1 = sparse->Name->Str[sWorld->GetDefaultDbcLocale()];
         itemTemplate.DisplayInfoID = db2Data->DisplayId;
         itemTemplate.Quality = sparse->Quality;
         itemTemplate.Flags = sparse->Flags;
@@ -2475,7 +2475,7 @@ void ObjectMgr::LoadItemTemplates()
 
         itemTemplate.SpellPPMRate = 0.0f;
         itemTemplate.Bonding = sparse->Bonding;
-        itemTemplate.Description = sparse->Description;
+        itemTemplate.Description = sparse->Description->Str[sWorld->GetDefaultDbcLocale()];
         itemTemplate.PageText = sparse->PageText;
         itemTemplate.LanguageID = sparse->LanguageID;
         itemTemplate.PageMaterial = sparse->PageMaterial;
@@ -3168,7 +3168,7 @@ void ObjectMgr::LoadPlayerInfo()
         uint32 oldMSTime = getMSTime();
 
         std::string tableName = sWorld->getBoolConfig(CONFIG_START_ALL_SPELLS) ? "playercreateinfo_spell_custom" : "playercreateinfo_spell";
-        QueryResult result = WorldDatabase.PQuery("SELECT race, class, Spell FROM %s", tableName.c_str());
+        QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell FROM %s", tableName.c_str());
 
         if (!result)
         {
@@ -3181,41 +3181,43 @@ void ObjectMgr::LoadPlayerInfo()
             do
             {
                 Field* fields = result->Fetch();
+                uint32 raceMask = fields[0].GetUInt32();
+                uint32 classMask = fields[1].GetUInt32();
+                uint32 spellId = fields[2].GetUInt32();
 
-                uint32 current_race = fields[0].GetUInt8();
-                if (current_race >= MAX_RACES)
+                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
                 {
-                    sLog->outError(LOG_FILTER_SQL, "Wrong race %u in `playercreateinfo_spell` table, ignoring.", current_race);
+                    sLog->outError(LOG_FILTER_SQL, "Wrong race mask %u in `playercreateinfo_spell` table, ignoring.", raceMask);
                     continue;
                 }
 
-                uint32 current_class = fields[1].GetUInt8();
-                if (current_class >= MAX_CLASSES)
+                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
                 {
-                    sLog->outError(LOG_FILTER_SQL, "Wrong class %u in `playercreateinfo_spell` table, ignoring.", current_class);
+                    sLog->outError(LOG_FILTER_SQL, "Wrong class mask %u in `playercreateinfo_spell` table, ignoring.", classMask);
                     continue;
                 }
 
-                if (!current_race || !current_class)
+                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
                 {
-                    uint32 min_race = current_race ? current_race : 1;
-                    uint32 max_race = current_race ? current_race + 1 : MAX_RACES;
-                    uint32 min_class = current_class ? current_class : 1;
-                    uint32 max_class = current_class ? current_class + 1 : MAX_CLASSES;
-                    for (uint32 r = min_race; r < max_race; ++r)
-                        for (uint32 c = min_class; c < max_class; ++c)
-                            if (PlayerInfo* info = _playerInfo[r][c])
-                                info->spell.push_back(fields[2].GetUInt32());
+                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                    {
+                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                        {
+                            if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                            {
+                                if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
+                                {
+                                    info->spell.push_back(spellId);
+                                    ++count;
+                                }
+                                // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                                // Either split the masks per class, or per race, which kind of kills the point yet.
+                                // else if (raceMask != 0 && classMask != 0)
+                                //     sLog->outError(LOG_FILTER_SQL, "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `playercreateinfo_spell` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, spellId);
+                            }
+                        }
+                    }
                 }
-                else if (PlayerInfo* info = _playerInfo[current_race][current_class])
-                    info->spell.push_back(fields[2].GetUInt32());
-                else
-                {
-                    sLog->outError(LOG_FILTER_SQL, "Wrong race: %u, class: %u combination in `playercreateinfo_spell` table, ignoring.", current_race, current_class);
-                    continue;
-                }
-
-                ++count;
             }
             while (result->NextRow());
 
@@ -8772,6 +8774,41 @@ void ObjectMgr::LoadHotfixData()
     while (result->NextRow());
 
     sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u hotfix info entries in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void ObjectMgr::LoadMissingKeyChains()
+{
+    uint32 oldMSTime = getMSTime();
+
+    QueryResult result = WorldDatabase.Query("SELECT keyId, k1, k2, k3, k4, k5, k6, k7, k8, "
+                                                     "k9, k10, k11, k12, k13, k14, k15, k16, "
+                                                     "k17, k18, k19, k20, k21, k22, k23, k24, "
+                                                     "k25, k26, k27, k28, k29, k30, k31, k32 "
+                                                     "FROM keychain_db2 ORDER BY keyId DESC");
+
+    if (!result)
+    {
+        sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 KeyChain entries. DB table `keychain_db2` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        uint32 id = fields[0].GetUInt32();
+
+        KeyChainEntry* kce = sKeyChainStore.CreateEntry(id, true);
+        kce->Id = id;
+        for (uint32 i = 0; i < KEYCHAIN_SIZE; ++i)
+            kce->Key[i] = fields[1 + i].GetUInt8();
+
+        ++count;
+    }
+    while (result->NextRow());
+
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u KeyChain entries in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void ObjectMgr::LoadFactionChangeSpells()

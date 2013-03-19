@@ -43,6 +43,7 @@
 #include "ConditionMgr.h"
 #include <functional>
 #include "PhaseMgr.h"
+#include "DB2Stores.h"
 
 class Item;
 class PhaseMgr;
@@ -1238,6 +1239,8 @@ class ObjectMgr
 
             return ret ? ret : time(NULL);
         }
+
+        void LoadMissingKeyChains();
 
     private:
         // first free id for selected id type

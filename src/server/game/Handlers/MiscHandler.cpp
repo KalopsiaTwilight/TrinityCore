@@ -55,6 +55,7 @@
 #include "BattlegroundMgr.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
+#include "DB2Stores.h"
 
 void WorldSession::HandleRepopRequestOpcode(WorldPacket& recvData)
 {
@@ -1864,6 +1865,14 @@ void WorldSession::HandleRequestHotfix(WorldPacket& recvPacket)
     uint32 type, count;
     recvPacket >> type;
 
+    DB2StorageBase const* store = GetDB2Storage(type);
+    if (!store)
+    {
+        sLog->outError(LOG_FILTER_NETWORKIO, "CMSG_REQUEST_HOTFIX: Received unknown hotfix type: %u", type);
+        recvPacket.rfinish();
+        return;
+    }
+
     count = recvPacket.ReadBits(23);
 
     ObjectGuid* guids = new ObjectGuid[count];
@@ -1892,19 +1901,28 @@ void WorldSession::HandleRequestHotfix(WorldPacket& recvPacket)
         recvPacket >> entry;
         recvPacket.ReadByteSeq(guids[i][2]);
 
-        switch (type)
+        if (!store->HasRecord(entry))
         {
-            case DB2_REPLY_ITEM:
-                SendItemDb2Reply(entry);
-                break;
-            case DB2_REPLY_SPARSE:
-                SendItemSparseDb2Reply(entry);
-                break;
-            default:
-                sLog->outError(LOG_FILTER_NETWORKIO, "CMSG_REQUEST_HOTFIX: Received unknown hotfix type: %u", type);
-                recvPacket.rfinish();
-                break;
+            WorldPacket data(SMSG_DB_REPLY, 4 * 4);
+            data << -int32(entry);
+            data << uint32(store->GetHash());
+            data << uint32(time(NULL));
+            data << uint32(0);
+            SendPacket(&data);
+            continue;
         }
+
+        WorldPacket data(SMSG_DB_REPLY);
+        data << int32(entry);
+        data << uint32(store->GetHash());
+        data << uint32(sObjectMgr->GetHotfixDate(entry, store->GetHash()));
+
+        size_t sizePos = data.wpos();
+        data << uint32(0);              // size of next block
+        store->WriteRecord(entry, uint32(GetSessionDbcLocale()), data);
+        data.put<uint32>(sizePos, data.wpos() - sizePos - 4);
+
+        SendPacket(&data);
     }
 
     delete[] guids;
