@@ -1384,7 +1384,7 @@ void Player::HandleDrowning(uint32 time_diff)
         else if (m_MirrorTimerFlagsLast & UNDERWATER_INWATER)
             SendMirrorTimer(BREATH_TIMER, UnderWaterTime, m_MirrorTimer[BREATH_TIMER], 10);
     }
-
+    /*
     // In dark water
     if (m_MirrorTimerFlags & UNDERWARER_INDARKWATER)
     {
@@ -1422,7 +1422,7 @@ void Player::HandleDrowning(uint32 time_diff)
         else if (m_MirrorTimerFlagsLast & UNDERWARER_INDARKWATER)
             SendMirrorTimer(FATIGUE_TIMER, DarkWaterTime, m_MirrorTimer[FATIGUE_TIMER], 10);
     }
-
+    */
     if (m_MirrorTimerFlags & (UNDERWATER_INLAVA /*| UNDERWATER_INSLIME*/) && !(_lastLiquid && _lastLiquid->SpellId))
     {
         // Breath timer not activated - activate it
