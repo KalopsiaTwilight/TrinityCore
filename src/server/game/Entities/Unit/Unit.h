@@ -758,13 +758,17 @@ enum MovementFlags2
     MOVEMENTFLAG2_FULL_SPEED_TURNING       = 0x00000004,
     MOVEMENTFLAG2_FULL_SPEED_PITCHING      = 0x00000008,
     MOVEMENTFLAG2_ALWAYS_ALLOW_PITCHING    = 0x00000010,
-    MOVEMENTFLAG2_UNK7                     = 0x00000020,
-    MOVEMENTFLAG2_UNK8                     = 0x00000040,
-    MOVEMENTFLAG2_UNK9                     = 0x00000080,
-    MOVEMENTFLAG2_UNK10                    = 0x00000100,
-    MOVEMENTFLAG2_INTERPOLATED_MOVEMENT    = 0x00000200,
-    MOVEMENTFLAG2_INTERPOLATED_TURNING     = 0x00000400,
-    MOVEMENTFLAG2_INTERPOLATED_PITCHING    = 0x00000800
+    MOVEMENTFLAG2_UNK5                     = 0x00000020,
+    MOVEMENTFLAG2_UNK6                     = 0x00000040,
+    MOVEMENTFLAG2_UNK7                     = 0x00000080,
+    MOVEMENTFLAG2_UNK8                     = 0x00000100,
+    MOVEMENTFLAG2_UNK9                     = 0x00000200,
+    MOVEMENTFLAG2_UNK10                    = 0x00000400,
+    MOVEMENTFLAG2_UNK11                    = 0x00000800,
+    MOVEMENTFLAG2_UNK12                    = 0x00001000,
+    MOVEMENTFLAG2_INTERPOLATED_MOVEMENT    = 0x00002000,
+    MOVEMENTFLAG2_INTERPOLATED_TURNING     = 0x00004000,
+    MOVEMENTFLAG2_INTERPOLATED_PITCHING    = 0x00008000
 };
 
 enum UnitTypeMask
@@ -1621,7 +1625,7 @@ class Unit : public WorldObject
 
         void SendClearTarget();
 
-        void BuildHeartBeatMsg(WorldPacket* data) const;
+        void BuildHeartBeatMsg(WorldPacket* data);
 
         bool isAlive() const { return (m_deathState == ALIVE); }
         bool isDying() const { return (m_deathState == JUST_DIED); }
@@ -2107,7 +2111,6 @@ class Unit : public WorldObject
         void _ExitVehicle(Position const* exitPosition = NULL);
         void _EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* aurApp = NULL);
 
-        void BuildMovementPacket(ByteBuffer *data) const;
         void ReadMovementInfo(WorldPacket& data, MovementInfo* mi);
         void WriteMovementInfo(WorldPacket& data);
 
@@ -2246,8 +2249,9 @@ class Unit : public WorldObject
         void SetStunned(bool apply);
         void SetRooted(bool apply);
 
+        uint32 m_movementCounter;       ///< Incrementing counter used in movement packets
+
     private:
-        uint32 m_rootTimes;
 
         uint32 m_state;                                     // Even derived shouldn't modify
         uint32 m_CombatTimer;
