@@ -2950,12 +2950,10 @@ public:
     static bool HandlePossessCommand(ChatHandler* handler, char const* /*args*/)
     {
         Unit* unit = handler->getSelectedUnit();
-        uint32 faction = unit->getFaction();
         if (!unit)
             return false;
 
         handler->GetSession()->GetPlayer()->CastSpell(unit, 530, true);
-        unit->setFaction(faction);
         return true;
     }
 

@@ -216,7 +216,7 @@ bool OutdoorPvPNA::SetupOutdoorPvP()
     m_obj = new OPvPCapturePointNA(this);
     if (!m_obj)
         return false;
-    //AddCapturePoint(m_obj);
+    //AddCapturePoint(m_obj); -- Custom, disabled
 
     return true;
 }
