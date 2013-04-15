@@ -602,7 +602,8 @@ public:
                 entry = object->GetEntry();
             else
                 entry = atoi((char*)args);
-        }
+        } else
+                entry = atoi((char*)args);
 
         GameObjectTemplate const* gameObjectInfo = sObjectMgr->GetGameObjectTemplate(entry);
 
