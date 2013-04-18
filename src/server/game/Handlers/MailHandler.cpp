@@ -149,7 +149,8 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
         return;
     }
 
-    uint32 cost = items_count ? 30 * items_count : 30;  // price hardcoded in client
+    //uint32 cost = items_count ? 30 * items_count : 30;  // price hardcoded in client
+    uint32 cost = 0; //Custom
 
     uint64 reqmoney = cost + money;
 
@@ -289,9 +290,11 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
     player->SendMailResult(0, MAIL_SEND, MAIL_OK);
 
     player->ModifyMoney(-int64(reqmoney));
-    player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL, cost);
+    //player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL, cost); //Custom
 
     bool needItemDelay = false;
+
+    body = "To: " + receiverName + "\n\n" + body;
 
     MailDraft draft(subject, body);
 

@@ -101,7 +101,7 @@ public:
                         else
                         {
                             SendSelectionInfo(player, object->GetGUIDLow(), true);
-                            session->SendAreaTriggerMessage("Selected %s", object->GetName());
+                            session->SendAreaTriggerMessage("Selected %s", object->GetName().c_str());
                         }
                     } break;
                 }
@@ -133,7 +133,7 @@ public:
                     case DOWN: SpawnObject(player,x,y,z-((float)ARG/100),o,p,true,objectGUIDLow);                         break;
                     case RIGHT: SpawnObject(player,x,y,z,o-((float)ARG/100),p,true,objectGUIDLow);                        break;
                     case LEFT: SpawnObject(player,x,y,z,o+((float)ARG/100),p,true,objectGUIDLow);                         break;
-                    case PHASE: SpawnObject(player,x,y,z,o,ARG,true,objectGUIDLow);                                        break;
+                    case PHASE: SpawnObject(player,x,y,z,o,ARG,true,objectGUIDLow);                                       break;
                     }
                 }
             }
@@ -230,19 +230,19 @@ public:
         if (!player || !guidLow)
             return;
 
-        char msg[250];
+        std::ostringstream ss;
         if (!add)
-            snprintf(msg, 250, "GOMOVE REMOVE %u  0", guidLow);
+            ss << "GOMOVE REMOVE "<< guidLow <<"  0";
         else
         {
             GameObject* object = GetObjectByGUIDLow(guidLow, player);
             if(!object)
                 return;
-            snprintf(msg, 250, "GOMOVE ADD %u %s %u", guidLow, object->GetName(), object->GetEntry());
+            ss <<"GOMOVE ADD "<< guidLow <<" "<< object->GetName() <<" "<< object->GetEntry();
         }
 
         WorldPacket data;
-        ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+        ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), ss.str().c_str());
         player->GetSession()->SendPacket(&data);
     }
 
@@ -253,6 +253,7 @@ public:
         GameObject* object = GetObjectByGUIDLow(guidLow, player);
         if (!object)
             return;
+
         uint64 ownerGuid = object->GetOwnerGUID();
         if (ownerGuid)
         {
@@ -301,7 +302,7 @@ public:
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            sLog->outError(LOG_FILTER_GENERAL, "Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
+            sLog->outError(LOG_FILTER_GENERAL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
             ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
             ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             return NULL;
@@ -326,10 +327,10 @@ public:
 
         if (move) // Swap objects
         {
-            char msg[250];
-            snprintf(msg, 250, "GOMOVE SWAP %u  %u", oldGuidLow, object->GetGUIDLow());
+            std::ostringstream ss;
+            ss <<"GOMOVE SWAP "<< oldGuidLow <<"  "<< object->GetGUIDLow();
             WorldPacket data;
-            ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+            ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), ss.str().c_str());
             player->GetSession()->SendPacket(&data);
         }
 
