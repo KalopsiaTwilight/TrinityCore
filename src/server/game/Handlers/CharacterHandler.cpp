@@ -1441,7 +1441,8 @@ void WorldSession::HandleAlterAppearance(WorldPacket& recvData)
         return;
     }
 
-    uint32 cost = _player->GetBarberShopCost(bs_hair->hair_id, Color, bs_facialHair->hair_id, bs_skinColor);
+    //uint32 cost = _player->GetBarberShopCost(bs_hair->hair_id, Color, bs_facialHair->hair_id, bs_skinColor);
+    uint32 cost = 0; // Custom
 
     // 0 - ok
     // 1, 3 - not enough money

@@ -1243,7 +1243,7 @@ public:
 #define GOSSIP_HELLO_ROGUE1 "I wish to unlearn my talents"
 #define GOSSIP_HELLO_ROGUE2 "<Take the letter>"
 #define GOSSIP_HELLO_ROGUE3 "Purchase a Dual Talent Specialization."
-#define DUAL_SPEC_COST      10 // 10c; normally 1000 00 00 (1000g)
+#define DUAL_SPEC_COST      1 // 1c; normally 1000 00 00 (1000g)
 
 class npc_rogue_trainer : public CreatureScript
 {
@@ -2516,7 +2516,7 @@ public:
 ## npc_experience
 ######*/
 
-#define EXP_COST                10 //10c, normally 10 00 00 copper (10golds)
+#define EXP_COST                1 //1c, normally 10 00 00 copper (10golds)
 #define GOSSIP_TEXT_EXP         14736
 #define GOSSIP_XP_OFF           "I no longer wish to gain experience."
 #define GOSSIP_XP_ON            "I wish to start gaining experience again."
