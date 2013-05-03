@@ -571,13 +571,14 @@ public:
                 float y = fields[3].GetFloat();
                 float z = fields[4].GetFloat();
                 uint16 mapId = fields[5].GetUInt16();
+                uint16 phaseMask = fields[6].GetUInt16();
 
                 GameObjectTemplate const* gameObjectInfo = sObjectMgr->GetGameObjectTemplate(entry);
 
                 if (!gameObjectInfo)
                     continue;
 
-                handler->PSendSysMessage(LANG_GO_LIST_CHAT, guid, entry, guid, gameObjectInfo->name.c_str(), x, y, z, mapId);
+                handler->PSendSysMessage(LANG_GO_LIST_CHAT, guid, entry, guid, gameObjectInfo->name.c_str(), x, y, z, mapId, phaseMask);
 
                 ++count;
             } while (result->NextRow());

@@ -133,6 +133,7 @@ public:
             { "masssummon",         SEC_GAMEMASTER,         false, &HandleMassSummonCommand,            "", NULL },
             { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
             { "gmbindsight",        SEC_ADMINISTRATOR,      false, &HandleGMBindSightCommand,           "", NULL },
+            { "mount",              SEC_GAMEMASTER,         false, &HandleMountCommand,                 "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -3377,7 +3378,23 @@ public:
         caster->ToPlayer()->SetViewpoint(target, true);
         return true;
     }
+    
+    static bool HandleMountCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
 
+        uint16 mId = (uint16)atoi((char*)args);
+
+        Unit* target = handler->getSelectedUnit();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+            return false;
+
+        target->Mount(mId);
+        return true;
+    }
 };
 
 void AddSC_misc_commandscript()

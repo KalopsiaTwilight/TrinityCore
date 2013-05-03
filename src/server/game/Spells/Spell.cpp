@@ -56,6 +56,7 @@
 #include "DB2Stores.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
+#include "AccountMgr.h"
 
 extern pEffect SpellEffects[TOTAL_SPELL_EFFECTS];
 
@@ -4971,7 +4972,7 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
 
     // zone check
-    if (m_caster->GetTypeId() == TYPEID_UNIT || !m_caster->ToPlayer()->isGameMaster())
+    if (m_caster->GetTypeId() == TYPEID_UNIT || (!m_caster->ToPlayer()->isGameMaster() && !AccountMgr::IsAdminAccount(m_caster->ToPlayer()->GetSession()->GetSecurity())))
     {
         uint32 zone, area;
         m_caster->GetZoneAndAreaId(zone, area);

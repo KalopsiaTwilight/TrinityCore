@@ -636,4 +636,6 @@ void CharacterDatabaseConnection::DoPrepareStatements()
                      "INNER JOIN character_inventory ci ON ci.guid = c.guid "
                      "INNER JOIN item_instance ii ON ii.guid = ci.item "
                      "LEFT JOIN character_inventory cb ON cb.item = ci.bag WHERE ii.owner_guid = ? LIMIT ?", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_GET_EXTERNAL_MAIL, "SELECT id, receiver, subject, body, money, item, item_count FROM mail_external ORDER BY id ASC", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_DEL_EXTERNAL_MAIL, "DELETE FROM mail_external WHERE id = ?", CONNECTION_ASYNC);
 }
