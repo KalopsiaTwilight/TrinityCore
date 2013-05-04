@@ -4972,15 +4972,21 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
 
     // zone check
-    if (m_caster->GetTypeId() == TYPEID_UNIT || (!m_caster->ToPlayer()->isGameMaster() && !AccountMgr::IsAdminAccount(m_caster->ToPlayer()->GetSession()->GetSecurity())))
+    if (m_caster->GetTypeId() == TYPEID_UNIT || !m_caster->ToPlayer()->isGameMaster())
     {
-        uint32 zone, area;
-        m_caster->GetZoneAndAreaId(zone, area);
+        if (m_caster->GetTypeId() == TYPEID_PLAYER && AccountMgr::IsAdminAccount(m_caster->ToPlayer()->GetSession()->GetSecurity()))
+        {
+        }
+        else
+        {
+            uint32 zone, area;
+            m_caster->GetZoneAndAreaId(zone, area);
 
-        SpellCastResult locRes= m_spellInfo->CheckLocation(m_caster->GetMapId(), zone, area,
-            m_caster->GetTypeId() == TYPEID_PLAYER ? m_caster->ToPlayer() : NULL);
-        if (locRes != SPELL_CAST_OK)
-            return locRes;
+            SpellCastResult locRes= m_spellInfo->CheckLocation(m_caster->GetMapId(), zone, area,
+                m_caster->GetTypeId() == TYPEID_PLAYER ? m_caster->ToPlayer() : NULL);
+            if (locRes != SPELL_CAST_OK)
+                return locRes;
+        }
     }
 
     // not let players cast spells at mount (and let do it to creatures)
