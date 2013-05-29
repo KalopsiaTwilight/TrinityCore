@@ -119,7 +119,10 @@ enum TrinityStrings
     LANG_RBAC_LIST_GROUPS_HEADER        = 93,
     LANG_RBAC_LIST_ROLES_HEADER         = 94,
     LANG_RBAC_LIST_PERMISSIONS_HEADER   = 95,
-    // Room for more level 0            96-99 not used
+    LANG_GUILD_RENAME_ALREADY_EXISTS    = 96,
+    LANG_GUILD_RENAME_DONE              = 97,
+    LANG_RENAME_PLAYER_ALREADY_EXISTS   = 98,
+    LANG_RENAME_PLAYER_WITH_NEW_NAME    = 99,
 
     // level 1 chat
     LANG_GLOBAL_NOTIFY                  = 100,
@@ -196,7 +199,7 @@ enum TrinityStrings
     LANG_COMMAND_TELE_NOTFOUND          = 164,
     LANG_COMMAND_TELE_PARAMETER         = 165,
     LANG_COMMAND_TELE_NOLOCATION        = 166,
-    //                                    167               // not used
+    LANG_RESERVED_NAME                  = 167,
     LANG_COMMAND_TELE_LOCATION          = 168,
 
     LANG_MAIL_SENT                      = 169,
@@ -206,15 +209,17 @@ enum TrinityStrings
     LANG_YOU_CHANGE_RUNIC_POWER         = 173,
     LANG_YOURS_RUNIC_POWER_CHANGED      = 174,
     LANG_LIQUID_STATUS                  = 175,
+    LANG_INVALID_GAMEOBJECT_TYPE        = 176,
+    LANG_GAMEOBJECT_DAMAGED             = 177,
 
-    LANG_PHASING_REPORT_STATUS          = 176,
-    LANG_PHASING_NO_DEFINITIONS         = 177,              // Phasing
     LANG_PHASING_SUCCESS                = 178,
     LANG_PHASING_FAILED                 = 179,
     LANG_PHASING_LAST_PHASE             = 180,
     LANG_PHASING_LIST                   = 181,
     LANG_PHASING_PHASEMASK              = 182,
-    // Room for more level 1              183-199 not used
+    LANG_PHASING_REPORT_STATUS          = 183,
+    LANG_PHASING_NO_DEFINITIONS         = 184,              // Phasing
+    // Room for more level 1              185-199 not used
 
     // level 2 chat
     LANG_NO_SELECTION                   = 200,
