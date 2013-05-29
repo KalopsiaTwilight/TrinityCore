@@ -163,8 +163,6 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
         if (!itemGUIDs[i] || !count[i] || count[i] > 1000)
         {
             recvData.rfinish();
-        {
-            recvData.rfinish();
             return;
         }
     }

@@ -1684,10 +1684,10 @@ void GameObject::Use(Unit* user)
             
             if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
                 {
-                    AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
+                    AreaTriggerStruct const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
                     if (!at)
                     {
-                        sLog->outError(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        TC_LOG_ERROR(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
                         return;
                     }
 
