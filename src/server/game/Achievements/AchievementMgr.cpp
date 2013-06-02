@@ -406,8 +406,11 @@ void AchievementMgr<Player>::SendPacket(WorldPacket* data) const
 }
 
 template<class T>
-void AchievementMgr<T>::RemoveCriteriaProgress(const AchievementCriteriaEntry* entry)
+void AchievementMgr<T>::RemoveCriteriaProgress(AchievementCriteriaEntry const* entry)
 {
+    if (!entry)
+        return;
+
     CriteriaProgressMap::iterator criteriaProgress = m_criteriaProgress.find(entry->ID);
     if (criteriaProgress == m_criteriaProgress.end())
         return;
@@ -420,8 +423,11 @@ void AchievementMgr<T>::RemoveCriteriaProgress(const AchievementCriteriaEntry* e
 }
 
 template<>
-void AchievementMgr<Guild>::RemoveCriteriaProgress(const AchievementCriteriaEntry* entry)
+void AchievementMgr<Guild>::RemoveCriteriaProgress(AchievementCriteriaEntry const* entry)
 {
+    if (!entry)
+        return;
+
     CriteriaProgressMap::iterator criteriaProgress = m_criteriaProgress.find(entry->ID);
     if (criteriaProgress == m_criteriaProgress.end())
         return;
@@ -1448,6 +1454,9 @@ void AchievementMgr<T>::UpdateAchievementCriteria(AchievementCriteriaTypes type,
 template<class T>
 bool AchievementMgr<T>::IsCompletedCriteria(AchievementCriteriaEntry const* achievementCriteria, AchievementEntry const* achievement)
 {
+    if (!achievement)
+        return false;
+
     // counter can never complete
     if (achievement->flags & ACHIEVEMENT_FLAG_COUNTER)
         return false;
@@ -2049,10 +2058,14 @@ void AchievementMgr<T>::SendAllAchievementData(Player* /*receiver*/) const
 template<>
 void AchievementMgr<Guild>::SendAllAchievementData(Player* receiver) const
 {
+    VisibleAchievementPred isVisible;
     WorldPacket data(SMSG_GUILD_ACHIEVEMENT_DATA, m_completedAchievements.size() * (4 + 4) + 3);
-    data.WriteBits(m_completedAchievements.size(), 23);
+    data.WriteBits(std::count_if(m_completedAchievements.begin(), m_completedAchievements.end(), isVisible), 23);
     for (CompletedAchievementMap::const_iterator itr = m_completedAchievements.begin(); itr != m_completedAchievements.end(); ++itr)
     {
+        if (!isVisible(*itr))
+            continue;
+
         data.AppendPackedTime(itr->second.date);
         data << uint32(itr->first);
     }
@@ -2689,8 +2702,15 @@ bool AchievementMgr<T>::AdditionalRequirementsSatisfied(AchievementCriteriaEntry
 {
     for (uint8 i = 0; i < MAX_ADDITIONAL_CRITERIA_CONDITIONS; ++i)
     {
-        uint32 const reqType = criteria->additionalConditionType[i];
-        uint32 const reqValue = criteria->additionalConditionValue[i];
+        uint32 reqType = criteria->additionalConditionType[i];
+
+        ///@TODO Extract additionalConditionValue[2] column from an older dbc and store it in database
+        ///      This column is not present in 4.3.4 Achievement_Criteria.dbc
+        ///      so for now, just return as failed condition to prevent invalid memory access
+        if (i == 2 && reqType)
+            return false;
+
+        uint32 reqValue = criteria->additionalConditionValue[i];
 
         switch (AchievementCriteriaAdditionalCondition(reqType))
         {
