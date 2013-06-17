@@ -163,7 +163,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
                 {
                     for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
                     {
-                        Player* player = itr->getSource();
+                        Player* player = itr->GetSource();
 
                         if (!player || player == _player)     // not self
                             continue;
@@ -499,12 +499,12 @@ void WorldSession::HandleQuestgiverCompleteQuest(WorldPacket& recvData)
 
     TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_QUESTGIVER_COMPLETE_QUEST npc = %u, questId = %u", uint32(GUID_LOPART(playerGuid)), questId);
 
+    Object* object = ObjectAccessor::GetObjectByTypeMask(*_player, playerGuid, TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT);
+    if (!object || !object->hasInvolvedQuest(questId))
+        return;
+
     if (autoCompleteMode == 0)
     {
-        Object* object = ObjectAccessor::GetObjectByTypeMask(*_player, playerGuid, TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT);
-        if (!object || !object->hasInvolvedQuest(questId))
-            return;
-
         // some kind of WPE protection
         if (!_player->CanInteractWithQuestGiver(object))
             return;
@@ -545,6 +545,9 @@ void WorldSession::HandleQuestgiverCompleteQuest(WorldPacket& recvData)
             else                                            // no items required
                 _player->PlayerTalkClass->SendQuestGiverOfferReward(quest, playerGuid, !autoCompleteMode);
         }
+
+        if (Creature* creature = object->ToCreature())
+            sScriptMgr->OnQuestComplete(_player, creature, quest);
     }
 }
 
@@ -566,7 +569,7 @@ void WorldSession::HandlePushQuestToParty(WorldPacket& recvPacket)
         {
             for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* player = itr->getSource();
+                Player* player = itr->GetSource();
 
                 if (!player || player == _player)         // skip self
                     continue;

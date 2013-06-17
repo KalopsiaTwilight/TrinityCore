@@ -149,7 +149,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (pUser->isInCombat())
+    if (pUser->IsInCombat())
     {
         for (int i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
         {
@@ -510,7 +510,7 @@ void WorldSession::HandlePetCancelAuraOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (!pet->isAlive())
+    if (!pet->IsAlive())
     {
         pet->SendPetActionFeedback(FEEDBACK_PET_DEAD);
         return;
@@ -563,7 +563,7 @@ void WorldSession::HandleTotemDestroyed(WorldPacket& recvPacket)
         return;
 
     Creature* totem = GetPlayer()->GetMap()->GetCreature(_player->m_SummonSlot[slotId]);
-    if (totem && totem->isTotem() && totem->GetGUID() == guid)
+    if (totem && totem->IsTotem() && totem->GetGUID() == guid)
         totem->ToTotem()->UnSummon();
 }
 
@@ -730,4 +730,28 @@ void WorldSession::HandleUpdateProjectilePosition(WorldPacket& recvPacket)
     data << float(y);
     data << float(z);
     caster->SendMessageToSet(&data, true);
+}
+
+void WorldSession::HandleRequestCategoryCooldowns(WorldPacket& /*recvPacket*/)
+{
+    std::map<uint32, int32> categoryMods;
+    Unit::AuraEffectList const& categoryCooldownAuras = _player->GetAuraEffectsByType(SPELL_AURA_MOD_SPELL_CATEGORY_COOLDOWN);
+    for (Unit::AuraEffectList::const_iterator itr = categoryCooldownAuras.begin(); itr != categoryCooldownAuras.end(); ++itr)
+    {
+        std::map<uint32, int32>::iterator cItr = categoryMods.find((*itr)->GetMiscValue());
+        if (cItr == categoryMods.end())
+            categoryMods[(*itr)->GetMiscValue()] = (*itr)->GetAmount();
+        else
+            cItr->second += (*itr)->GetAmount();
+    }
+
+    WorldPacket data(SMSG_SPELL_CATEGORY_COOLDOWN, 11);
+    data.WriteBits(categoryMods.size(), 23);
+    for (std::map<uint32, int32>::const_iterator itr = categoryMods.begin(); itr != categoryMods.end(); ++itr)
+    {
+        data << uint32(itr->first);
+        data << int32(-itr->second);
+    }
+
+    SendPacket(&data);
 }

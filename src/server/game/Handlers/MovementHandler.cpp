@@ -361,13 +361,11 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvPacket)
     {
         plrMover->m_transport->RemovePassenger(plrMover);
         plrMover->m_transport = NULL;
-        movementInfo.t_pos.Relocate(0.0f, 0.0f, 0.0f, 0.0f);
-        movementInfo.t_time = 0;
-        movementInfo.t_seat = -1;
+        movementInfo.ClearTransport();
     }
 
     // fall damage generation (ignore in flight case that can be triggered also at lags in moment teleportation to another map).
-    if (opcode == MSG_MOVE_FALL_LAND && plrMover && !plrMover->isInFlight())
+    if (opcode == MSG_MOVE_FALL_LAND && plrMover && !plrMover->IsInFlight())
         plrMover->HandleFall(movementInfo);
 
     if (plrMover && ((movementInfo.flags & MOVEMENTFLAG_SWIMMING) != 0) != plrMover->IsInWater())
@@ -392,7 +390,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvPacket)
     mover->UpdatePosition(movementInfo.pos);
 
     WorldPacket data(SMSG_PLAYER_MOVE, recvPacket.size());
-    _player->WriteMovementInfo(data);
+    mover->WriteMovementInfo(data);
     mover->SendMessageToSet(&data, _player);
 
     if (plrMover)                                            // nothing is charmed, or player charmed
@@ -408,13 +406,13 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvPacket)
                 // NOTE: this is actually called many times while falling
                 // even after the player has been teleported away
                 /// @todo discard movement packets after the player is rooted
-                if (plrMover->isAlive())
+                if (plrMover->IsAlive())
                 {
                     plrMover->EnvironmentalDamage(DAMAGE_FALL_TO_VOID, GetPlayer()->GetMaxHealth());
                     // player can be alive if GM/etc
                     // change the death state to CORPSE to prevent the death timer from
                     // starting in the next player update
-                    if (!plrMover->isAlive())
+                    if (!plrMover->IsAlive())
                         plrMover->KillPlayer();
                 }
             }
@@ -598,7 +596,7 @@ void WorldSession::HandleMoveWaterWalkAck(WorldPacket& recvData)
 
 void WorldSession::HandleSummonResponseOpcode(WorldPacket& recvData)
 {
-    if (!_player->isAlive() || _player->isInCombat())
+    if (!_player->IsAlive() || _player->IsInCombat())
         return;
 
     uint64 summonerGuid;

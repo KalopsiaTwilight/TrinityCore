@@ -43,8 +43,8 @@ void PointMovementGenerator<T>::DoInitialize(T* unit)
     if (speed > 0.0f)
         init.SetVelocity(speed);
     init.Launch();
-    
-    //Call for creature group update
+
+    // Call for creature group update
     if (Creature* creature = unit->ToCreature())
         if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
             creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
@@ -72,8 +72,8 @@ bool PointMovementGenerator<T>::DoUpdate(T* unit, uint32 /*diff*/)
         if (speed > 0.0f) // Default value for point motion type is 0.0, if 0.0 spline will use GetSpeed on unit
             init.SetVelocity(speed);
         init.Launch();
-        
-        //Call for creature group update
+
+        // Call for creature group update
         if (Creature* creature = unit->ToCreature())
             if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
                 creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
@@ -125,7 +125,7 @@ void AssistanceMovementGenerator::Finalize(Unit* unit)
 {
     unit->ToCreature()->SetNoCallAssistance(false);
     unit->ToCreature()->CallAssistance();
-    if (unit->isAlive())
+    if (unit->IsAlive())
         unit->GetMotionMaster()->MoveSeekAssistanceDistract(sWorld->getIntConfig(CONFIG_CREATURE_FAMILY_ASSISTANCE_DELAY));
 }
 
@@ -140,9 +140,9 @@ void EffectMovementGenerator::Finalize(Unit* unit)
         return;
 
     // Need restore previous movement since we have no proper states system
-    if (unit->isAlive() && !unit->HasUnitState(UNIT_STATE_CONFUSED | UNIT_STATE_FLEEING))
+    if (unit->IsAlive() && !unit->HasUnitState(UNIT_STATE_CONFUSED | UNIT_STATE_FLEEING))
     {
-        if (Unit* victim = unit->getVictim())
+        if (Unit* victim = unit->GetVictim())
             unit->GetMotionMaster()->MoveChase(victim);
         else
             unit->GetMotionMaster()->Initialize();
