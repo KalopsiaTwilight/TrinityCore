@@ -815,7 +815,7 @@ void Creature::InitializeReactState()
 {
     if (IsTotem() || IsTrigger() || GetCreatureType() == CREATURE_TYPE_CRITTER || IsSpiritService())
         SetReactState(REACT_PASSIVE);
-    else if (isCivilian())
+    else if (IsCivilian())
         SetReactState(REACT_DEFENSIVE);
     else
         SetReactState(REACT_AGGRESSIVE);

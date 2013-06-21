@@ -1653,7 +1653,7 @@ public:
         uint32 npcDynFlags = (uint32) atoi((char*)args);
 
         Creature* creature = handler->getSelectedCreature();
-        if (!creature || creature->isPet())
+        if (!creature || creature->IsPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
@@ -1674,7 +1674,7 @@ public:
 
         Creature* creature = handler->getSelectedCreature();
 
-        if (!creature || creature->isPet())
+        if (!creature || creature->IsPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
@@ -1700,7 +1700,7 @@ public:
         }
 
         Creature* creature = handler->getSelectedCreature();
-        if (!creature || creature->isPet())
+        if (!creature || creature->IsPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
@@ -1731,7 +1731,7 @@ public:
         char* pfactionid = handler->extractKeyFromLink((char*)args, "Hfaction");
 
         Creature* target = handler->getSelectedCreature();
-        if (!target || target->isPet())
+        if (!target || target->IsPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);

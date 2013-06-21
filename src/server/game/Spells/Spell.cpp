@@ -6238,6 +6238,11 @@ SpellCastResult Spell::CheckItems()
                 if (!itemProto)
                     return SPELL_FAILED_CANT_BE_DISENCHANTED;
 
+                //CUSTOM - Needed to prevent custom items (that players can add) from being DE'd
+                uint32 item_entry = itemProto->ItemId;
+                if (item_entry >= 200000)
+                    return SPELL_FAILED_CANT_BE_DISENCHANTED;
+
                 uint32 item_quality = itemProto->Quality;
                 // 2.0.x addon: Check player enchanting level against the item disenchanting requirements
                 uint32 item_disenchantskilllevel = itemProto->RequiredDisenchantSkill;
