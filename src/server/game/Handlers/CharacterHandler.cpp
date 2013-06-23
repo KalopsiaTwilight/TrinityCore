@@ -1338,7 +1338,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
-        data << uint64(guid);
         SendPacket(&data);
         return;
     }
@@ -1348,7 +1347,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
-        data << uint64(guid);
         SendPacket(&data);
         return;
     }
@@ -1357,7 +1355,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
-        data << uint64(guid);
         SendPacket(&data);
         return;
     }
@@ -1371,7 +1368,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
-        data << uint64(guid);
         SendPacket(&data);
         return;
     }
@@ -1383,7 +1379,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
         {
             WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
             data << uint32(1);
-            data << uint64(guid);
             SendPacket(&data);
             return;
         }
@@ -1393,7 +1388,6 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
     {
         WorldPacket data(SMSG_SET_PLAYER_DECLINED_NAMES_RESULT, 4+8);
         data << uint32(1);
-        data << uint64(guid);
         SendPacket(&data);
         return;
     }
