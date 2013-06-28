@@ -1860,8 +1860,8 @@ public:
                 zoneName = zone->area_name;
         }
 
-        //if (target) (CRASHING)
-            //handler->PSendSysMessage(LANG_PINFO_CHR_MAP, map->name[locale], (!zoneName.empty() ? zoneName.c_str() : "<Unknown>"), (!areaName.empty() ? areaName.c_str() : "<Unknown>"));
+        if (target)
+            handler->PSendSysMessage(LANG_PINFO_CHR_MAP, map->name, (!zoneName.empty() ? zoneName.c_str() : "<Unknown>"), (!areaName.empty() ? areaName.c_str() : "<Unknown>"));
 
         // Output XVII. - XX. if they are not empty
         if (!guildName.empty())
