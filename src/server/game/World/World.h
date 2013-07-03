@@ -160,6 +160,7 @@ enum WorldBoolConfigs
     CONFIG_WINTERGRASP_ENABLE,
     CONFIG_UI_QUESTLEVELS_IN_DIALOGS,     // Should we add quest levels to the title in the NPC dialogs?
     CONFIG_EVENT_ANNOUNCE,
+    CONFIG_STATS_LIMITS_ENABLE,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -177,6 +178,10 @@ enum WorldFloatConfigs
     CONFIG_THREAT_RADIUS,
     CONFIG_MAX_AGRO_RANGE,
     CONFIG_CHANCE_OF_GM_SURVEY,
+    CONFIG_STATS_LIMITS_DODGE,
+    CONFIG_STATS_LIMITS_PARRY,
+    CONFIG_STATS_LIMITS_BLOCK,
+    CONFIG_STATS_LIMITS_CRIT,
     FLOAT_CONFIG_VALUE_COUNT
 };
 
@@ -303,6 +308,7 @@ enum WorldIntConfigs
     CONFIG_CHARDELETE_KEEP_DAYS,
     CONFIG_CHARDELETE_METHOD,
     CONFIG_CHARDELETE_MIN_LEVEL,
+    CONFIG_CHARDELETE_HEROIC_MIN_LEVEL,
     CONFIG_AUTOBROADCAST_CENTER,
     CONFIG_AUTOBROADCAST_INTERVAL,
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
@@ -831,7 +837,11 @@ class World
         // used versions
         std::string m_DBVersion;
 
-        std::list<std::string> m_Autobroadcasts;
+        typedef std::map<uint8, std::string> AutobroadcastsMap;
+        AutobroadcastsMap m_Autobroadcasts;
+
+        typedef std::map<uint8, uint8> AutobroadcastsWeightMap;
+        AutobroadcastsWeightMap m_AutobroadcastsWeights;
 
         std::map<uint32, CharacterNameData> _characterNameDataMap;
         void LoadCharacterNameData();

@@ -30,13 +30,12 @@ enum Yells
 {
     //Yells Ingvar
     YELL_AGGRO_1                                = 0,
-    YELL_AGGRO_2                                = 1,
-
+    YELL_KILL_1                                 = 1,
     YELL_DEAD_1                                 = 2,
-    YELL_DEAD_2                                 = 3,
 
-    YELL_KILL_1                                 = 4,
-    YELL_KILL_2                                 = 5,
+    YELL_AGGRO_2                                = 0,
+    YELL_KILL_2                                 = 1,
+    YELL_DEAD_2                                 = 2
 };
 
 enum Creatures
@@ -238,7 +237,7 @@ public:
                     case EVENT_JUST_TRANSFORMED:
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         me->SetInCombatWithZone();
-                        me->GetMotionMaster()->MoveChase(me->getVictim());
+                        me->GetMotionMaster()->MoveChase(me->GetVictim());
                         ScheduleSecondPhase();
                         return;
                     case EVENT_SUMMON_BANSHEE:
@@ -312,11 +311,7 @@ public:
         void Reset()
         {
             //! HACK: Creature's can't have MOVEMENTFLAG_FLYING
-            me->AddUnitMovementFlag(MOVEMENTFLAG_FLYING | MOVEMENTFLAG_HOVER);
-            me->SetSpeed(MOVE_SWIM, 1.0f);
-            me->SetSpeed(MOVE_RUN, 1.0f);
-            me->SetSpeed(MOVE_WALK, 1.0f);
-            //me->SetSpeed(MOVE_FLIGHT, 1.0f);
+            me->SetHover(true);
 
             me->GetPosition(x, y, z);
             DoTeleportTo(x+1, y, z+30);
@@ -381,7 +376,7 @@ public:
                         {
                             ingvar->RemoveAurasDueToSpell(SPELL_SCOURG_RESURRECTION_DUMMY);
 
-                            if (ingvar->getVictim())
+                            if (ingvar->GetVictim())
                                 if (boss_ingvar_the_plunderer::boss_ingvar_the_plundererAI* ai = CAST_AI(boss_ingvar_the_plunderer::boss_ingvar_the_plundererAI, ingvar->AI()))
                                     ai->StartZombiePhase();
 

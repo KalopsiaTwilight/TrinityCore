@@ -300,8 +300,7 @@ class boss_devourer_of_souls : public CreatureScript
                             DoCast(me, SPELL_WAILING_SOULS_STARTING);
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             {
-                                me->SetOrientation(me->GetAngle(target));
-                                me->SendMovementFlagUpdate();
+                                me->SetFacingToObject(target);
                                 DoCast(me, SPELL_WAILING_SOULS_BEAM);
                             }
 
@@ -327,8 +326,7 @@ class boss_devourer_of_souls : public CreatureScript
 
                         case EVENT_WAILING_SOULS_TICK:
                             beamAngle += beamAngleDiff;
-                            me->SetOrientation(beamAngle);
-                            me->SendMovementFlagUpdate();
+                            me->SetFacingTo(beamAngle);
                             me->StopMoving();
 
                             DoCast(me, SPELL_WAILING_SOULS);
@@ -340,7 +338,7 @@ class boss_devourer_of_souls : public CreatureScript
                                 me->SetReactState(REACT_AGGRESSIVE);
                                 me->SetDisplayId(DISPLAY_ANGER);
                                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
-                                me->GetMotionMaster()->MoveChase(me->getVictim());
+                                me->GetMotionMaster()->MoveChase(me->GetVictim());
                                 events.ScheduleEvent(EVENT_WAILING_SOULS, urand(60000, 70000));
                             }
                             break;

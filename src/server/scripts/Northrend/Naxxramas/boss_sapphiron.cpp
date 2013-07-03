@@ -174,7 +174,7 @@ class boss_sapphiron : public CreatureScript
                     Map::PlayerList const &players = _map->GetPlayers();
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                     {
-                        if (itr->getSource()->GetResistance(SPELL_SCHOOL_FROST) > MAX_FROST_RESISTANCE)
+                        if (itr->GetSource()->GetResistance(SPELL_SCHOOL_FROST) > MAX_FROST_RESISTANCE)
                         {
                             _canTheHundredClub = false;
                             break;
@@ -294,7 +294,6 @@ class boss_sapphiron : public CreatureScript
                             case EVENT_LIFTOFF:
                                 Talk(EMOTE_AIR_PHASE);
                                 me->SetDisableGravity(true);
-                                me->SendMovementFlagUpdate();
                                 events.ScheduleEvent(EVENT_ICEBOLT, 1500);
                                 _iceboltCount = RAID_MODE(2, 3);
                                 return;
@@ -339,7 +338,6 @@ class boss_sapphiron : public CreatureScript
                                 me->HandleEmoteCommand(EMOTE_ONESHOT_LAND);
                                 Talk(EMOTE_GROUND_PHASE);
                                 me->SetDisableGravity(false);
-                                me->SendMovementFlagUpdate();
                                 events.ScheduleEvent(EVENT_GROUND, 1500);
                                 return;
                             case EVENT_GROUND:

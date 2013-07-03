@@ -232,7 +232,7 @@ public:
             return false;
         }
 
-        if (!caster->getVictim())
+        if (!caster->GetVictim())
         {
             handler->SendSysMessage(LANG_SELECTED_TARGET_NOT_HAVE_VICTIM);
             handler->SetSentErrorMessage(true);
@@ -258,7 +258,7 @@ public:
 
         bool triggered = (triggeredStr != NULL);
 
-        caster->CastSpell(caster->getVictim(), spellId, triggered);
+        caster->CastSpell(caster->GetVictim(), spellId, triggered);
 
         return true;
     }
