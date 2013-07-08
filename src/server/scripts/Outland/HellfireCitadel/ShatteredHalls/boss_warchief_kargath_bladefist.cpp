@@ -30,25 +30,25 @@ EndContentData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 
-enum eSays
+enum Says
 {
     SAY_AGGRO                      = 0,
     SAY_SLAY                       = 1,
     SAY_DEATH                      = 2
 };
 
-enum eSpells
+enum Spells
 {
      SPELL_BLADE_DANCE              = 30739,
      H_SPELL_CHARGE                 = 25821,
 };
 
-enum eCreatures
+enum Creatures
 {
-    MOB_SHATTERED_ASSASSIN         = 17695,
-    MOB_HEARTHEN_GUARD             = 17621,
-    MOB_SHARPSHOOTER_GUARD         = 17622,
-    MOB_REAVER_GUARD               = 17623,
+    NPC_SHATTERED_ASSASSIN         = 17695,
+    NPC_HEARTHEN_GUARD             = 17621,
+    NPC_SHARPSHOOTER_GUARD         = 17622,
+    NPC_REAVER_GUARD               = 17623,
 };
 
 #define TARGET_NUM                      5
@@ -88,7 +88,7 @@ class boss_warchief_kargath_bladefist : public CreatureScript
 
             uint32 target_num;
 
-            void Reset()
+            void Reset() OVERRIDE
             {
                 removeAdds();
 
@@ -106,28 +106,28 @@ class boss_warchief_kargath_bladefist : public CreatureScript
                 resetcheck_timer = 5000;
             }
 
-            void EnterCombat(Unit* /*who*/)
+            void EnterCombat(Unit* /*who*/) OVERRIDE
             {
                 Talk(SAY_AGGRO);
             }
 
-            void JustSummoned(Creature* summoned)
+            void JustSummoned(Creature* summoned) OVERRIDE
             {
                 switch (summoned->GetEntry())
                 {
-                    case MOB_HEARTHEN_GUARD:
-                    case MOB_SHARPSHOOTER_GUARD:
-                    case MOB_REAVER_GUARD:
+                    case NPC_HEARTHEN_GUARD:
+                    case NPC_SHARPSHOOTER_GUARD:
+                    case NPC_REAVER_GUARD:
                         summoned->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0));
                         adds.push_back(summoned->GetGUID());
                         break;
-                    case MOB_SHATTERED_ASSASSIN:
+                    case NPC_SHATTERED_ASSASSIN:
                         assassins.push_back(summoned->GetGUID());
                         break;
                 }
             }
 
-            void KilledUnit(Unit* victim)
+            void KilledUnit(Unit* victim) OVERRIDE
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -135,13 +135,13 @@ class boss_warchief_kargath_bladefist : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) OVERRIDE
             {
                 Talk(SAY_DEATH);
                 removeAdds();
             }
 
-            void MovementInform(uint32 type, uint32 id)
+            void MovementInform(uint32 type, uint32 id) OVERRIDE
             {
                 if (InBlade)
                 {
@@ -188,13 +188,13 @@ class boss_warchief_kargath_bladefist : public CreatureScript
             }
             void SpawnAssassin()
             {
-                me->SummonCreature(MOB_SHATTERED_ASSASSIN, AssassEntrance[0], AssassEntrance[1]+8, AssassEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                me->SummonCreature(MOB_SHATTERED_ASSASSIN, AssassEntrance[0], AssassEntrance[1]-8, AssassEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                me->SummonCreature(MOB_SHATTERED_ASSASSIN, AssassExit[0], AssassExit[1]+8, AssassExit[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
-                me->SummonCreature(MOB_SHATTERED_ASSASSIN, AssassExit[0], AssassExit[1]-8, AssassExit[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                me->SummonCreature(NPC_SHATTERED_ASSASSIN, AssassEntrance[0], AssassEntrance[1]+8, AssassEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                me->SummonCreature(NPC_SHATTERED_ASSASSIN, AssassEntrance[0], AssassEntrance[1]-8, AssassEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                me->SummonCreature(NPC_SHATTERED_ASSASSIN, AssassExit[0], AssassExit[1]+8, AssassExit[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                me->SummonCreature(NPC_SHATTERED_ASSASSIN, AssassExit[0], AssassExit[1]-8, AssassExit[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
             }
 
-            void UpdateAI(uint32 diff)
+            void UpdateAI(uint32 diff) OVERRIDE
             {
                 //Return since we have no target
                 if (!UpdateVictim())
@@ -279,13 +279,13 @@ class boss_warchief_kargath_bladefist : public CreatureScript
                             switch (urand(0, 2))
                             {
                                 case 0:
-                                    me->SummonCreature(MOB_HEARTHEN_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                                    me->SummonCreature(NPC_HEARTHEN_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
                                     break;
                                 case 1:
-                                    me->SummonCreature(MOB_SHARPSHOOTER_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                                    me->SummonCreature(NPC_SHARPSHOOTER_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
                                     break;
                                 case 2:
-                                    me->SummonCreature(MOB_REAVER_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
+                                    me->SummonCreature(NPC_REAVER_GUARD, AddsEntrance[0], AddsEntrance[1], AddsEntrance[2], 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 30000);
                                     break;
                             }
                         }
@@ -314,7 +314,7 @@ class boss_warchief_kargath_bladefist : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
             return new boss_warchief_kargath_bladefistAI(creature);
         }

@@ -25,15 +25,15 @@ EndScriptData */
 
 /* ContentData
 boss_grand_warlock_nethekurse
-mob_fel_orc_convert
-mob_lesser_shadow_fissure
+npc_fel_orc_convert
+npc_lesser_shadow_fissure
 EndContentData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "shattered_halls.h"
 
-enum eSays
+enum Says
 {
     SAY_INTRO          = 0,
     SAY_PEON_ATTACKED  = 1,
@@ -44,7 +44,7 @@ enum eSays
     SAY_DIE            = 6
 };
 
-enum eSpells
+enum Spells
 {
     SPELL_DEATH_COIL           = 30500,
     SPELL_DARK_SPIN            = 30502, // core bug spell attack caster :D
@@ -89,7 +89,7 @@ class boss_grand_warlock_nethekurse : public CreatureScript
             uint32 ShadowFissure_Timer;
             uint32 Cleave_Timer;
 
-            void Reset()
+            void Reset() OVERRIDE
             {
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
 
@@ -146,7 +146,7 @@ class boss_grand_warlock_nethekurse : public CreatureScript
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             }
 
-            void AttackStart(Unit* who)
+            void AttackStart(Unit* who) OVERRIDE
             {
                 if (IsIntroEvent || !IsMainEvent)
                     return;
@@ -160,7 +160,8 @@ class boss_grand_warlock_nethekurse : public CreatureScript
                 }
             }
 
-            void MoveInLineOfSight(Unit* who)
+            void MoveInLineOfSight(Unit* who) OVERRIDE
+
             {
                 if (!IntroOnce && me->IsWithinDistInMap(who, 50.0f))
                     {
@@ -181,12 +182,12 @@ class boss_grand_warlock_nethekurse : public CreatureScript
                     ScriptedAI::MoveInLineOfSight(who);
             }
 
-            void EnterCombat(Unit* /*who*/)
+            void EnterCombat(Unit* /*who*/) OVERRIDE
             {
                 Talk(SAY_AGGRO);
             }
 
-            void JustSummoned(Creature* summoned)
+            void JustSummoned(Creature* summoned) OVERRIDE
             {
                 summoned->setFaction(16);
                 summoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
@@ -197,12 +198,12 @@ class boss_grand_warlock_nethekurse : public CreatureScript
                 summoned->CastSpell(summoned, SPELL_CONSUMPTION, false, 0, 0, me->GetGUID());
             }
 
-            void KilledUnit(Unit* /*victim*/)
+            void KilledUnit(Unit* /*victim*/) OVERRIDE
             {
                 Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) OVERRIDE
             {
                 Talk(SAY_DIE);
 
@@ -213,7 +214,7 @@ class boss_grand_warlock_nethekurse : public CreatureScript
                 instance->HandleGameObject(instance->GetData64(DATA_NETHEKURSE_DOOR), true);
             }
 
-            void UpdateAI(uint32 diff)
+            void UpdateAI(uint32 diff) OVERRIDE
             {
                 if (IsIntroEvent)
                 {
@@ -279,24 +280,24 @@ class boss_grand_warlock_nethekurse : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
             return new boss_grand_warlock_nethekurseAI(creature);
         }
 };
 
-class mob_fel_orc_convert : public CreatureScript
+class npc_fel_orc_convert : public CreatureScript
 {
     public:
 
-        mob_fel_orc_convert()
-            : CreatureScript("mob_fel_orc_convert")
+        npc_fel_orc_convert()
+            : CreatureScript("npc_fel_orc_convert")
         {
         }
 
-        struct mob_fel_orc_convertAI : public ScriptedAI
+        struct npc_fel_orc_convertAI : public ScriptedAI
         {
-            mob_fel_orc_convertAI(Creature* creature) : ScriptedAI(creature)
+            npc_fel_orc_convertAI(Creature* creature) : ScriptedAI(creature)
             {
                 instance = creature->GetInstanceScript();
             }
@@ -304,17 +305,18 @@ class mob_fel_orc_convert : public CreatureScript
             InstanceScript* instance;
             uint32 Hemorrhage_Timer;
 
-            void Reset()
+            void Reset() OVERRIDE
             {
                 me->SetNoCallAssistance(true);              //we don't want any assistance (WE R HEROZ!)
                 Hemorrhage_Timer = 3000;
             }
 
-            void MoveInLineOfSight(Unit* /*who*/)
+            void MoveInLineOfSight(Unit* /*who*/) OVERRIDE
+
             {
             }
 
-            void EnterCombat(Unit* /*who*/)
+            void EnterCombat(Unit* /*who*/) OVERRIDE
             {
                 if (instance)
                 {
@@ -334,7 +336,7 @@ class mob_fel_orc_convert : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) OVERRIDE
             {
                 if (instance)
                 {
@@ -346,7 +348,7 @@ class mob_fel_orc_convert : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff)
+            void UpdateAI(uint32 diff) OVERRIDE
             {
                 if (!UpdateVictim())
                     return;
@@ -361,42 +363,43 @@ class mob_fel_orc_convert : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return new mob_fel_orc_convertAI(creature);
+            return new npc_fel_orc_convertAI(creature);
         }
 };
 
 //NOTE: this Creature are also summoned by other spells, for different creatures
-class mob_lesser_shadow_fissure : public CreatureScript
+class npc_lesser_shadow_fissure : public CreatureScript
 {
     public:
 
-        mob_lesser_shadow_fissure()
-            : CreatureScript("mob_lesser_shadow_fissure")
+        npc_lesser_shadow_fissure()
+            : CreatureScript("npc_lesser_shadow_fissure")
         {
         }
 
-        struct mob_lesser_shadow_fissureAI : public ScriptedAI
+        struct npc_lesser_shadow_fissureAI : public ScriptedAI
         {
-            mob_lesser_shadow_fissureAI(Creature* creature) : ScriptedAI(creature) {}
+            npc_lesser_shadow_fissureAI(Creature* creature) : ScriptedAI(creature) {}
 
-            void Reset() { }
-            void MoveInLineOfSight(Unit* /*who*/) {}
-            void AttackStart(Unit* /*who*/) {}
-            void EnterCombat(Unit* /*who*/) {}
+            void Reset() OVERRIDE {}
+            void MoveInLineOfSight(Unit* /*who*/) OVERRIDE {}
+
+            void AttackStart(Unit* /*who*/) OVERRIDE {}
+            void EnterCombat(Unit* /*who*/) OVERRIDE {}
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return new mob_lesser_shadow_fissureAI (creature);
+            return new npc_lesser_shadow_fissureAI(creature);
         }
 };
 
 void AddSC_boss_grand_warlock_nethekurse()
 {
     new boss_grand_warlock_nethekurse();
-    new mob_fel_orc_convert();
-    new mob_lesser_shadow_fissure();
+    new npc_fel_orc_convert();
+    new npc_lesser_shadow_fissure();
 }
 
