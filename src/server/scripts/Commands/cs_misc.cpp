@@ -3296,7 +3296,7 @@ public:
             if (scaleTimesChanged < 10)
             {
                 //if ((scaleUnlocked == 0 && Scale > 1.1f) || (scaleUnlocked == 0 && Scale < 0.9f))
-                if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+                if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
@@ -3326,7 +3326,7 @@ public:
         else
 	    {
             //if ((Scale > 1.1f) || (Scale < 0.9f))
-            if ((chrLevel < 80 && Scale > 1.1f) || (chrLevel < 80 && Scale < 0.9f))
+            if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
