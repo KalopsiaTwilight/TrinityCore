@@ -286,15 +286,14 @@ class spell_dk_blood_gorged : public SpellScriptLoader
 
             void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
-                PreventDefaultAction();
-                int32 bp = int32(eventInfo.GetDamageInfo()->GetDamage() * 1.5f);
-                GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, bp, _procTarget, true, NULL, aurEff);
+                int32 heal = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 150));
+                GetTarget()->CastCustomSpell(SPELL_DK_BLOOD_GORGED_HEAL, SPELLVALUE_BASE_POINT0, heal, _procTarget, true, NULL, aurEff);
             }
 
             void Register() OVERRIDE
             {
                 DoCheckProc += AuraCheckProcFn(spell_dk_blood_gorged_AuraScript::CheckProc);
-                OnEffectProc += AuraEffectProcFn(spell_dk_blood_gorged_AuraScript::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+                OnEffectProc += AuraEffectProcFn(spell_dk_blood_gorged_AuraScript::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
             }
 
         private:
@@ -1026,11 +1025,15 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
 
             bool Validate(SpellInfo const* spellInfo) OVERRIDE
             {
-                // can't use other spell than will of the necropolis due to spell_ranks dependency
-                if (sSpellMgr->GetFirstSpellInChain(SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1) != sSpellMgr->GetFirstSpellInChain(spellInfo->Id))
+                SpellInfo const* firstRankSpellInfo = sSpellMgr->GetSpellInfo(SPELL_DK_WILL_OF_THE_NECROPOLIS_AURA_R1);
+                if (!firstRankSpellInfo)
                     return false;
 
-                uint8 rank = sSpellMgr->GetSpellRank(spellInfo->Id);
+                // can't use other spell than will of the necropolis due to spell_ranks dependency
+                if (!spellInfo->IsRankOf(firstRankSpellInfo))
+                    return false;
+
+                uint8 rank = spellInfo->GetRank();
                 if (!sSpellMgr->GetSpellWithRank(SPELL_DK_WILL_OF_THE_NECROPOLIS_TALENT_R1, rank, true))
                     return false;
 
@@ -1054,7 +1057,7 @@ class spell_dk_will_of_the_necropolis : public SpellScriptLoader
             void Absorb(AuraEffect* /*aurEff*/, DamageInfo & dmgInfo, uint32 & absorbAmount)
             {
                 // min pct of hp is stored in effect 0 of talent spell
-                uint32 rank = sSpellMgr->GetSpellRank(GetSpellInfo()->Id);
+                uint8 rank = GetSpellInfo()->GetRank();
                 SpellInfo const* talentProto = sSpellMgr->GetSpellInfo(sSpellMgr->GetSpellWithRank(SPELL_DK_WILL_OF_THE_NECROPOLIS_TALENT_R1, rank));
 
                 int32 remainingHp = int32(GetTarget()->GetHealth() - dmgInfo.GetDamage());
