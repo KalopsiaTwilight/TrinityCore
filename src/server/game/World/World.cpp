@@ -910,9 +910,9 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_GROUP_VISIBILITY] = sConfigMgr->GetIntDefault("Visibility.GroupMode", 1);
 
     m_int_configs[CONFIG_MAIL_DELIVERY_DELAY] = sConfigMgr->GetIntDefault("MailDeliveryDelay", HOUR);
-    m_bool_configs[CONFIG_EXTERNAL_MAIL] = ConfigMgr::GetBoolDefault("ExternalMail", false);
-    m_int_configs[CONFIG_EXTERNAL_MAIL_INTERVAL] = ConfigMgr::GetIntDefault("ExternalMailInterval", 1);
-    m_bool_configs[CONFIG_MAIL_LOAD_ACCOUNTWIDE] = ConfigMgr::GetBoolDefault("MailLoadAccountwide", false);
+    m_bool_configs[CONFIG_EXTERNAL_MAIL] = sConfigMgr->GetBoolDefault("ExternalMail", false);
+    m_int_configs[CONFIG_EXTERNAL_MAIL_INTERVAL] = sConfigMgr->GetIntDefault("ExternalMailInterval", 1);
+    m_bool_configs[CONFIG_MAIL_LOAD_ACCOUNTWIDE] = sConfigMgr->GetBoolDefault("MailLoadAccountwide", false);
 
     m_int_configs[CONFIG_UPTIME_UPDATE] = sConfigMgr->GetIntDefault("UpdateUptimeInterval", 10);
     if (int32(m_int_configs[CONFIG_UPTIME_UPDATE]) <= 0)
@@ -1040,7 +1040,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_DIE_COMMAND_MODE] = sConfigMgr->GetBoolDefault("Die.Command.Mode", true);
 
     m_float_configs[CONFIG_THREAT_RADIUS] = sConfigMgr->GetFloatDefault("ThreatRadius", 60.0f);
-    m_float_configs[CONFIG_MAX_AGRO_RANGE] = ConfigMgr::GetFloatDefault("MaxAgroRange", 45.0f);
+    m_float_configs[CONFIG_MAX_AGRO_RANGE] = sConfigMgr->GetFloatDefault("MaxAgroRange", 45.0f);
 
     // always use declined names in the russian client
     m_bool_configs[CONFIG_DECLINED_NAMES_USED] =
