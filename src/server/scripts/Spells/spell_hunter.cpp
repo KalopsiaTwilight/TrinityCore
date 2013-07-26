@@ -32,11 +32,9 @@
 
 enum HunterSpells
 {
-    SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET            = 61669,
-    SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE       = 34075,
     SPELL_HUNTER_BESTIAL_WRATH                      = 19574,
     SPELL_HUNTER_CHIMERA_SHOT_HEAL                  = 53353,
-    SPELL_HUNTER_GLYPH_OF_ASPECT_OF_THE_VIPER       = 56851,
+    SPELL_HUNTER_FIRE                               = 82926,
     SPELL_HUNTER_IMPROVED_MEND_PET                  = 24406,
     SPELL_HUNTER_INVIGORATION_TRIGGERED             = 53398,
     SPELL_HUNTER_LOCK_AND_LOAD                      = 56453,
@@ -55,99 +53,6 @@ enum HunterSpells
     SPELL_HUNTER_STEADY_SHOT_FOCUS                  = 77443,
     SPELL_HUNTER_THRILL_OF_THE_HUNT                 = 34720,
     SPELL_DRAENEI_GIFT_OF_THE_NAARU                 = 59543,
-};
-
-// 13161 - Aspect of the Beast
-class spell_hun_aspect_of_the_beast : public SpellScriptLoader
-{
-    public:
-        spell_hun_aspect_of_the_beast() : SpellScriptLoader("spell_hun_aspect_of_the_beast") { }
-
-        class spell_hun_aspect_of_the_beast_AuraScript : public AuraScript
-        {
-            PrepareAuraScript(spell_hun_aspect_of_the_beast_AuraScript);
-
-            bool Load() OVERRIDE
-            {
-                return GetCaster()->GetTypeId() == TYPEID_PLAYER;
-            }
-
-            bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
-            {
-                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET))
-                    return false;
-                return true;
-            }
-
-            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-            {
-                if (Player* caster = GetCaster()->ToPlayer())
-                    if (Pet* pet = caster->GetPet())
-                        pet->RemoveAurasDueToSpell(SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET);
-            }
-
-            void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
-            {
-                if (Player* caster = GetCaster()->ToPlayer())
-                    if (caster->GetPet())
-                        caster->CastSpell(caster, SPELL_HUNTER_ASPECT_OF_THE_BEAST_PET, true);
-            }
-
-            void Register() OVERRIDE
-            {
-                AfterEffectApply += AuraEffectApplyFn(spell_hun_aspect_of_the_beast_AuraScript::OnApply, EFFECT_0, SPELL_AURA_UNTRACKABLE, AURA_EFFECT_HANDLE_REAL);
-                AfterEffectRemove += AuraEffectRemoveFn(spell_hun_aspect_of_the_beast_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_UNTRACKABLE, AURA_EFFECT_HANDLE_REAL);
-            }
-        };
-
-        AuraScript* GetAuraScript() const OVERRIDE
-        {
-            return new spell_hun_aspect_of_the_beast_AuraScript();
-        }
-};
-
-// 34074 - Aspect of the Viper
-class spell_hun_ascpect_of_the_viper : public SpellScriptLoader
-{
-    public:
-        spell_hun_ascpect_of_the_viper() : SpellScriptLoader("spell_hun_ascpect_of_the_viper") { }
-
-        class spell_hun_ascpect_of_the_viper_AuraScript : public AuraScript
-        {
-            PrepareAuraScript(spell_hun_ascpect_of_the_viper_AuraScript);
-
-            bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
-            {
-                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE))
-                    return false;
-                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_GLYPH_OF_ASPECT_OF_THE_VIPER))
-                    return false;
-                return true;
-            }
-
-            void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
-            {
-                PreventDefaultAction();
-
-                uint32 maxMana = GetTarget()->GetMaxPower(POWER_MANA);
-                int32 mana = CalculatePct(maxMana, GetTarget()->GetAttackTime(RANGED_ATTACK) / 1000.0f);
-
-                if (AuraEffect const* glyph = GetTarget()->GetAuraEffect(SPELL_HUNTER_GLYPH_OF_ASPECT_OF_THE_VIPER, EFFECT_0))
-                    AddPct(mana, glyph->GetAmount());
-
-                GetTarget()->CastCustomSpell(SPELL_HUNTER_ASPECT_OF_THE_VIPER_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, GetTarget(), true, NULL, aurEff);
-            }
-
-            void Register() OVERRIDE
-            {
-                OnEffectProc += AuraEffectProcFn(spell_hun_ascpect_of_the_viper_AuraScript::HandleProc, EFFECT_0, SPELL_AURA_OBS_MOD_POWER);
-            }
-        };
-
-        AuraScript* GetAuraScript() const OVERRIDE
-        {
-            return new spell_hun_ascpect_of_the_viper_AuraScript();
-        }
 };
 
 // 53209 - Chimera Shot
@@ -172,7 +77,7 @@ class spell_hun_chimera_shot : public SpellScriptLoader
             {
                 GetCaster()->CastSpell(GetCaster(), SPELL_HUNTER_CHIMERA_SHOT_HEAL, true);
 
-                if (Aura* aur = GetHitUnit()->GetAura(SPELL_HUNTER_SERPENT_STING))
+                if (Aura* aur = GetHitUnit()->GetAura(SPELL_HUNTER_SERPENT_STING, GetCaster()->GetGUID()))
                     aur->SetDuration(aur->GetSpellInfo()->GetMaxDuration(), true);
             }
 
@@ -216,6 +121,42 @@ class spell_hun_disengage : public SpellScriptLoader
         SpellScript* GetSpellScript() const OVERRIDE
         {
             return new spell_hun_disengage_SpellScript();
+        }
+};
+
+// 82926 - Fire!
+class spell_hun_fire : public SpellScriptLoader
+{
+    public:
+        spell_hun_fire() : SpellScriptLoader("spell_hun_fire") { }
+
+        class spell_hun_fire_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_hun_fire_AuraScript);
+
+            void HandleEffectCalcSpellMod(AuraEffect const* aurEff, SpellModifier*& spellMod)
+            {
+                if (!spellMod)
+                {
+                    spellMod = new SpellModifier(GetAura());
+                    spellMod->op = SPELLMOD_CASTING_TIME;
+                    spellMod->type = SPELLMOD_PCT;
+                    spellMod->spellId = GetId();
+                    spellMod->mask = GetSpellInfo()->Effects[aurEff->GetEffIndex()].SpellClassMask;
+                }
+
+                spellMod->value = -aurEff->GetAmount();
+            }
+
+            void Register() OVERRIDE
+            {
+                DoEffectCalcSpellMod += AuraEffectCalcSpellModFn(spell_hun_fire_AuraScript::HandleEffectCalcSpellMod, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const OVERRIDE
+        {
+            return new spell_hun_fire_AuraScript();
         }
 };
 
@@ -345,7 +286,8 @@ class spell_hun_masters_call : public SpellScriptLoader
 
             bool Validate(SpellInfo const* spellInfo) OVERRIDE
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_MASTERS_CALL_TRIGGERED) || !sSpellMgr->GetSpellInfo(spellInfo->Effects[EFFECT_0].CalcValue()) || !sSpellMgr->GetSpellInfo(spellInfo->Effects[EFFECT_1].CalcValue()))
+                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_MASTERS_CALL_TRIGGERED) ||
+                    !sSpellMgr->GetSpellInfo(spellInfo->Effects[EFFECT_0].CalcValue()))
                     return false;
                 return true;
             }
@@ -358,7 +300,6 @@ class spell_hun_masters_call : public SpellScriptLoader
                         {
                             TriggerCastFlags castMask = TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_IGNORE_CASTER_AURASTATE);
                             target->CastSpell(ally, GetEffectValue(), castMask);
-                            target->CastSpell(ally, GetSpellInfo()->Effects[EFFECT_0].CalcValue(), castMask);
                         }
             }
 
@@ -661,6 +602,44 @@ class spell_hun_readiness : public SpellScriptLoader
         }
 };
 
+// 82925 - Ready, Set, Aim...
+class spell_hun_ready_set_aim : public SpellScriptLoader
+{
+    public:
+        spell_hun_ready_set_aim() : SpellScriptLoader("spell_hun_ready_set_aim") { }
+
+        class spell_hun_ready_set_aim_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_hun_ready_set_aim_AuraScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_FIRE))
+                    return false;
+                return true;
+            }
+
+            void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+            {
+                if (GetStackAmount() == 5)
+                {
+                    GetTarget()->CastSpell(GetTarget(), SPELL_HUNTER_FIRE, true, NULL, aurEff);
+                    GetTarget()->RemoveAura(GetId());
+                }
+            }
+
+            void Register() OVERRIDE
+            {
+                AfterEffectApply += AuraEffectApplyFn(spell_hun_ready_set_aim_AuraScript::OnApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+            }
+        };
+
+        AuraScript* GetAuraScript() const OVERRIDE
+        {
+            return new spell_hun_ready_set_aim_AuraScript();
+        }
+};
+
 // 37506 - Scatter Shot
 class spell_hun_scatter_shot : public SpellScriptLoader
 {
@@ -709,7 +688,8 @@ class spell_hun_sniper_training : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_SNIPER_TRAINING_R1) || !sSpellMgr->GetSpellInfo(SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1))
+                if (!sSpellMgr->GetSpellInfo(SPELL_HUNTER_SNIPER_TRAINING_R1) ||
+                    !sSpellMgr->GetSpellInfo(SPELL_HUNTER_SNIPER_TRAINING_BUFF_R1))
                     return false;
                 return true;
             }
@@ -960,10 +940,9 @@ class spell_hun_tnt : public SpellScriptLoader
 
 void AddSC_hunter_spell_scripts()
 {
-    new spell_hun_aspect_of_the_beast();
-    new spell_hun_ascpect_of_the_viper();
     new spell_hun_chimera_shot();
     new spell_hun_disengage();
+    new spell_hun_fire();
     new spell_hun_improved_mend_pet();
     new spell_hun_invigoration();
     new spell_hun_last_stand_pet();
@@ -974,6 +953,7 @@ void AddSC_hunter_spell_scripts()
     new spell_hun_pet_heart_of_the_phoenix();
     new spell_hun_rapid_recuperation();
     new spell_hun_readiness();
+    new spell_hun_ready_set_aim();
     new spell_hun_scatter_shot();
     new spell_hun_sniper_training();
     new spell_hun_steady_shot();
