@@ -3263,7 +3263,11 @@ public:
     static bool HandleSelfScaleCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
-            return false;
+        {
+            float currentScale = handler->GetSession()->GetPlayer()->GetObjectScale();
+            handler->PSendSysMessage(LANG_CUSTOM_SCALE_CURRENT, currentScale);
+            return true;
+        }
 
         float Scale = (float)atof((char*)args);
         if (Scale > 1.15f || Scale < 0.85f)
