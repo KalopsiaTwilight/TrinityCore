@@ -632,7 +632,7 @@ void CharacterDatabaseConnection::DoPrepareStatements()
 	
 	// CUSTOM
     PrepareStatement(CHAR_DEL_CHARACTER_ADDON, "DELETE FROM characters_addon WHERE guid = ?", CONNECTION_ASYNC);
-    PrepareStatement(CHAR_SEL_MAIL_ACCOUNTWIDE, "SELECT id, messageType, sender, receiver, subject, body, has_items, expire_time, deliver_time, money, cod, checked, stationery, mailTemplateId FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) ORDER BY id DESC", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_MAIL_ACCOUNTWIDE, "SELECT id, messageType, sender, receiver, subject, body, has_items, expire_time, deliver_time, money, cod, checked, stationery, mailTemplateId FROM mail WHERE receiver = ? OR (receiver IN (SELECT guid FROM characters WHERE account = ?) AND messageType = 0 AND stationery != 61 AND sender != receiver) ORDER BY id DESC", CONNECTION_SYNCH);
     PrepareStatement(CHAR_SEL_CHARACTER_MAILCOUNT_ACCOUNTWIDE, "SELECT COUNT(id) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0 AND deliver_time <= ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_CHARACTER_MAILDATE_ACCOUNTWIDE, "SELECT MIN(deliver_time) FROM mail WHERE receiver IN (SELECT guid FROM characters WHERE account = ?) AND (checked & 1) = 0", CONNECTION_ASYNC);
     PrepareStatement(CHAR_SEL_CHAR_LIST_INVENTORY_COUNT_ITEM, "SELECT COUNT(owner_guid) FROM character_inventory ci INNER JOIN item_instance ii ON ii.guid = ci.item WHERE owner_guid = ?", CONNECTION_SYNCH);

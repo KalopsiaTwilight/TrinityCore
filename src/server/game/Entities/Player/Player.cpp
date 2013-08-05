@@ -18339,7 +18339,8 @@ void Player::_LoadMail()
     else
     {
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAIL_ACCOUNTWIDE);
-        stmt->setUInt32(0, GetSession()->GetAccountId());
+        stmt->setUInt32(0, GetGUIDLow());
+        stmt->setUInt32(1, GetSession()->GetAccountId());
         result = CharacterDatabase.Query(stmt);
     }
 

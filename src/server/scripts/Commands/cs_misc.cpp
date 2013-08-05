@@ -3278,7 +3278,7 @@ public:
         }
 
         uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
-        if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
+        if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_DRAENEI && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
         {
             handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
             handler->SetSentErrorMessage(true);
@@ -3297,7 +3297,6 @@ public:
 
             if (scaleTimesChanged < 10)
             {
-                //if ((scaleUnlocked == 0 && Scale > 1.1f) || (scaleUnlocked == 0 && Scale < 0.9f))
                 if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
