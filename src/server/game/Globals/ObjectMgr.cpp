@@ -7013,6 +7013,7 @@ void ObjectMgr::LoadPointsOfInterest()
         uint32 point_id = fields[0].GetUInt32();
 
         PointOfInterest POI;
+        POI.entry = point_id;
         POI.x = fields[1].GetFloat();
         POI.y = fields[2].GetFloat();
         POI.icon = fields[3].GetUInt32();
@@ -8412,6 +8413,12 @@ bool ObjectMgr::IsVendorItemValid(uint32 vendor_entry, uint32 id, int32 maxcount
             ChatHandler(player->GetSession()).PSendSysMessage(LANG_ITEM_ALREADY_IN_LIST, id, ExtendedCost, type);
         else
             TC_LOG_ERROR(LOG_FILTER_SQL, "Table `npc_vendor` has duplicate items %u (with extended cost %u, type %u) for vendor (Entry: %u), ignoring", id, ExtendedCost, type, vendor_entry);
+        return false;
+    }
+
+    if (type == ITEM_VENDOR_TYPE_CURRENCY && maxcount == 0)
+    {
+        TC_LOG_ERROR(LOG_FILTER_SQL, "Table `(game_event_)npc_vendor` have Item (Entry: %u, type: %u) with missing maxcount for vendor (%u), ignore", id, type, ExtendedCost, vendor_entry);
         return false;
     }
 
