@@ -80,7 +80,7 @@ public:
         };
         static ChatCommand commandTable[] =
         {
-            { "morph",          SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,          "", NULL },
+            //{ "morph",          SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,          "", NULL }, -- Custom, have a separate command for .morph
             { "demorph",        SEC_GAMEMASTER,     false, &HandleDeMorphCommand,              "", NULL },
             { "modify",         SEC_MODERATOR,      false, NULL,                 "", modifyCommandTable },
             { NULL,             0,                  false, NULL,                               "", NULL }
