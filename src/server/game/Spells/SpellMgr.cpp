@@ -1224,7 +1224,7 @@ void SpellMgr::LoadSpellTalentRanks()
             node.rank  = rank + 1;
 
             node.prev = prevSpell;
-            node.next = node.rank < MAX_TALENT_RANK ? GetSpellInfo(talentInfo->RankID[rank + 1]) : NULL;
+            node.next = node.rank < MAX_TALENT_RANK ? GetSpellInfo(talentInfo->RankID[node.rank]) : NULL;
 
             mSpellChains[spellId] = node;
             mSpellInfoMap[spellId]->ChainEntry = &mSpellChains[spellId];
@@ -2858,6 +2858,9 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                     {
                         uint32 enchantId = spellInfo->Effects[j].MiscValue;
                         SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(enchantId);
+                        if (!enchant)
+                            break;
+
                         for (uint8 s = 0; s < MAX_ITEM_ENCHANTMENT_EFFECTS; ++s)
                         {
                             if (enchant->type[s] != ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL)
@@ -3047,6 +3050,11 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                 break;
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
+                break;            
+            case 38729:  // Rod of Purification
+            case 96946:  // Gaze of Occu'thar
+            case 101005: // Gaze of Occu'thar
+                spellInfo->AttributesCu |= SPELL_ATTR0_CU_TRIGGERED_BY_CASTER;
                 break;
             default:
                 break;
@@ -3167,6 +3175,9 @@ void SpellMgr::LoadSpellInfoCorrections()
             case 53232: // Rapid Killing (Rank 2)
                 // Entries were not updated after spell effect change, we have to do that manually :/
                 spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
+                break;
+            case 5308: // Execute
+                spellInfo->AttributesEx3 |= SPELL_ATTR3_CANT_TRIGGER_PROC;
                 break;
             case 59725: // Improved Spell Reflection - aoe aura
                 // Target entry seems to be wrong for this spell :/
@@ -3377,10 +3388,6 @@ void SpellMgr::LoadSpellInfoCorrections()
                 break;
             case 45602: // Ride Carpet
                 spellInfo->Effects[EFFECT_0].BasePoints = 0; // force seat 0, vehicle doesn't have the required seat flags for "no seat specified (-1)"
-                break;
-            case 59414: // Pulsing Shockwave Aura (Loken)
-                // this flag breaks movement, remove it
-                spellInfo->AttributesEx &= ~SPELL_ATTR1_CHANNELED_1;
                 break;
             case 61719: // Easter Lay Noblegarden Egg Aura - Interrupt flags copied from aura which this aura is linked with
                 spellInfo->AuraInterruptFlags = AURA_INTERRUPT_FLAG_HITBYSPELL | AURA_INTERRUPT_FLAG_TAKE_DAMAGE;
@@ -3754,6 +3761,10 @@ void SpellMgr::LoadSpellInfoCorrections()
                 // Crashes client on pressing ESC
                 spellInfo->AttributesEx4 &= ~SPELL_ATTR4_TRIGGERED;
                 break;
+            case 96942:  // Gaze of Occu'thar
+            case 101009: // Gaze of Occu'thar
+                spellInfo->AttributesEx &= ~SPELL_ATTR1_CHANNELED_1;
+                break;
             default:
                 break;
         }
@@ -3773,10 +3784,10 @@ void SpellMgr::LoadSpellInfoCorrections()
         }
     }
 
-    SummonPropertiesEntry* properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(121));
-    properties->Type = SUMMON_TYPE_TOTEM;
-    properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(647)); // 52893
-    properties->Type = SUMMON_TYPE_TOTEM;
+    if (SummonPropertiesEntry* properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(121)))
+        properties->Type = SUMMON_TYPE_TOTEM;
+    if (SummonPropertiesEntry* properties = const_cast<SummonPropertiesEntry*>(sSummonPropertiesStore.LookupEntry(647))) // 52893
+        properties->Type = SUMMON_TYPE_TOTEM;
 
     TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, ">> Loaded SpellInfo corrections in %u ms", GetMSTimeDiffToNow(oldMSTime));
 }

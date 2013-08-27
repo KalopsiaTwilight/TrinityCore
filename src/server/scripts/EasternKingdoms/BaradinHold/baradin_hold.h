@@ -18,6 +18,10 @@
 #ifndef DEF_BARADIN_HOLD_H_
 #define DEF_BARADIN_HOLD_H_
 
+#include "Map.h"
+#include "Creature.h"
+#include "ObjectMgr.h"
+
 #define BHScriptName "instance_baradin_hold"
 
 uint32 const EncounterCount = 3;
@@ -43,7 +47,8 @@ enum CreatureIds
 enum GameObjectIds
 {
     GO_ARGALOTH_DOOR        = 207619,
-    GO_OCCUTHAR_DOOR        = 208953
+    GO_OCCUTHAR_DOOR        = 208953,
+    GO_ALIZABAL_DOOR        = 209849
 };
 
 template<class AI>
