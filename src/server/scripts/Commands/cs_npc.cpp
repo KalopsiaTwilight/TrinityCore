@@ -193,8 +193,8 @@ public:
             //{ @todo fix or remove these commands
             { "name",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetNameCommand,           "", NULL },
             { "subname",        RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetSubNameCommand,        "", NULL },
-            { "dynflags",       SEC_GAMEMASTER,     false, &HandleNpcSetDynamicFlagsCommand,   "", NULL },
-            { "unitflags",      SEC_GAMEMASTER,     false, &HandleNpcSetUnitFlagsCommand,      "", NULL },
+            { "dynflags",       RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetDynamicFlagsCommand,   "", NULL },
+            { "unitflags",      RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetUnitFlagsCommand,      "", NULL },
             //}
             { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };

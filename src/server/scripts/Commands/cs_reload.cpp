@@ -155,7 +155,7 @@ public:
             { "waypoint_data",                RBAC_PERM_ADMINISTRATOR_COMMANDS, true,  &HandleReloadWpCommand,                         "", NULL },
             { "vehicle_accessory",            RBAC_PERM_ADMINISTRATOR_COMMANDS, true,  &HandleReloadVehicleAccessoryCommand,           "", NULL },
             { "vehicle_template_accessory",   RBAC_PERM_ADMINISTRATOR_COMMANDS, true,  &HandleReloadVehicleTemplateAccessoryCommand,   "", NULL },
-            { "npc_tele",                     SEC_ADMINISTRATOR, true,  &HandleReloadNPCTeleCommand,                    "", NULL },
+            { "npc_tele",                     RBAC_PERM_ADMINISTRATOR_COMMANDS, true,  &HandleReloadNPCTeleCommand,                    "", NULL },
             { NULL,                           0,                 false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
