@@ -33,15 +33,18 @@ EndScriptData */
 #include "Player.h"
 #include "Pet.h"
 
-struct NpcFlagText
+template<typename E, typename T = char const*>
+struct EnumName
 {
-    uint32 flag;
-    int32 text;
+    E Value;
+    T Name;
 };
+
+#define CREATE_NAMED_ENUM(VALUE) { VALUE, STRINGIZE(VALUE) }
 
 #define NPCFLAG_COUNT   24
 
-NpcFlagText const npcFlagTexts[NPCFLAG_COUNT] =
+EnumName<NPCFlags, int32> const npcFlagTexts[NPCFLAG_COUNT] =
 {
     { UNIT_NPC_FLAG_AUCTIONEER,         LANG_NPCINFO_AUCTIONEER         },
     { UNIT_NPC_FLAG_BANKER,             LANG_NPCINFO_BANKER             },
@@ -69,90 +72,77 @@ NpcFlagText const npcFlagTexts[NPCFLAG_COUNT] =
     { UNIT_NPC_FLAG_VENDOR_REAGENT,     LANG_NPCINFO_VENDOR_REAGENT     }
 };
 
-struct MechanicImmune
+EnumName<Mechanics> const mechanicImmunes[MAX_MECHANIC] =
 {
-    uint32 flag;
-    char const* text;
+    CREATE_NAMED_ENUM(MECHANIC_NONE),
+    CREATE_NAMED_ENUM(MECHANIC_CHARM),
+    CREATE_NAMED_ENUM(MECHANIC_DISORIENTED),
+    CREATE_NAMED_ENUM(MECHANIC_DISARM),
+    CREATE_NAMED_ENUM(MECHANIC_DISTRACT),
+    CREATE_NAMED_ENUM(MECHANIC_FEAR),
+    CREATE_NAMED_ENUM(MECHANIC_GRIP),
+    CREATE_NAMED_ENUM(MECHANIC_ROOT),
+    CREATE_NAMED_ENUM(MECHANIC_SLOW_ATTACK),
+    CREATE_NAMED_ENUM(MECHANIC_SILENCE),
+    CREATE_NAMED_ENUM(MECHANIC_SLEEP),
+    CREATE_NAMED_ENUM(MECHANIC_SNARE),
+    CREATE_NAMED_ENUM(MECHANIC_STUN),
+    CREATE_NAMED_ENUM(MECHANIC_FREEZE),
+    CREATE_NAMED_ENUM(MECHANIC_KNOCKOUT),
+    CREATE_NAMED_ENUM(MECHANIC_BLEED),
+    CREATE_NAMED_ENUM(MECHANIC_BANDAGE),
+    CREATE_NAMED_ENUM(MECHANIC_POLYMORPH),
+    CREATE_NAMED_ENUM(MECHANIC_BANISH),
+    CREATE_NAMED_ENUM(MECHANIC_SHIELD),
+    CREATE_NAMED_ENUM(MECHANIC_SHACKLE),
+    CREATE_NAMED_ENUM(MECHANIC_MOUNT),
+    CREATE_NAMED_ENUM(MECHANIC_INFECTED),
+    CREATE_NAMED_ENUM(MECHANIC_TURN),
+    CREATE_NAMED_ENUM(MECHANIC_HORROR),
+    CREATE_NAMED_ENUM(MECHANIC_INVULNERABILITY),
+    CREATE_NAMED_ENUM(MECHANIC_INTERRUPT),
+    CREATE_NAMED_ENUM(MECHANIC_DAZE),
+    CREATE_NAMED_ENUM(MECHANIC_DISCOVERY),
+    CREATE_NAMED_ENUM(MECHANIC_IMMUNE_SHIELD),
+    CREATE_NAMED_ENUM(MECHANIC_SAPPED),
+    CREATE_NAMED_ENUM(MECHANIC_ENRAGED),
+    CREATE_NAMED_ENUM(MECHANIC_WOUNDED)
 };
 
-MechanicImmune const mechanicImmunes[MAX_MECHANIC] =
+EnumName<UnitFlags> const unitFlags[MAX_UNIT_FLAGS] =
 {
-    { MECHANIC_NONE            , "MECHANIC_NONE"            },
-    { MECHANIC_CHARM           , "MECHANIC_CHARM"           },
-    { MECHANIC_DISORIENTED     , "MECHANIC_DISORIENTED"     },
-    { MECHANIC_DISARM          , "MECHANIC_DISARM"          },
-    { MECHANIC_DISTRACT        , "MECHANIC_DISTRACT"        },
-    { MECHANIC_FEAR            , "MECHANIC_FEAR"            },
-    { MECHANIC_GRIP            , "MECHANIC_GRIP"            },
-    { MECHANIC_ROOT            , "MECHANIC_ROOT"            },
-    { MECHANIC_SLOW_ATTACK     , "MECHANIC_SLOW_ATTACK"     },
-    { MECHANIC_SILENCE         , "MECHANIC_SILENCE"         },
-    { MECHANIC_SLEEP           , "MECHANIC_SLEEP"           },
-    { MECHANIC_SNARE           , "MECHANIC_SNARE"           },
-    { MECHANIC_STUN            , "MECHANIC_STUN"            },
-    { MECHANIC_FREEZE          , "MECHANIC_FREEZE"          },
-    { MECHANIC_KNOCKOUT        , "MECHANIC_KNOCKOUT"        },
-    { MECHANIC_BLEED           , "MECHANIC_BLEED"           },
-    { MECHANIC_BANDAGE         , "MECHANIC_BANDAGE"         },
-    { MECHANIC_POLYMORPH       , "MECHANIC_POLYMORPH"       },
-    { MECHANIC_BANISH          , "MECHANIC_BANISH"          },
-    { MECHANIC_SHIELD          , "MECHANIC_SHIELD"          },
-    { MECHANIC_SHACKLE         , "MECHANIC_SHACKLE"         },
-    { MECHANIC_MOUNT           , "MECHANIC_MOUNT"           },
-    { MECHANIC_INFECTED        , "MECHANIC_INFECTED"        },
-    { MECHANIC_TURN            , "MECHANIC_TURN"            },
-    { MECHANIC_HORROR          , "MECHANIC_HORROR"          },
-    { MECHANIC_INVULNERABILITY , "MECHANIC_INVULNERABILITY" },
-    { MECHANIC_INTERRUPT       , "MECHANIC_INTERRUPT"       },
-    { MECHANIC_DAZE            , "MECHANIC_DAZE"            },
-    { MECHANIC_DISCOVERY       , "MECHANIC_DISCOVERY"       },
-    { MECHANIC_IMMUNE_SHIELD   , "MECHANIC_IMMUNE_SHIELD"   },
-    { MECHANIC_SAPPED          , "MECHANIC_SAPPED"          },
-    { MECHANIC_ENRAGED         , "MECHANIC_ENRAGED"         },
-    { MECHANIC_WOUNDED         , "MECHANIC_WOUNDED"         }
-};
-
-
-struct UnitFlag
-{
-    uint32 flag;
-    char const* text;
-};
-
-UnitFlag const unitFlags[MAX_UNIT_FLAGS] =
-{
-    { UNIT_FLAG_SERVER_CONTROLLED   , "UNIT_FLAG_SERVER_CONTROLLED"     },
-    { UNIT_FLAG_NON_ATTACKABLE      , "UNIT_FLAG_NON_ATTACKABLE"        },
-    { UNIT_FLAG_DISABLE_MOVE        , "UNIT_FLAG_DISABLE_MOVE"          },
-    { UNIT_FLAG_PVP_ATTACKABLE      , "UNIT_FLAG_PVP_ATTACKABLE"        },
-    { UNIT_FLAG_RENAME              , "UNIT_FLAG_RENAME"                },
-    { UNIT_FLAG_PREPARATION         , "UNIT_FLAG_PREPARATION"           },
-    { UNIT_FLAG_UNK_6               , "UNIT_FLAG_UNK_6"                 },
-    { UNIT_FLAG_NOT_ATTACKABLE_1    , "UNIT_FLAG_NOT_ATTACKABLE_1"      },
-    { UNIT_FLAG_IMMUNE_TO_PC        , "UNIT_FLAG_IMMUNE_TO_PC"          },
-    { UNIT_FLAG_IMMUNE_TO_NPC       , "UNIT_FLAG_IMMUNE_TO_NPC"         },
-    { UNIT_FLAG_LOOTING             , "UNIT_FLAG_LOOTING"               },
-    { UNIT_FLAG_PET_IN_COMBAT       , "UNIT_FLAG_PET_IN_COMBAT"         },
-    { UNIT_FLAG_PVP                 , "UNIT_FLAG_PVP"                   },
-    { UNIT_FLAG_SILENCED            , "UNIT_FLAG_SILENCED"              },
-    { UNIT_FLAG_UNK_14              , "UNIT_FLAG_UNK_14"                },
-    { UNIT_FLAG_UNK_15              , "UNIT_FLAG_UNK_15"                },
-    { UNIT_FLAG_UNK_16              , "UNIT_FLAG_UNK_16"                },
-    { UNIT_FLAG_PACIFIED            , "UNIT_FLAG_PACIFIED"              },
-    { UNIT_FLAG_STUNNED             , "UNIT_FLAG_STUNNED"               },
-    { UNIT_FLAG_IN_COMBAT           , "UNIT_FLAG_IN_COMBAT"             },
-    { UNIT_FLAG_TAXI_FLIGHT         , "UNIT_FLAG_TAXI_FLIGHT"           },
-    { UNIT_FLAG_DISARMED            , "UNIT_FLAG_DISARMED"              },
-    { UNIT_FLAG_CONFUSED            , "UNIT_FLAG_CONFUSED"              },
-    { UNIT_FLAG_FLEEING             , "UNIT_FLAG_FLEEING"               },
-    { UNIT_FLAG_PLAYER_CONTROLLED   , "UNIT_FLAG_PLAYER_CONTROLLED"     },
-    { UNIT_FLAG_NOT_SELECTABLE      , "UNIT_FLAG_NOT_SELECTABLE"        },
-    { UNIT_FLAG_SKINNABLE           , "UNIT_FLAG_SKINNABLE"             },
-    { UNIT_FLAG_MOUNT               , "UNIT_FLAG_MOUNT"                 },
-    { UNIT_FLAG_UNK_28              , "UNIT_FLAG_UNK_28"                },
-    { UNIT_FLAG_UNK_29              , "UNIT_FLAG_UNK_29"                },
-    { UNIT_FLAG_SHEATHE             , "UNIT_FLAG_SHEATHE"               },
-    { UNIT_FLAG_UNK_31              , "UNIT_FLAG_UNK_31"                }
+    CREATE_NAMED_ENUM(UNIT_FLAG_SERVER_CONTROLLED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_NON_ATTACKABLE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_DISABLE_MOVE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PVP_ATTACKABLE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_RENAME),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PREPARATION),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_6),
+    CREATE_NAMED_ENUM(UNIT_FLAG_NOT_ATTACKABLE_1),
+    CREATE_NAMED_ENUM(UNIT_FLAG_IMMUNE_TO_PC),
+    CREATE_NAMED_ENUM(UNIT_FLAG_IMMUNE_TO_NPC),
+    CREATE_NAMED_ENUM(UNIT_FLAG_LOOTING),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PET_IN_COMBAT),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PVP),
+    CREATE_NAMED_ENUM(UNIT_FLAG_SILENCED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_14),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_15),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_16),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PACIFIED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_STUNNED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_IN_COMBAT),
+    CREATE_NAMED_ENUM(UNIT_FLAG_TAXI_FLIGHT),
+    CREATE_NAMED_ENUM(UNIT_FLAG_DISARMED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_CONFUSED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_FLEEING),
+    CREATE_NAMED_ENUM(UNIT_FLAG_PLAYER_CONTROLLED),
+    CREATE_NAMED_ENUM(UNIT_FLAG_NOT_SELECTABLE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_SKINNABLE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_MOUNT),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_28),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_29),
+    CREATE_NAMED_ENUM(UNIT_FLAG_SHEATHE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_31)
 };
 
 class npc_commandscript : public CommandScript
@@ -164,75 +154,75 @@ public:
     {
         static ChatCommand npcAddCommandTable[] =
         {
-            { "formation",      SEC_MODERATOR,      false, &HandleNpcAddFormationCommand,      "", NULL },
-            { "item",           SEC_GAMEMASTER,     false, &HandleNpcAddVendorItemCommand,     "", NULL },
-            { "move",           SEC_GAMEMASTER,     false, &HandleNpcAddMoveCommand,           "", NULL },
-            { "temp",           SEC_GAMEMASTER,     false, &HandleNpcAddTempSpawnCommand,      "", NULL },
+            { "formation",      RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcAddFormationCommand,      "", NULL },
+            { "item",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcAddVendorItemCommand,     "", NULL },
+            { "move",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcAddMoveCommand,           "", NULL },
+            { "temp",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcAddTempSpawnCommand,      "", NULL },
             //{@todo fix or remove this command
-            { "weapon",         SEC_ADMINISTRATOR,  false, &HandleNpcAddWeaponCommand,         "", NULL },
+            { "weapon",         RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcAddWeaponCommand,         "", NULL },
             //}
-            { "",               SEC_GAMEMASTER,     false, &HandleNpcAddCommand,               "", NULL },
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { "",               RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcAddCommand,               "", NULL },
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcDeleteCommandTable[] =
         {
-            { "item",           SEC_GAMEMASTER,     false, &HandleNpcDeleteVendorItemCommand,  "", NULL },
-            { "",               SEC_GAMEMASTER,     false, &HandleNpcDeleteCommand,            "", NULL },
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { "item",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcDeleteVendorItemCommand,  "", NULL },
+            { "",               RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcDeleteCommand,            "", NULL },
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcFollowCommandTable[] =
         {
-            { "stop",           SEC_GAMEMASTER,     false, &HandleNpcUnFollowCommand,          "", NULL },
-            { "",               SEC_GAMEMASTER,     false, &HandleNpcFollowCommand,            "", NULL },
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { "stop",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcUnFollowCommand,          "", NULL },
+            { "",               RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcFollowCommand,            "", NULL },
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcSetCommandTable[] =
         {
-            { "allowmove",      SEC_ADMINISTRATOR,  false, &HandleNpcSetAllowMovementCommand,  "", NULL },
-            { "entry",          SEC_ADMINISTRATOR,  false, &HandleNpcSetEntryCommand,          "", NULL },
-            { "factionid",      SEC_GAMEMASTER,     false, &HandleNpcSetFactionIdCommand,      "", NULL },
-            { "flag",           SEC_GAMEMASTER,     false, &HandleNpcSetFlagCommand,           "", NULL },
-            { "level",          SEC_GAMEMASTER,     false, &HandleNpcSetLevelCommand,          "", NULL },
-            { "link",           SEC_GAMEMASTER,     false, &HandleNpcSetLinkCommand,           "", NULL },
-            { "model",          SEC_GAMEMASTER,     false, &HandleNpcSetModelCommand,          "", NULL },
-            { "movetype",       SEC_GAMEMASTER,     false, &HandleNpcSetMoveTypeCommand,       "", NULL },
-            { "phase",          SEC_GAMEMASTER,     false, &HandleNpcSetPhaseCommand,          "", NULL },
-            { "spawndist",      SEC_GAMEMASTER,     false, &HandleNpcSetSpawnDistCommand,      "", NULL },
-            { "spawntime",      SEC_GAMEMASTER,     false, &HandleNpcSetSpawnTimeCommand,      "", NULL },
-            { "data",           SEC_ADMINISTRATOR,  false, &HandleNpcSetDataCommand,           "", NULL },
+            { "allowmove",      RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcSetAllowMovementCommand,  "", NULL },
+            { "entry",          RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcSetEntryCommand,          "", NULL },
+            { "factionid",      RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetFactionIdCommand,      "", NULL },
+            { "flag",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetFlagCommand,           "", NULL },
+            { "level",          RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetLevelCommand,          "", NULL },
+            { "link",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetLinkCommand,           "", NULL },
+            { "model",          RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetModelCommand,          "", NULL },
+            { "movetype",       RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetMoveTypeCommand,       "", NULL },
+            { "phase",          RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetPhaseCommand,          "", NULL },
+            { "spawndist",      RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetSpawnDistCommand,      "", NULL },
+            { "spawntime",      RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetSpawnTimeCommand,      "", NULL },
+            { "data",           RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcSetDataCommand,           "", NULL },
             //{ @todo fix or remove these commands
-            { "name",           SEC_GAMEMASTER,     false, &HandleNpcSetNameCommand,           "", NULL },
-            { "subname",        SEC_GAMEMASTER,     false, &HandleNpcSetSubNameCommand,        "", NULL },
+            { "name",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetNameCommand,           "", NULL },
+            { "subname",        RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcSetSubNameCommand,        "", NULL },
             { "dynflags",       SEC_GAMEMASTER,     false, &HandleNpcSetDynamicFlagsCommand,   "", NULL },
             { "unitflags",      SEC_GAMEMASTER,     false, &HandleNpcSetUnitFlagsCommand,      "", NULL },
             //}
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcCommandTable[] =
         {
-            { "info",           SEC_ADMINISTRATOR,  false, &HandleNpcInfoCommand,              "", NULL },
-            { "near",           SEC_GAMEMASTER,     false, &HandleNpcNearCommand,              "", NULL },
-            { "move",           SEC_GAMEMASTER,     false, &HandleNpcMoveCommand,              "", NULL },
-            { "playemote",      SEC_ADMINISTRATOR,  false, &HandleNpcPlayEmoteCommand,         "", NULL },
-            { "say",            SEC_MODERATOR,      false, &HandleNpcSayCommand,               "", NULL },
-            { "emote",          SEC_MODERATOR,      false, &HandleNpcTextEmoteCommand,         "", NULL },
-            { "whisper",        SEC_MODERATOR,      false, &HandleNpcWhisperCommand,           "", NULL },
-            { "yell",           SEC_MODERATOR,      false, &HandleNpcYellCommand,              "", NULL },
-            { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
-            { "add",            SEC_GAMEMASTER,     false, NULL,                 "", npcAddCommandTable },
-            { "delete",         SEC_GAMEMASTER,     false, NULL,              "", npcDeleteCommandTable },
-            { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
-            { "set",            SEC_GAMEMASTER,     false, NULL,                 "", npcSetCommandTable },
-            { "return",         SEC_GAMEMASTER,     false, &HandleNpcReturnCommand,            "", NULL },
-            { "scale",          SEC_GAMEMASTER,     false, &HandleNpcCustScaleCommand,         "", NULL },
-            { "faction",        SEC_GAMEMASTER,     false, &HandleNpcCustFactCommand,          "", NULL },
-            { "attack",         SEC_GAMEMASTER,     false, &HandleNpcAttackCommand,            "", NULL },
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { "info",           RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcInfoCommand,              "", NULL },
+            { "near",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcNearCommand,              "", NULL },
+            { "move",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcMoveCommand,              "", NULL },
+            { "playemote",      RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcPlayEmoteCommand,         "", NULL },
+            { "say",            RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcSayCommand,               "", NULL },
+            { "textemote",      RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcTextEmoteCommand,         "", NULL },
+            { "whisper",        RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcWhisperCommand,           "", NULL },
+            { "yell",           RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcYellCommand,              "", NULL },
+            { "tame",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcTameCommand,              "", NULL },
+            { "add",            RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,                 "", npcAddCommandTable },
+            { "delete",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,              "", npcDeleteCommandTable },
+            { "follow",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,              "", npcFollowCommandTable },
+            { "set",            RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,                 "", npcSetCommandTable },
+            { "return",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcReturnCommand,            "", NULL },
+            { "scale",          RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcCustScaleCommand,         "", NULL },
+            { "faction",        RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcCustFactCommand,          "", NULL },
+            { "attack",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcAttackCommand,            "", NULL },
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "npc",            SEC_MODERATOR,      false, NULL,                    "", npcCommandTable },
-            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
+            { "npc",            RBAC_PERM_MODERATOR_COMMANDS,      false, NULL,                    "", npcCommandTable },
+            { NULL,             RBAC_PERM_PLAYER_COMMANDS,         false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -249,10 +239,15 @@ public:
 
         char* team = strtok(NULL, " ");
         int32 teamval = 0;
-        if (team) { teamval = atoi(team); }
-        if (teamval < 0) { teamval = 0; }
+        if (team)
+            teamval = atoi(team);
+
+        if (teamval < 0)
+            teamval = 0;
 
         uint32 id  = atoi(charID);
+        if (!sObjectMgr->GetCreatureTemplate(id))
+            return false;
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
         {
@@ -759,8 +754,8 @@ public:
 
         handler->PSendSysMessage(LANG_NPCINFO_UNIT_FIELD_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS));
         for (uint8 i = 0; i < MAX_UNIT_FLAGS; ++i)
-            if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].flag)
-                handler->PSendSysMessage(unitFlags[i].text, unitFlags[i].flag);
+            if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].Value)
+                handler->PSendSysMessage("%s (0x%X)", unitFlags[i].Name, unitFlags[i].Value);
 
         handler->PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS_2), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->getFaction());
         handler->PSendSysMessage(LANG_COMMAND_RAWPAWNTIMES, defRespawnDelayStr.c_str(), curRespawnDelayStr.c_str());
@@ -772,13 +767,13 @@ public:
         handler->PSendSysMessage(LANG_NPCINFO_AIINFO, target->GetAIName().c_str(), target->GetScriptName().c_str());
 
         for (uint8 i = 0; i < NPCFLAG_COUNT; i++)
-            if (npcflags & npcFlagTexts[i].flag)
-                handler->PSendSysMessage(npcFlagTexts[i].text, npcFlagTexts[i].flag);
+            if (npcflags & npcFlagTexts[i].Value)
+                handler->PSendSysMessage(npcFlagTexts[i].Name);
 
         handler->PSendSysMessage(LANG_NPCINFO_MECHANIC_IMMUNE, mechanicImmuneMask);
         for (uint8 i = 0; i < MAX_MECHANIC; ++i)
-            if ((mechanicImmuneMask << 1) & mechanicImmunes[i].flag)
-                handler->PSendSysMessage(mechanicImmunes[i].text, mechanicImmunes[i].flag);
+            if ((mechanicImmuneMask << 1) & mechanicImmunes[i].Value)
+                handler->PSendSysMessage("%s (0x%X)", mechanicImmunes[i].Name, mechanicImmunes[i].Value);
 
         return true;
     }
@@ -1396,6 +1391,9 @@ public:
 
         uint32 id = atoi(charID);
         if (!id)
+            return false;
+
+        if (!sObjectMgr->GetCreatureTemplate(id))
             return false;
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)

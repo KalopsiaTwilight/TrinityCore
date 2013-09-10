@@ -1680,7 +1680,7 @@ void Guild::HandleSetMemberNote(WorldSession* session, std::string const& note, 
     }
 }
 
-void Guild::HandleSetRankInfo(WorldSession* session, uint8 rankId, std::string const& name, uint32 rights, uint32 moneyPerDay, GuildBankRightsAndSlotsVec rightsAndSlots)
+void Guild::HandleSetRankInfo(WorldSession* session, uint8 rankId, std::string const& name, uint32 rights, uint32 moneyPerDay, const GuildBankRightsAndSlotsVec& rightsAndSlots)
 {
     // Only leader can modify ranks
     if (!_IsLeader(session->GetPlayer()))
@@ -1860,6 +1860,8 @@ void Guild::HandleAcceptMember(WorldSession* session)
 void Guild::HandleLeaveMember(WorldSession* session)
 {
     Player* player = session->GetPlayer();
+    bool disband = false;
+
     // If leader is leaving
     if (_IsLeader(player))
     {
@@ -1869,7 +1871,11 @@ void Guild::HandleLeaveMember(WorldSession* session)
         else if (GetLevel() >= sWorld->getIntConfig(CONFIG_GUILD_UNDELETABLE_LEVEL))
             SendCommandResult(session, GUILD_COMMAND_QUIT, ERR_GUILD_UNDELETABLE_DUE_TO_LEVEL);
         else
-            Disband(); // Guild is disbanded if leader leaves.
+        {
+            // Guild is disbanded if leader leaves.
+            Disband();
+            disband = true;
+        }
     }
     else
     {
@@ -1882,6 +1888,9 @@ void Guild::HandleLeaveMember(WorldSession* session)
     }
 
     sCalendarMgr->RemovePlayerGuildEventsAndSignups(player->GetGUID(), GetId());
+
+    if (disband)
+        delete this;
 }
 
 void Guild::HandleRemoveMember(WorldSession* session, uint64 guid)
@@ -2124,6 +2133,7 @@ void Guild::HandleDisband(WorldSession* session)
     {
         Disband();
         TC_LOG_DEBUG(LOG_FILTER_GUILD, "Guild Successfully Disbanded");
+        delete this;
     }
 }
 
@@ -2707,7 +2717,7 @@ bool Guild::AddMember(uint64 guid, uint8 rankId)
     return true;
 }
 
-void Guild::DeleteMember(uint64 guid, bool isDisbanding, bool isKicked)
+void Guild::DeleteMember(uint64 guid, bool isDisbanding, bool isKicked, bool canDeleteGuild)
 {
     uint32 lowguid = GUID_LOPART(guid);
     Player* player = ObjectAccessor::FindPlayer(guid);
@@ -2729,6 +2739,8 @@ void Guild::DeleteMember(uint64 guid, bool isDisbanding, bool isKicked)
         if (!newLeader)
         {
             Disband();
+            if (canDeleteGuild)
+                delete this;
             return;
         }
 
@@ -2828,10 +2840,10 @@ void Guild::SetBankTabText(uint8 tabId, std::string const& text)
 // Private methods
 void Guild::_CreateLogHolders()
 {
-    m_eventLog = new LogHolder(m_id, sWorld->getIntConfig(CONFIG_GUILD_EVENT_LOG_COUNT));
-    m_newsLog = new LogHolder(m_id, sWorld->getIntConfig(CONFIG_GUILD_NEWS_LOG_COUNT));
+    m_eventLog = new LogHolder(sWorld->getIntConfig(CONFIG_GUILD_EVENT_LOG_COUNT));
+    m_newsLog = new LogHolder(sWorld->getIntConfig(CONFIG_GUILD_NEWS_LOG_COUNT));
     for (uint8 tabId = 0; tabId <= GUILD_BANK_MAX_TABS; ++tabId)
-        m_bankEventLog[tabId] = new LogHolder(m_id, sWorld->getIntConfig(CONFIG_GUILD_BANK_EVENT_LOG_COUNT));
+        m_bankEventLog[tabId] = new LogHolder(sWorld->getIntConfig(CONFIG_GUILD_BANK_EVENT_LOG_COUNT));
 }
 
 void Guild::_CreateNewBankTab()

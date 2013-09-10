@@ -27,7 +27,6 @@
 #include "Chat.h"
 #include "Spell.h"
 #include "BattlegroundMgr.h"
-#include "CreatureAI.h"
 #include "MapManager.h"
 #include "BattlefieldWG.h"
 #include "BattlefieldMgr.h"
@@ -3050,11 +3049,6 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
                 break;
             case 72293: // Mark of the Fallen Champion (Deathbringer Saurfang)
                 spellInfo->AttributesCu |= SPELL_ATTR0_CU_NEGATIVE_EFF0;
-                break;            
-            case 38729:  // Rod of Purification
-            case 96946:  // Gaze of Occu'thar
-            case 101005: // Gaze of Occu'thar
-                spellInfo->AttributesCu |= SPELL_ATTR0_CU_TRIGGERED_BY_CASTER;
                 break;
             default:
                 break;
@@ -3078,8 +3072,6 @@ void SpellMgr::LoadSpellInfoCustomAttributes()
 
         spellInfo->_InitializeExplicitTargetMask();
     }
-
-    CreatureAI::FillAISpellInfo();
 
     TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, ">> Loaded SpellInfo custom attributes in %u ms", GetMSTimeDiffToNow(oldMSTime));
 }
@@ -3765,6 +3757,13 @@ void SpellMgr::LoadSpellInfoCorrections()
             case 101009: // Gaze of Occu'thar
                 spellInfo->AttributesEx &= ~SPELL_ATTR1_CHANNELED_1;
                 break;
+            // ISLE OF CONQUEST SPELLS
+            //
+            case 66551: // Teleport
+                spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(13); // 50000yd
+                break;
+            // ENDOF ISLE OF CONQUEST SPELLS
+            //
             default:
                 break;
         }

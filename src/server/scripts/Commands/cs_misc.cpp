@@ -46,94 +46,94 @@ public:
     {
         static ChatCommand groupCommandTable[] =
         {
-            { "leader",         SEC_ADMINISTRATOR,          false,  &HandleGroupLeaderCommand,          "", NULL },
-            { "disband",        SEC_ADMINISTRATOR,          false,  &HandleGroupDisbandCommand,         "", NULL },
-            { "remove",         SEC_ADMINISTRATOR,          false,  &HandleGroupRemoveCommand,          "", NULL },
-            { "join",           SEC_ADMINISTRATOR,          false,  &HandleGroupJoinCommand,            "", NULL },
-            { "list",           SEC_ADMINISTRATOR,          false,  &HandleGroupListCommand,            "", NULL },
+            { "leader",         RBAC_PERM_ADMINISTRATOR_COMMANDS,          false,  &HandleGroupLeaderCommand,          "", NULL },
+            { "disband",        RBAC_PERM_ADMINISTRATOR_COMMANDS,          false,  &HandleGroupDisbandCommand,         "", NULL },
+            { "remove",         RBAC_PERM_ADMINISTRATOR_COMMANDS,          false,  &HandleGroupRemoveCommand,          "", NULL },
+            { "join",           RBAC_PERM_ADMINISTRATOR_COMMANDS,          false,  &HandleGroupJoinCommand,            "", NULL },
+            { "list",           RBAC_PERM_ADMINISTRATOR_COMMANDS,          false,  &HandleGroupListCommand,            "", NULL },
             { NULL,             0,                          false,  NULL,                               "", NULL }
         };
         static ChatCommand petCommandTable[] =
         {
-            { "create",             SEC_GAMEMASTER,         false, &HandleCreatePetCommand,             "", NULL },
-            { "learn",              SEC_GAMEMASTER,         false, &HandlePetLearnCommand,              "", NULL },
-            { "unlearn",            SEC_GAMEMASTER,         false, &HandlePetUnlearnCommand,            "", NULL },
+            { "create",             RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleCreatePetCommand,             "", NULL },
+            { "learn",              RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandlePetLearnCommand,              "", NULL },
+            { "unlearn",            RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandlePetUnlearnCommand,            "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         static ChatCommand sendCommandTable[] =
         {
-            { "items",              SEC_ADMINISTRATOR,      true,  &HandleSendItemsCommand,             "", NULL },
-            { "mail",               SEC_MODERATOR,          true,  &HandleSendMailCommand,              "", NULL },
-            { "message",            SEC_ADMINISTRATOR,      true,  &HandleSendMessageCommand,           "", NULL },
-            { "money",              SEC_ADMINISTRATOR,      true,  &HandleSendMoneyCommand,             "", NULL },
+            { "items",              RBAC_PERM_ADMINISTRATOR_COMMANDS,      true,  &HandleSendItemsCommand,             "", NULL },
+            { "mail",               RBAC_PERM_MODERATOR_COMMANDS,          true,  &HandleSendMailCommand,              "", NULL },
+            { "message",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      true,  &HandleSendMessageCommand,           "", NULL },
+            { "money",              RBAC_PERM_ADMINISTRATOR_COMMANDS,      true,  &HandleSendMoneyCommand,             "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "dev",                SEC_ADMINISTRATOR,      false, &HandleDevCommand,                   "", NULL },
-            { "gps",                SEC_ADMINISTRATOR,      false, &HandleGPSCommand,                   "", NULL },
-            { "aura",               SEC_ADMINISTRATOR,      false, &HandleAuraCommand,                  "", NULL },
-            { "unaura",             SEC_ADMINISTRATOR,      false, &HandleUnAuraCommand,                "", NULL },
-            { "appear",             SEC_MODERATOR,          false, &HandleAppearCommand,                "", NULL },
-            { "summon",             SEC_MODERATOR,          false, &HandleSummonCommand,                "", NULL },
-            { "groupsummon",        SEC_MODERATOR,          false, &HandleGroupSummonCommand,           "", NULL },
-            { "commands",           SEC_PLAYER,             true,  &HandleCommandsCommand,              "", NULL },
-            { "die",                SEC_ADMINISTRATOR,      false, &HandleDieCommand,                   "", NULL },
-            { "revive",             SEC_ADMINISTRATOR,      true,  &HandleReviveCommand,                "", NULL },
-            { "dismount",           SEC_PLAYER,             false, &HandleDismountCommand,              "", NULL },
-            { "guid",               SEC_GAMEMASTER,         false, &HandleGUIDCommand,                  "", NULL },
-            { "help",               SEC_PLAYER,             true,  &HandleHelpCommand,                  "", NULL },
-            { "itemmove",           SEC_GAMEMASTER,         false, &HandleItemMoveCommand,              "", NULL },
-            { "cooldown",           SEC_ADMINISTRATOR,      false, &HandleCooldownCommand,              "", NULL },
-            { "distance",           SEC_ADMINISTRATOR,      false, &HandleGetDistanceCommand,           "", NULL },
-            { "recall",             SEC_MODERATOR,          false, &HandleRecallCommand,                "", NULL },
-            { "save",               SEC_PLAYER,             false, &HandleSaveCommand,                  "", NULL },
-            { "saveall",            SEC_MODERATOR,          true,  &HandleSaveAllCommand,               "", NULL },
-            { "kick",               SEC_GAMEMASTER,         true,  &HandleKickPlayerCommand,            "", NULL },
-            { "unstuck",            SEC_PLAYER,             true,  &HandleUnstuckCommand,               "", NULL },
-            { "linkgrave",          SEC_ADMINISTRATOR,      false, &HandleLinkGraveCommand,             "", NULL },
-            { "neargrave",          SEC_ADMINISTRATOR,      false, &HandleNearGraveCommand,             "", NULL },
-            { "showarea",           SEC_ADMINISTRATOR,      false, &HandleShowAreaCommand,              "", NULL },
-            { "hidearea",           SEC_ADMINISTRATOR,      false, &HandleHideAreaCommand,              "", NULL },
-            { "additem",            SEC_ADMINISTRATOR,      false, &HandleAddItemCommand,               "", NULL },
-            { "additemset",         SEC_ADMINISTRATOR,      false, &HandleAddItemSetCommand,            "", NULL },
-            { "bank",               SEC_ADMINISTRATOR,      false, &HandleBankCommand,                  "", NULL },
-            { "wchange",            SEC_ADMINISTRATOR,      false, &HandleChangeWeather,                "", NULL },
-            { "maxskill",           SEC_ADMINISTRATOR,      false, &HandleMaxSkillCommand,              "", NULL },
-            { "setskill",           SEC_ADMINISTRATOR,      false, &HandleSetSkillCommand,              "", NULL },
-            { "pinfo",              SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
-            { "playerinfo",         SEC_GAMEMASTER,         true,  &HandlePInfoCommand,                 "", NULL },
-            { "respawn",            SEC_ADMINISTRATOR,      false, &HandleRespawnCommand,               "", NULL },
-            { "send",               SEC_MODERATOR,          true,  NULL,                                "", sendCommandTable },
-            { "pet",                SEC_GAMEMASTER,         false, NULL,                                "", petCommandTable },
-            { "mute",               SEC_MODERATOR,          true,  &HandleMuteCommand,                  "", NULL },
-            { "unmute",             SEC_MODERATOR,          true,  &HandleUnmuteCommand,                "", NULL },
-            { "movegens",           SEC_ADMINISTRATOR,      false, &HandleMovegensCommand,              "", NULL },
-            { "cometome",           SEC_ADMINISTRATOR,      false, &HandleComeToMeCommand,              "", NULL },
-            { "damage",             SEC_ADMINISTRATOR,      false, &HandleDamageCommand,                "", NULL },
-            { "combatstop",         SEC_GAMEMASTER,         true,  &HandleCombatStopCommand,            "", NULL },
-            { "repairitems",        SEC_GAMEMASTER,         true,  &HandleRepairitemsCommand,           "", NULL },
-            { "freeze",             SEC_MODERATOR,          false, &HandleFreezeCommand,                "", NULL },
-            { "unfreeze",           SEC_MODERATOR,          false, &HandleUnFreezeCommand,              "", NULL },
-            { "listfreeze",         SEC_MODERATOR,          false, &HandleListFreezeCommand,            "", NULL },
-            { "group",              SEC_ADMINISTRATOR,      false, NULL,                                "", groupCommandTable },
-            { "possess",            SEC_ADMINISTRATOR,      false, HandlePossessCommand,                "", NULL },
-            { "unpossess",          SEC_ADMINISTRATOR,      false, HandleUnPossessCommand,              "", NULL },
-            { "bindsight",          SEC_ADMINISTRATOR,      false, HandleBindSightCommand,              "", NULL },
-            { "unbindsight",        SEC_ADMINISTRATOR,      false, HandleUnbindSightCommand,            "", NULL },
-            { "playall",            SEC_GAMEMASTER,         false, HandlePlayAllCommand,                "", NULL },
+            { "dev",                RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleDevCommand,                   "", NULL },
+            { "gps",                RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleGPSCommand,                   "", NULL },
+            { "aura",               RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleAuraCommand,                  "", NULL },
+            { "unaura",             RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleUnAuraCommand,                "", NULL },
+            { "appear",             RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleAppearCommand,                "", NULL },
+            { "summon",             RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleSummonCommand,                "", NULL },
+            { "groupsummon",        RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleGroupSummonCommand,           "", NULL },
+            { "commands",           RBAC_PERM_PLAYER_COMMANDS,             true,  &HandleCommandsCommand,              "", NULL },
+            { "die",                RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleDieCommand,                   "", NULL },
+            { "revive",             RBAC_PERM_ADMINISTRATOR_COMMANDS,      true,  &HandleReviveCommand,                "", NULL },
+            { "dismount",           RBAC_PERM_PLAYER_COMMANDS,             false, &HandleDismountCommand,              "", NULL },
+            { "guid",               RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleGUIDCommand,                  "", NULL },
+            { "help",               RBAC_PERM_PLAYER_COMMANDS,             true,  &HandleHelpCommand,                  "", NULL },
+            { "itemmove",           RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleItemMoveCommand,              "", NULL },
+            { "cooldown",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleCooldownCommand,              "", NULL },
+            { "distance",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleGetDistanceCommand,           "", NULL },
+            { "recall",             RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleRecallCommand,                "", NULL },
+            { "save",               RBAC_PERM_PLAYER_COMMANDS,             false, &HandleSaveCommand,                  "", NULL },
+            { "saveall",            RBAC_PERM_MODERATOR_COMMANDS,          true,  &HandleSaveAllCommand,               "", NULL },
+            { "kick",               RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandleKickPlayerCommand,            "", NULL },
+            { "unstuck",            RBAC_PERM_PLAYER_COMMANDS,             true,  &HandleUnstuckCommand,               "", NULL },
+            { "linkgrave",          RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleLinkGraveCommand,             "", NULL },
+            { "neargrave",          RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleNearGraveCommand,             "", NULL },
+            { "showarea",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleShowAreaCommand,              "", NULL },
+            { "hidearea",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleHideAreaCommand,              "", NULL },
+            { "additem",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleAddItemCommand,               "", NULL },
+            { "additemset",         RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleAddItemSetCommand,            "", NULL },
+            { "bank",               RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleBankCommand,                  "", NULL },
+            { "wchange",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleChangeWeather,                "", NULL },
+            { "maxskill",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleMaxSkillCommand,              "", NULL },
+            { "setskill",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleSetSkillCommand,              "", NULL },
+            { "pinfo",              RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandlePInfoCommand,                 "", NULL },
+            { "respawn",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleRespawnCommand,               "", NULL },
+            { "send",               RBAC_PERM_MODERATOR_COMMANDS,          true,  NULL,                                "", sendCommandTable },
+            { "pet",                RBAC_PERM_GAMEMASTER_COMMANDS,         false, NULL,                                "", petCommandTable },
+            { "mute",               RBAC_PERM_MODERATOR_COMMANDS,          true,  &HandleMuteCommand,                  "", NULL },
+            { "unmute",             RBAC_PERM_MODERATOR_COMMANDS,          true,  &HandleUnmuteCommand,                "", NULL },
+            { "movegens",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleMovegensCommand,              "", NULL },
+            { "cometome",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleComeToMeCommand,              "", NULL },
+            { "damage",             RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleDamageCommand,                "", NULL },
+            { "combatstop",         RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandleCombatStopCommand,            "", NULL },
+            { "repairitems",        RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandleRepairitemsCommand,           "", NULL },
+            { "freeze",             RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleFreezeCommand,                "", NULL },
+            { "unfreeze",           RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleUnFreezeCommand,              "", NULL },
+            { "listfreeze",         RBAC_PERM_MODERATOR_COMMANDS,          false, &HandleListFreezeCommand,            "", NULL },
+            { "group",              RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, NULL,                                "", groupCommandTable },
+            { "possess",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, HandlePossessCommand,                "", NULL },
+            { "unpossess",          RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, HandleUnPossessCommand,              "", NULL },
+            { "bindsight",          RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, HandleBindSightCommand,              "", NULL },
+            { "unbindsight",        RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, HandleUnbindSightCommand,            "", NULL },
+            { "playall",            RBAC_PERM_GAMEMASTER_COMMANDS,         false, HandlePlayAllCommand,                "", NULL },
             // Custom stuff
-            { "addrpitem",          SEC_PLAYER,             false, &HandleAddRPItemCommand,             "", NULL },
-            { "taxi",               SEC_PLAYER,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
-            { "scale",              SEC_PLAYER,             false, &HandleSelfScaleCommand,             "", NULL },
-            { "playlocal",          SEC_GAMEMASTER,         false, &HandlePlayLocalCommand,             "", NULL },
-            { "morph",              SEC_GAMEMASTER,         false, &HandleSelfMorphCommand,             "", NULL },
-            { "additemall",         SEC_ADMINISTRATOR,      false, &HandleAddItemAllCommand,            "", NULL },
-            { "unauraall",          SEC_ADMINISTRATOR,      false, &HandleUnAuraAllCommand,             "", NULL },
-            { "masssummon",         SEC_GAMEMASTER,         false, &HandleMassSummonCommand,            "", NULL },
-            { "gbank",              SEC_ADMINISTRATOR,      false, &HandleGuildBankCommand,             "", NULL },
-            { "gmbindsight",        SEC_ADMINISTRATOR,      false, &HandleGMBindSightCommand,           "", NULL },
-            { "mount",              SEC_GAMEMASTER,         false, &HandleMountCommand,                 "", NULL },
+            { "playerinfo",         RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandlePInfoCommand,                 "", NULL },
+            { "addrpitem",          RBAC_PERM_PLAYER_COMMANDS,             false, &HandleAddRPItemCommand,             "", NULL },
+            { "taxi",               RBAC_PERM_PLAYER_COMMANDS,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
+            { "scale",              RBAC_PERM_PLAYER_COMMANDS,             false, &HandleSelfScaleCommand,             "", NULL },
+            { "playlocal",          RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandlePlayLocalCommand,             "", NULL },
+            { "morph",              RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleSelfMorphCommand,             "", NULL },
+            { "additemall",         RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleAddItemAllCommand,            "", NULL },
+            { "unauraall",          RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleUnAuraAllCommand,             "", NULL },
+            { "masssummon",         RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleMassSummonCommand,            "", NULL },
+            { "gbank",              RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleGuildBankCommand,             "", NULL },
+            { "gmbindsight",        RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleGMBindSightCommand,           "", NULL },
+            { "mount",              RBAC_PERM_GAMEMASTER_COMMANDS,         false, &HandleMountCommand,                 "", NULL },
             { NULL,                 0,                      false, NULL,                                "", NULL }
         };
         return commandTable;
@@ -1555,20 +1555,21 @@ public:
          * ** Muted: (Time, Reason, By)              - IV.   LANG_PINFO_MUTED (if muted)
          * * Account: %s (id: %u), GM Level: %u      - V.    LANG_PINFO_ACC_ACCOUNT
          * * Last Login: %u (Failed Logins: %u)      - VI.   LANG_PINFO_ACC_LASTLOGIN
-         * * Uses OS: %s - Latency: %u ms - Email %s - VII.  LANG_PINFO_ACC_OS
-         * * Last IP: %u (Locked: %s)                - VIII. LANG_PINFO_ACC_IP
-         * * Level: %u (%u/%u XP (%u XP left)        - IX.   LANG_PINFO_CHR_LEVEL
-         * * Race: %s %s, Class %s                   - X.    LANG_PINFO_CHR_RACE
-         * * Alive ?: %s                             - XI.   LANG_PINFO_CHR_ALIVE
-         * * Phase: %s                               - XII.  LANG_PINFO_CHR_PHASE (if not GM)
-         * * Money: %ug%us%uc                        - XIII. LANG_PINFO_CHR_MONEY
-         * * Map: %s, Area: %s                       - XIV.  LANG_PINFO_CHR_MAP
-         * * Guild: %s (Id: %u)                      - XV.   LANG_PINFO_CHR_GUILD (if in guild)
-         * ** Rank: %s                               - XVI.  LANG_PINFO_CHR_GUILD_RANK (if in guild)
-         * ** Note: %s                               - XVII. LANG_PINFO_CHR_GUILD_NOTE (if in guild and has note)
-         * ** O. Note: %s                            - XVIII.LANG_PINFO_CHR_GUILD_ONOTE (if in guild and has officer note)
-         * * Played time: %s                         - XIX.  LANG_PINFO_CHR_PLAYEDTIME
-         * * Mails: %u Read/%u Total                 - XX.   LANG_PINFO_CHR_MAILS (if has mails)
+         * * Uses OS: %s - Latency: %u ms            - VII.  LANG_PINFO_ACC_OS
+         * * Registration Email: %s - Email: %s      - VIII. LANG_PINFO_ACC_REGMAILS
+         * * Last IP: %u (Locked: %s)                - IX.   LANG_PINFO_ACC_IP
+         * * Level: %u (%u/%u XP (%u XP left)        - X.    LANG_PINFO_CHR_LEVEL
+         * * Race: %s %s, Class %s                   - XI.   LANG_PINFO_CHR_RACE
+         * * Alive ?: %s                             - XII.  LANG_PINFO_CHR_ALIVE
+         * * Phase: %s                               - XIII. LANG_PINFO_CHR_PHASE (if not GM)
+         * * Money: %ug%us%uc                        - XIV.  LANG_PINFO_CHR_MONEY
+         * * Map: %s, Area: %s                       - XV.   LANG_PINFO_CHR_MAP
+         * * Guild: %s (Id: %u)                      - XVI.  LANG_PINFO_CHR_GUILD (if in guild)
+         * ** Rank: %s                               - XVII. LANG_PINFO_CHR_GUILD_RANK (if in guild)
+         * ** Note: %s                               - XVIII.LANG_PINFO_CHR_GUILD_NOTE (if in guild and has note)
+         * ** O. Note: %s                            - XVIX. LANG_PINFO_CHR_GUILD_ONOTE (if in guild and has officer note)
+         * * Played time: %s                         - XX.   LANG_PINFO_CHR_PLAYEDTIME
+         * * Mails: %u Read/%u Total                 - XXI.  LANG_PINFO_CHR_MAILS (if has mails)
          *
          * Not all of them can be moved to the top. These should
          * place the most important ones to the head, though.
@@ -1581,6 +1582,7 @@ public:
         uint32 accId                  = 0;
         uint32 lowguid                = GUID_LOPART(targetGuid);
         std::string eMail             = handler->GetTrinityString(LANG_ERROR);
+        std::string regMail           = handler->GetTrinityString(LANG_ERROR);
         uint32 security               = 0;
         std::string lastIp            = handler->GetTrinityString(LANG_ERROR);
         uint8 locked                  = 0;
@@ -1701,8 +1703,9 @@ public:
                (!handler->GetSession() || handler->GetSession()->GetSecurity() >= AccountTypes(security)))
             {
                 eMail     = fields[2].GetString();
-                lastIp    = fields[3].GetString();
-                lastLogin = fields[4].GetString();
+                regMail   = fields[3].GetString();
+                lastIp    = fields[4].GetString();
+                lastLogin = fields[5].GetString();
 
                 uint32 ip = inet_addr(lastIp.c_str());
                 EndianConvertReverse(ip);
@@ -1724,12 +1727,12 @@ public:
                 lastIp    = "Unauthorized";
                 lastLogin = "Unauthorized";
             }
-            muteTime      = fields[5].GetUInt64();
-            muteReason    = fields[6].GetString();
-            muteBy        = fields[7].GetString();
-            failedLogins  = fields[8].GetUInt32();
-            locked        = fields[9].GetUInt8();
-            OS            = fields[10].GetString();
+            muteTime      = fields[6].GetUInt64();
+            muteReason    = fields[7].GetString();
+            muteBy        = fields[8].GetString();
+            failedLogins  = fields[9].GetUInt32();
+            locked        = fields[10].GetUInt8();
+            OS            = fields[11].GetString();
         }
 
         // Creates a chat link to the character. Returns nameLink
@@ -1818,8 +1821,11 @@ public:
         // Output VI. LANG_PINFO_ACC_LASTLOGIN
         handler->PSendSysMessage(LANG_PINFO_ACC_LASTLOGIN, lastLogin.c_str(), failedLogins);
 
-        // Output VIII. LANG_PINFO_ACC_OS
-        handler->PSendSysMessage(LANG_PINFO_ACC_OS, OS.c_str(), latency, eMail.c_str());
+        // Output VII. LANG_PINFO_ACC_OS
+        handler->PSendSysMessage(LANG_PINFO_ACC_OS, OS.c_str(), latency);
+
+        // Output VIII. LANG_PINFO_ACC_REGMAILS
+        handler->PSendSysMessage(LANG_PINFO_ACC_REGMAILS, regMail.c_str(), eMail.c_str());
 
         // Output IX. LANG_PINFO_ACC_IP
         handler->PSendSysMessage(LANG_PINFO_ACC_IP, lastIp.c_str(), locked ? "Yes" : "No");
@@ -1863,7 +1869,7 @@ public:
         if (target)
             handler->PSendSysMessage(LANG_PINFO_CHR_MAP, map->name, (!zoneName.empty() ? zoneName.c_str() : "<Unknown>"), (!areaName.empty() ? areaName.c_str() : "<Unknown>"));
 
-        // Output XVII. - XX. if they are not empty
+        // Output XVII. - XVIX. if they are not empty
         if (!guildName.empty())
         {
             handler->PSendSysMessage(LANG_PINFO_CHR_GUILD, guildName.c_str(), guildId);
@@ -1874,7 +1880,7 @@ public:
                 handler->PSendSysMessage(LANG_PINFO_CHR_GUILD_ONOTE, officeNote.c_str());
         }
 
-        // Output XXI. LANG_PINFO_CHR_PLAYEDTIME
+        // Output XX. LANG_PINFO_CHR_PLAYEDTIME
         handler->PSendSysMessage(LANG_PINFO_CHR_PLAYEDTIME, (secsToTimeString(totalPlayerTime, true, true)).c_str());
 
         // Mail Data - an own query, because it may or may not be useful.
@@ -1896,7 +1902,7 @@ public:
             // ... we have to convert it from Char to int. We can use totalmail as it is
             rmailint = atol(readmail.c_str());
 
-            // Output XXII. LANG_INFO_CHR_MAILS if at least one mail is given
+            // Output XXI. LANG_INFO_CHR_MAILS if at least one mail is given
             if (totalmail >= 1)
                handler->PSendSysMessage(LANG_PINFO_CHR_MAILS, rmailint, totalmail);
         }
