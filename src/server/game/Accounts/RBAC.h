@@ -372,6 +372,17 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_WHISPERS                               = 471,
 
     // custom permissions 1000+
+    RBAC_PERM_COMMAND_CAST_PLAYER                            = 1000,
+    RBAC_PERM_COMMAND_CAST_ALL                               = 1001,
+    RBAC_PERM_COMMAND_CHARACTER_FACTION                      = 1002,
+    RBAC_PERM_COMMAND_CHARACTER_FACTIONPERM                  = 1003,
+    RBAC_PERM_COMMAND_CHARACTER_VIEWITEMS                    = 1004,
+    RBAC_PERM_COMMAND_DEBUG_ROLL                             = 1005,
+    RBAC_PERM_COMMAND_GOBJECT_SCALE                          = 1006,
+    RBAC_PERM_COMMAND_LOOKUP_RPITEM                          = 1007,
+    RBAC_PERM_COMMAND_LOOKUP_POBJECT                         = 1008,
+    RBAC_PERM_COMMAND_GOMOVE                                 = 1009,
+
     RBAC_PERM_MAX
 };
 

@@ -23,7 +23,7 @@ public:
     {
         static ChatCommand GOMoveCommandTable[] =
         {
-            { "gomove",			SEC_GAMEMASTER,		false,   &GOMove_Command,				"", NULL },
+            { "gomove",			RBAC_PERM_COMMAND_GOMOVE,		false,   &GOMove_Command,				"", NULL },
             { NULL,				0,					false,	NULL,							"", NULL }
         };
         return GOMoveCommandTable;

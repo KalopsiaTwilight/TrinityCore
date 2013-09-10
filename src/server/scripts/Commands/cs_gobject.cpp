@@ -60,7 +60,7 @@ public:
             { "near",     RBAC_PERM_COMMAND_GOBJECT_NEAR,     false, &HandleGameObjectNearCommand,      "", NULL },
             { "target",   RBAC_PERM_COMMAND_GOBJECT_TARGET,   false, &HandleGameObjectTargetCommand,    "", NULL },
             { "turn",     RBAC_PERM_COMMAND_GOBJECT_TURN,     false, &HandleGameObjectTurnCommand,      "", NULL },
-            { "scale",    RBAC_PERM_COMMAND_GOBJECT_SCALE     false, &HandleGameObjectScaleCommand,     "", NULL },
+            { "scale",    RBAC_PERM_COMMAND_GOBJECT_SCALE,    false, &HandleGameObjectScaleCommand,     "", NULL },
             { "add",      RBAC_PERM_COMMAND_GOBJECT_ADD,      false, NULL,            "", gobjectAddCommandTable },
             { "set",      RBAC_PERM_COMMAND_GOBJECT_SET,      false, NULL,            "", gobjectSetCommandTable },
             { NULL,       0,                                  false, NULL,                              "", NULL }

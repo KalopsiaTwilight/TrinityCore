@@ -102,6 +102,7 @@ public:
             { "maxskill",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleMaxSkillCommand,              "", NULL },
             { "setskill",           RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleSetSkillCommand,              "", NULL },
             { "pinfo",              RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandlePInfoCommand,                 "", NULL },
+            { "playerinfo",         RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandlePInfoCommand,                 "", NULL },
             { "respawn",            RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, &HandleRespawnCommand,               "", NULL },
             { "send",               RBAC_PERM_MODERATOR_COMMANDS,          true,  NULL,                                "", sendCommandTable },
             { "pet",                RBAC_PERM_GAMEMASTER_COMMANDS,         false, NULL,                                "", petCommandTable },
@@ -122,7 +123,6 @@ public:
             { "unbindsight",        RBAC_PERM_ADMINISTRATOR_COMMANDS,      false, HandleUnbindSightCommand,            "", NULL },
             { "playall",            RBAC_PERM_GAMEMASTER_COMMANDS,         false, HandlePlayAllCommand,                "", NULL },
             // Custom stuff
-            { "playerinfo",         RBAC_PERM_GAMEMASTER_COMMANDS,         true,  &HandlePInfoCommand,                 "", NULL },
             { "addrpitem",          RBAC_PERM_PLAYER_COMMANDS,             false, &HandleAddRPItemCommand,             "", NULL },
             { "taxi",               RBAC_PERM_PLAYER_COMMANDS,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
             { "scale",              RBAC_PERM_PLAYER_COMMANDS,             false, &HandleSelfScaleCommand,             "", NULL },
