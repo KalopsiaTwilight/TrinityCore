@@ -143,6 +143,17 @@ public:
             return false;
         }
 
+        if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
+        {
+            const uint32 SHADOW_RUNE = 195661;
+            if (objectId == SHADOW_RUNE)
+            {
+                handler->PSendSysMessage(LANG_RESTRICTED_OBJECT, objectId);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
         Player* player = handler->GetSession()->GetPlayer();
         float x = float(player->GetPositionX());
         float y = float(player->GetPositionY());

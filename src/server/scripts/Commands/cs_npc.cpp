@@ -200,10 +200,10 @@ public:
         };
         static ChatCommand npcCommandTable[] =
         {
-            { "info",           RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcInfoCommand,              "", NULL },
+            { "info",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcInfoCommand,              "", NULL },
             { "near",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcNearCommand,              "", NULL },
             { "move",           RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcMoveCommand,              "", NULL },
-            { "playemote",      RBAC_PERM_ADMINISTRATOR_COMMANDS,  false, &HandleNpcPlayEmoteCommand,         "", NULL },
+            { "playemote",      RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcPlayEmoteCommand,         "", NULL },
             { "say",            RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcSayCommand,               "", NULL },
             { "textemote",      RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcTextEmoteCommand,         "", NULL },
             { "whisper",        RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcWhisperCommand,           "", NULL },
@@ -213,6 +213,7 @@ public:
             { "delete",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,              "", npcDeleteCommandTable },
             { "follow",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,              "", npcFollowCommandTable },
             { "set",            RBAC_PERM_GAMEMASTER_COMMANDS,     false, NULL,                 "", npcSetCommandTable },
+            { "emote",          RBAC_PERM_MODERATOR_COMMANDS,      false, &HandleNpcTextEmoteCommand,         "", NULL },
             { "return",         RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcReturnCommand,            "", NULL },
             { "scale",          RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcCustScaleCommand,         "", NULL },
             { "faction",        RBAC_PERM_GAMEMASTER_COMMANDS,     false, &HandleNpcCustFactCommand,          "", NULL },
@@ -251,7 +252,10 @@ public:
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
         {
-            if (id == 21369 || id == 24666 || id == 25554) //21369-Flame strike trigger, 24666-Flame strike trigger, 25554-Flame strike trigger
+            const uint32 FLAME_STRIKE_TRIGGER_1 = 21369;
+            const uint32 FLAME_STRIKE_TRIGGER_2 = 24666;
+            const uint32 FLAME_STRIKE_TRIGGER_3 = 25554;
+            if (id == FLAME_STRIKE_TRIGGER_1 || id == FLAME_STRIKE_TRIGGER_2 || id == FLAME_STRIKE_TRIGGER_3)
             {
                 handler->PSendSysMessage(LANG_RESTRICTED_NPC, id);
                 handler->SetSentErrorMessage(true);
