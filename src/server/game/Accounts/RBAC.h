@@ -689,6 +689,31 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_LOOKUP_RPITEM                          = 1007,
     RBAC_PERM_COMMAND_LOOKUP_POBJECT                         = 1008,
     RBAC_PERM_COMMAND_GOMOVE                                 = 1009,
+    RBAC_PERM_COMMAND_MODIFY_MORPH                           = 1010,
+    RBAC_PERM_COMMAND_MODIFY_SCALEPERM                       = 1011,
+    RBAC_PERM_COMMAND_MODIFY_MORPHPERM                       = 1012,
+    RBAC_PERM_COMMAND_MODIFY_BYTES1                          = 1013,
+    RBAC_PERM_COMMAND_MODIFY_BYTES2                          = 1014,
+    RBAC_PERM_COMMAND_NPC_SET_DYNFLAGS                       = 1015,
+    RBAC_PERM_COMMAND_NPC_SET_UNITFLAGS                      = 1016,
+    //RBAC_PERM_COMMAND_NPC_EMOTE                              = 1017, REUSE
+    RBAC_PERM_COMMAND_NPC_RETURN                             = 1018,
+    RBAC_PERM_COMMAND_NPC_SCALE                              = 1019,
+    RBAC_PERM_COMMAND_NPC_FACTION                            = 1020,
+    RBAC_PERM_COMMAND_NPC_ATTACK                             = 1021,
+    //RBAC_PERM_COMMAND_NPC_FACTION                            = 1022, REUSE
+    RBAC_PERM_COMMAND_ADDRPITEM                              = 1023,
+    RBAC_PERM_COMMAND_TAXI                                   = 1024,
+    RBAC_PERM_COMMAND_SCALE                                  = 1025,
+    RBAC_PERM_COMMAND_PLAYLOCAL                              = 1026,
+    RBAC_PERM_COMMAND_SELFMORPH                              = 1027,
+    RBAC_PERM_COMMAND_ADDITEMALL                             = 1028,
+    RBAC_PERM_COMMAND_UNAURAALL                              = 1029,
+    RBAC_PERM_COMMAND_MASSSUMMON                             = 1030,
+    RBAC_PERM_COMMAND_GMBINDSIGHT                            = 1031,
+    RBAC_PERM_COMMAND_MOUNT                                  = 1032,
+    RBAC_PERM_COMMAND_SERVER_EMOTE                           = 1033,
+    RBAC_PERM_COMMANDS_RELOAD_NPC_TELE                       = 1034,
 
     RBAC_PERM_MAX
 };

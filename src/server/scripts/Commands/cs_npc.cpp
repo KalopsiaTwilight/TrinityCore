@@ -211,7 +211,7 @@ public:
             { "follow",    RBAC_PERM_COMMAND_NPC_FOLLOW,    false, NULL,              "", npcFollowCommandTable },
             { "set",       RBAC_PERM_COMMAND_NPC_SET,       false, NULL,                 "", npcSetCommandTable },
             // CUSTOM
-            { "emote",     RBAC_PERM_COMMAND_NPC_EMOTE,     false, &HandleNpcTextEmoteCommand,         "", NULL },
+            { "emote",     RBAC_PERM_COMMAND_NPC_TEXTEMOTE, false, &HandleNpcTextEmoteCommand,         "", NULL },
             { "return",    RBAC_PERM_COMMAND_NPC_RETURN,    false, &HandleNpcReturnCommand,            "", NULL },
             { "scale",     RBAC_PERM_COMMAND_NPC_SCALE,     false, &HandleNpcCustScaleCommand,         "", NULL },
             { "faction",   RBAC_PERM_COMMAND_NPC_FACTION,   false, &HandleNpcCustFactCommand,          "", NULL },

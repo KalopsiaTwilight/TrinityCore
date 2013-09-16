@@ -63,6 +63,7 @@ public:
             { "rename",        RBAC_PERM_COMMAND_CHARACTER_RENAME,          true,  &HandleCharacterRenameCommand,         "", NULL },
             { "reputation",    RBAC_PERM_COMMAND_CHARACTER_REPUTATION,      true,  &HandleCharacterReputationCommand,     "", NULL },
             { "titles",        RBAC_PERM_COMMAND_CHARACTER_TITLES,          true,  &HandleCharacterTitlesCommand,         "", NULL },
+            // CUSTOM
             { "faction",       RBAC_PERM_COMMAND_CHARACTER_FACTION,         true,  &HandleCharacterFactionCommand,        "", NULL },
             { "factionperm",   RBAC_PERM_COMMAND_CHARACTER_FACTIONPERM,     true,  &HandleCharacterFactionPermCommand,    "", NULL },
             { "viewitems",     RBAC_PERM_COMMAND_CHARACTER_VIEWITEMS,       true,  &HandleCharacterListItemCommand,       "", NULL },
