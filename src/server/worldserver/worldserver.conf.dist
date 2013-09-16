@@ -871,6 +871,13 @@ Instance.ResetTimeHour = 4
 Instance.UnloadDelay = 1800000
 
 #
+#    InstancesResetAnnounce
+#        Description: Announce the reset of one instance to whole party.
+#        Default:     false - (Disabled, don't show, blizzlike)
+#                     true  - (Enabled, show)
+
+InstancesResetAnnounce = false
+#
 #    Quests.LowLevelHideDiff
 #        Description: Level difference between player and quest level at which quests are
 #                     considered low-level and are not shown via exclamation mark (!) at quest
@@ -1209,7 +1216,6 @@ Warden.BanDuration = 86400
 
 ###################################################################################################
 # PLAYER INTERACTION
-#
 #
 #    AllowTwoSide.Interaction.Calendar
 #        Description: Allow calendar invites between factions.
@@ -2631,7 +2637,6 @@ UI.ShowQuestLevelsInDialogs = 0
 ###################################################################################################
 
 ###################################################################################################
-#
 #  LOGGING SYSTEM SETTINGS
 #
 #  Appender config values: Given a appender "name"
@@ -2820,7 +2825,6 @@ Log.Async.Enable = 0
 ###################################################################################################
 
 ###################################################################################################
-#
 #  GUILD LEVELING SETTINGS
 #
 #    Guild.LevelingEnabled
@@ -2882,7 +2886,6 @@ Guild.WeeklyReputationCap = 4375
 ###################################################################################################
 
 ###################################################################################################
-#
 # CURRENCIES SETTINGS
 #
 #    Currency.ResetInterval
@@ -2966,7 +2969,6 @@ Currency.ConquestPointsArenaReward = 180
 
 #
 ###################################################################################################
-#
 # PACKET SPOOF PROTECTION SETTINGS
 #
 # These settings determine which action to take when harmful packet spoofing is detected.
