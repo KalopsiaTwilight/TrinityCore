@@ -137,10 +137,12 @@ public:
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
             // report to DB errors log as in loading case
-            TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", objectId, objectInfo->type, objectInfo->displayId);
-            handler->PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, objectId);
+            //TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", objectId, objectInfo->type, objectInfo->displayId); -- CUSTOM, seems some of these are actually fine.  Testing!
+            //handler->PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, objectId);
+            TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), but attempted spawn.", objectId, objectInfo->type, objectInfo->displayId);
+            handler->PSendSysMessage(LANG_GAMEOBJECT_INVALID_DATA_CUSTOM, objectId);
             handler->SetSentErrorMessage(true);
-            return false;
+            //return false;
         }
 
         if (handler->GetSession()->GetSecurity() < SEC_ADMINISTRATOR)
