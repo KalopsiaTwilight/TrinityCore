@@ -29,7 +29,6 @@
 #include "ObjectAccessor.h"
 #include "Group.h"
 #include "Battleground.h"
-#include "BattlegroundAV.h"
 #include "ScriptMgr.h"
 #include "GameObjectAI.h"
 
@@ -120,13 +119,35 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
 
     Object* object = ObjectAccessor::GetObjectByTypeMask(*_player, guid, TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT|TYPEMASK_ITEM|TYPEMASK_PLAYER);
 
+#define CLOSE_GOSSIP_CLEAR_DIVIDER() \
+    do { \
+        _player->PlayerTalkClass->SendCloseGossip(); \
+        _player->SetDivider(0); \
+    } while (0)
+
     // no or incorrect quest giver
-    if (!object || (object->GetTypeId() != TYPEID_PLAYER && !object->hasQuest(questId)) ||
-        (object->GetTypeId() == TYPEID_PLAYER && object != _player && !object->ToPlayer()->CanShareQuest(questId)))
+    if (!object)
     {
-        _player->PlayerTalkClass->SendCloseGossip();
-        _player->SetDivider(0);
+        CLOSE_GOSSIP_CLEAR_DIVIDER();
         return;
+    }
+
+    if (Player* playerQuestObject = object->ToPlayer())
+    {
+        if ((_player->GetDivider() && _player->GetDivider() != guid) ||
+           ((object != _player && !playerQuestObject->CanShareQuest(questId))))
+        {
+            CLOSE_GOSSIP_CLEAR_DIVIDER();
+            return;
+        }
+    }
+    else
+    {
+        if (!object->hasQuest(questId))
+        {
+            CLOSE_GOSSIP_CLEAR_DIVIDER();
+            return;
+        }
     }
 
     // some kind of WPE protection
@@ -138,8 +159,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
         // prevent cheating
         if (!GetPlayer()->CanTakeQuest(quest, true))
         {
-            _player->PlayerTalkClass->SendCloseGossip();
-            _player->SetDivider(0);
+            CLOSE_GOSSIP_CLEAR_DIVIDER();
             return;
         }
 
@@ -188,18 +208,19 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
             {
                 case TYPEID_UNIT:
                     sScriptMgr->OnQuestAccept(_player, (object->ToCreature()), quest);
-                    (object->ToCreature())->AI()->sQuestAccept(_player, quest);
+                    object->ToCreature()->AI()->sQuestAccept(_player, quest);
                     break;
                 case TYPEID_ITEM:
                 case TYPEID_CONTAINER:
                 {
-                    sScriptMgr->OnQuestAccept(_player, ((Item*)object), quest);
+                    Item* item = (Item*)object;
+                    sScriptMgr->OnQuestAccept(_player, item, quest);
 
                     // destroy not required for quest finish quest starting item
                     bool destroyItem = true;
                     for (int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
                     {
-                        if ((quest->RequiredItemId[i] == ((Item*)object)->GetEntry()) && (((Item*)object)->GetTemplate()->MaxCount > 0))
+                        if (quest->RequiredItemId[i] == item->GetEntry() && item->GetTemplate()->MaxCount > 0)
                         {
                             destroyItem = false;
                             break;
@@ -207,13 +228,13 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
                     }
 
                     if (destroyItem)
-                        _player->DestroyItem(((Item*)object)->GetBagSlot(), ((Item*)object)->GetSlot(), true);
+                        _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
 
                     break;
                 }
                 case TYPEID_GAMEOBJECT:
-                    sScriptMgr->OnQuestAccept(_player, ((GameObject*)object), quest);
-                    (object->ToGameObject())->AI()->QuestAccept(_player, quest);
+                    sScriptMgr->OnQuestAccept(_player, object->ToGameObject(), quest);
+                    object->ToGameObject()->AI()->QuestAccept(_player, quest);
                     break;
                 default:
                     break;
@@ -228,6 +249,8 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvData)
     }
 
     _player->PlayerTalkClass->SendCloseGossip();
+
+#undef CLOSE_GOSSIP_CLEAR_DIVIDER
 }
 
 void WorldSession::HandleQuestgiverQueryQuestOpcode(WorldPacket& recvData)
@@ -427,7 +450,7 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPacket& recvData)
 
             if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
             {
-                if (quest->HasFlag(QUEST_TRINITY_FLAGS_TIMED))
+                if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED))
                     _player->RemoveTimedQuest(questId);
 
                 if (quest->HasFlag(QUEST_FLAGS_FLAGS_PVP))
@@ -486,6 +509,10 @@ void WorldSession::HandleQuestgiverCompleteQuest(WorldPacket& recvData)
 
     TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_QUESTGIVER_COMPLETE_QUEST npc = %u, quest = %u", uint32(GUID_LOPART(guid)), questId);
 
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return;
+
     Object* object = ObjectAccessor::GetObjectByTypeMask(*_player, guid, TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT);
     if (!object || !object->hasInvolvedQuest(questId))
         return;
@@ -494,38 +521,33 @@ void WorldSession::HandleQuestgiverCompleteQuest(WorldPacket& recvData)
     if (!_player->CanInteractWithQuestGiver(object))
         return;
 
-    if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
+    if (!_player->CanSeeStartQuest(quest) && _player->GetQuestStatus(questId) == QUEST_STATUS_NONE)
     {
-        if (!_player->CanSeeStartQuest(quest) && _player->GetQuestStatus(questId) == QUEST_STATUS_NONE)
-        {
-            TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "Possible hacking attempt: Player %s [guid: %u] tried to complete quest [entry: %u] without being in possession of the quest!",
-                          _player->GetName().c_str(), _player->GetGUIDLow(), questId);
-            return;
-        }
-        /// @todo need a virtual function
-        if (_player->InBattleground())
-            if (Battleground* bg = _player->GetBattleground())
-                if (bg->GetTypeID() == BATTLEGROUND_AV)
-                    ((BattlegroundAV*)bg)->HandleQuestComplete(questId, _player);
-
-        if (_player->GetQuestStatus(questId) != QUEST_STATUS_COMPLETE)
-        {
-            if (quest->IsRepeatable())
-                _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanCompleteRepeatableQuest(quest), false);
-            else
-                _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanRewardQuest(quest, false), false);
-        }
-        else
-        {
-            if (quest->GetReqItemsCount())                  // some items required
-                _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanRewardQuest(quest, false), false);
-            else                                            // no items required
-                _player->PlayerTalkClass->SendQuestGiverOfferReward(quest, guid, true);
-        }
-
-        if (Creature* creature = object->ToCreature())
-            sScriptMgr->OnQuestComplete(_player, creature, quest);
+        TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "Possible hacking attempt: Player %s [guid: %u] tried to complete quest [entry: %u] without being in possession of the quest!",
+                      _player->GetName().c_str(), _player->GetGUIDLow(), questId);
+        return;
     }
+
+    if (Battleground* bg = _player->GetBattleground())
+        bg->HandleQuestComplete(questId, _player);
+
+    if (_player->GetQuestStatus(questId) != QUEST_STATUS_COMPLETE)
+    {
+        if (quest->IsRepeatable())
+            _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanCompleteRepeatableQuest(quest), false);
+        else
+            _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanRewardQuest(quest, false), false);
+    }
+    else
+    {
+        if (quest->GetReqItemsCount())                  // some items required
+            _player->PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, _player->CanRewardQuest(quest, false), false);
+        else                                            // no items required
+            _player->PlayerTalkClass->SendQuestGiverOfferReward(quest, guid, true);
+    }
+
+    if (Creature* creature = object->ToCreature())
+        sScriptMgr->OnQuestComplete(_player, creature, quest);
 }
 
 void WorldSession::HandleQuestgiverQuestAutoLaunch(WorldPacket& /*recvPacket*/)
@@ -538,54 +560,73 @@ void WorldSession::HandlePushQuestToParty(WorldPacket& recvPacket)
     uint32 questId;
     recvPacket >> questId;
 
-    TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_PUSHQUESTTOPARTY quest = %u", questId);
+    if (!_player->CanShareQuest(questId))
+        return;
 
-    if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
+    TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_PUSHQUESTTOPARTY questId = %u", questId);
+
+    Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+    if (!quest)
+        return;
+
+    Player * const sender = GetPlayer();
+
+    Group* group = sender->GetGroup();
+    if (!group)
+        return;
+
+    for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
     {
-        if (Group* group = _player->GetGroup())
+        Player* receiver = itr->GetSource();
+
+        if (!receiver || receiver == sender)
+            continue;
+
+        if (!receiver->SatisfyQuestStatus(quest, false))
         {
-            for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
-            {
-                Player* player = itr->GetSource();
+            sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_HAVE_QUEST);
+            continue;
+        }
 
-                if (!player || player == _player)         // skip self
-                    continue;
+        if (receiver->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
+        {
+            sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_FINISH_QUEST);
+            continue;
+        }
 
-                _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_SHARING_QUEST);
+        if (!receiver->CanTakeQuest(quest, false))
+        {
+            sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_CANT_TAKE_QUEST);
+            continue;
+        }
 
-                if (!player->SatisfyQuestStatus(quest, false))
-                {
-                    _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_HAVE_QUEST);
-                    continue;
-                }
+        if (!receiver->SatisfyQuestLog(false))
+        {
+            sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_LOG_FULL);
+            continue;
+        }
 
-                if (player->GetQuestStatus(questId) == QUEST_STATUS_COMPLETE)
-                {
-                    _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_FINISH_QUEST);
-                    continue;
-                }
+        if (receiver->GetDivider() != 0)
+        {
+            sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_BUSY);
+            continue;
+        }
 
-                if (!player->CanTakeQuest(quest, false))
-                {
-                    _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_CANT_TAKE_QUEST);
-                    continue;
-                }
+        sender->SendPushToPartyResponse(receiver, QUEST_PARTY_MSG_SHARING_QUEST);
 
-                if (!player->SatisfyQuestLog(false))
-                {
-                    _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_LOG_FULL);
-                    continue;
-                }
+        if (quest->IsAutoAccept() && receiver->CanAddQuest(quest, true) && receiver->CanTakeQuest(quest, true))
+        {
+            receiver->AddQuest(quest, sender);
+            if (receiver->CanCompleteQuest(questId))
+                receiver->CompleteQuest(questId);
+        }
 
-                if (player->GetDivider() != 0)
-                {
-                    _player->SendPushToPartyResponse(player, QUEST_PARTY_MSG_BUSY);
-                    continue;
-                }
-
-                player->PlayerTalkClass->SendQuestGiverQuestDetails(quest, _player->GetGUID(), true);
-                player->SetDivider(_player->GetGUID());
-            }
+        if ((quest->IsAutoComplete() && quest->IsRepeatable() && !quest->IsDailyOrWeekly()) || quest->HasFlag(QUEST_FLAGS_AUTOCOMPLETE))
+            receiver->PlayerTalkClass->SendQuestGiverRequestItems(quest, sender->GetGUID(), receiver->CanCompleteRepeatableQuest(quest), true);
+        else
+        {
+            receiver->SetDivider(sender->GetGUID());
+            receiver->PlayerTalkClass->SendQuestGiverQuestDetails(quest, sender->GetGUID(), true);
         }
     }
 }
@@ -593,20 +634,21 @@ void WorldSession::HandlePushQuestToParty(WorldPacket& recvPacket)
 void WorldSession::HandleQuestPushResult(WorldPacket& recvPacket)
 {
     uint64 guid;
+    uint32 questId;
     uint8 msg;
-    recvPacket >> guid >> msg;
+    recvPacket >> guid >> questId >> msg;
 
     TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "WORLD: Received MSG_QUEST_PUSH_RESULT");
 
-    if (_player->GetDivider() != 0)
+    if (_player->GetDivider() && _player->GetDivider() == guid)
     {
         Player* player = ObjectAccessor::FindPlayer(_player->GetDivider());
         if (player)
         {
-            WorldPacket data(MSG_QUEST_PUSH_RESULT, (8+1));
-            data << uint64(guid);
+            WorldPacket data(MSG_QUEST_PUSH_RESULT, 8 + 4 + 1);
+            data << uint64(_player->GetGUID());
             data << uint8(msg);                             // valid values: 0-8
-            player->GetSession()->SendPacket(&data);
+            player->SendDirectMessage(&data);
             _player->SetDivider(0);
         }
     }

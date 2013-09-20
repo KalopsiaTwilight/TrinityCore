@@ -150,8 +150,7 @@ class npc_zulaman_hostage : public CreatureScript
 
             void JustDied(Unit* /*killer*/) OVERRIDE
             {
-                Player* player = Unit::GetPlayer(*me, PlayerGUID);
-                if (player)
+                if (Player* player = ObjectAccessor::GetPlayer(*me, PlayerGUID))
                     player->SendLoot(me->GetGUID(), LOOT_CORPSE);
             }
 
@@ -272,8 +271,7 @@ class npc_harrison_jones : public CreatureScript
 {
     public:
 
-        npc_harrison_jones()
-            : CreatureScript("npc_harrison_jones")
+        npc_harrison_jones() : CreatureScript("npc_harrison_jones")
         {
         }
 
@@ -333,6 +331,9 @@ class npc_harrison_jones : public CreatureScript
                 {
                     if (_gongTimer <= diff)
                     {
+                        if (!instance)
+                            return;
+
                         switch (_gongEvent)
                         {
                             case GONG_EVENT_1:
@@ -362,8 +363,7 @@ class npc_harrison_jones : public CreatureScript
 
                                 // trigger or gong will need to be scripted to set IN_PROGRESS after enough hits.
                                 // This is temp workaround.
-                                if (instance)
-                                    instance->SetData(DATA_GONGEVENT, IN_PROGRESS); // to be removed.
+                                instance->SetData(DATA_GONGEVENT, IN_PROGRESS); // to be removed.
 
                                 if (instance->GetData(DATA_GONGEVENT) == IN_PROGRESS)
                                 {
@@ -410,9 +410,11 @@ class npc_harrison_jones : public CreatureScript
                                                     ptarget->AI()->SetData(0, 1);
                                                 }
                                                 else
+                                                {
                                                     ptarget->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                                                     ptarget->SetReactState(REACT_PASSIVE);
                                                     ptarget->AI()->SetData(0, 2);
+                                                }
                                             }
                                         }
                                     }
@@ -437,16 +439,16 @@ class npc_harrison_jones : public CreatureScript
                                 _gongEvent = GONG_EVENT_10;
                                 break;
                             case GONG_EVENT_10:
-                                    me->SetFacingTo(1.59044f);
-                                    _gongEvent = 11;
-                                    _gongTimer = 6000;
+                                me->SetFacingTo(1.59044f);
+                                _gongEvent = 11;
+                                _gongTimer = 6000;
                                 break;
                             case GONG_EVENT_11:
-                                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                                    if (instance)
-                                        instance->SetData(DATA_GONGEVENT, NOT_STARTED);
-                                    _gongEvent = 0;
-                                    _gongTimer = 1000;
+                                me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+
+                                instance->SetData(DATA_GONGEVENT, NOT_STARTED);
+                                _gongEvent = 0;
+                                _gongTimer = 1000;
                                 break;
                         }
                     }

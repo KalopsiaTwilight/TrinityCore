@@ -485,6 +485,7 @@ struct RepRewardRate
     float questDailyRate;
     float questWeeklyRate;
     float questMonthlyRate;
+    float questRepeatableRate;
     float creatureRate;         // no reputation are given at all for this faction/rate type.
     float spellRate;
 };
@@ -716,7 +717,21 @@ class ObjectMgr
         void GetPlayerLevelInfo(uint32 race, uint32 class_, uint8 level, PlayerLevelInfo* info) const;
 
         uint64 GetPlayerGUIDByName(std::string const& name) const;
-        bool GetPlayerNameByGUID(uint64 guid, std::string &name) const;
+
+        /**
+        * Retrieves the player name by guid.
+        *
+        * If the player is online, the name is retrieved immediately otherwise
+        * a database query is done.
+        *
+        * @remark Use sWorld->GetCharacterNameData because it doesn't require a database query when player is offline
+        *
+        * @param guid player full guid
+        * @param name returned name
+        *
+        * @return true if player was found, false otherwise
+        */
+        bool GetPlayerNameByGUID(uint64 guid, std::string& name) const;
         uint32 GetPlayerTeamByGUID(uint64 guid) const;
         uint32 GetPlayerAccountIdByGUID(uint64 guid) const;
         uint32 GetPlayerAccountIdByPlayerName(std::string const& name) const;
@@ -837,21 +852,21 @@ class ObjectMgr
         }
 
         void LoadQuests();
-        void LoadQuestRelations()
+        void LoadQuestStartersAndEnders()
         {
             TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, "Loading GO Start Quest Data...");
-            LoadGameobjectQuestRelations();
+            LoadGameobjectQuestStarters();
             TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, "Loading GO End Quest Data...");
-            LoadGameobjectInvolvedRelations();
+            LoadGameobjectQuestEnders();
             TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, "Loading Creature Start Quest Data...");
-            LoadCreatureQuestRelations();
+            LoadCreatureQuestStarters();
             TC_LOG_INFO(LOG_FILTER_SERVER_LOADING, "Loading Creature End Quest Data...");
-            LoadCreatureInvolvedRelations();
+            LoadCreatureQuestEnders();
         }
-        void LoadGameobjectQuestRelations();
-        void LoadGameobjectInvolvedRelations();
-        void LoadCreatureQuestRelations();
-        void LoadCreatureInvolvedRelations();
+        void LoadGameobjectQuestStarters();
+        void LoadGameobjectQuestEnders();
+        void LoadCreatureQuestStarters();
+        void LoadCreatureQuestEnders();
 
         QuestRelations* GetGOQuestRelationMap()
         {
@@ -1121,7 +1136,7 @@ class ObjectMgr
         void RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data);
         uint32 AddGOData(uint32 entry, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0, float rotation0 = 0, float rotation1 = 0, float rotation2 = 0, float rotation3 = 0);
         uint32 AddCreData(uint32 entry, uint32 team, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0);
-        bool MoveCreData(uint32 guid, uint32 map, Position pos);
+        bool MoveCreData(uint32 guid, uint32 map, const Position& pos);
 
         // reserved names
         void LoadReservedPlayersNames();
@@ -1132,7 +1147,7 @@ class ObjectMgr
         static PetNameInvalidReason CheckPetName(std::string const& name);
         static bool IsValidCharterName(std::string const& name);
 
-        static bool CheckDeclinedNames(std::wstring w_ownname, DeclinedName const& names);
+        static bool CheckDeclinedNames(const std::wstring& w_ownname, DeclinedName const& names);
 
         GameTele const* GetGameTele(uint32 id) const
         {

@@ -417,7 +417,7 @@ void Loot::AddItem(LootStoreItem const& item)
         return;
 
     uint32 count = urand(item.mincountOrRef, item.maxcount);
-    uint32 stacks = count / proto->GetMaxStackSize() + (count % proto->GetMaxStackSize() ? 1 : 0);
+    uint32 stacks = count / proto->GetMaxStackSize() + ((count % proto->GetMaxStackSize()) ? 1 : 0);
 
     std::vector<LootItem>& lootItems = item.needs_quest ? quest_items : items;
     uint32 limit = item.needs_quest ? MAX_NR_QUEST_ITEMS : MAX_NR_LOOT_ITEMS;
@@ -1248,7 +1248,7 @@ void LootTemplate::AddEntry(LootStoreItem* item)
         Entries.push_back(item);
 }
 
-void LootTemplate::CopyConditions(ConditionList conditions)
+void LootTemplate::CopyConditions(const ConditionList& conditions)
 {
     for (LootStoreItemList::iterator i = Entries.begin(); i != Entries.end(); ++i)
         (*i)->conditions.clear();

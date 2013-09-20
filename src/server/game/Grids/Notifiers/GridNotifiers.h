@@ -130,10 +130,14 @@ namespace Trinity
         Player const* skipped_receiver;
         MessageDistDeliverer(WorldObject* src, WorldPacket* msg, float dist, bool own_team_only = false, Player const* skipped = NULL)
             : i_source(src), i_message(msg), i_phaseMask(src->GetPhaseMask()), i_distSq(dist * dist)
-            , team((own_team_only && src->GetTypeId() == TYPEID_PLAYER) ? ((Player*)src)->GetTeam() : 0)
+            , team(0)
             , skipped_receiver(skipped)
         {
+            if (own_team_only)
+                if (Player* player = src->ToPlayer())
+                    team = player->GetTeam();
         }
+
         void Visit(PlayerMapType &m);
         void Visit(CreatureMapType &m);
         void Visit(DynamicObjectMapType &m);
@@ -722,13 +726,12 @@ namespace Trinity
     class GameObjectWithDbGUIDCheck
     {
         public:
-            GameObjectWithDbGUIDCheck(WorldObject const& obj, uint32 db_guid) : i_obj(obj), i_db_guid(db_guid) {}
+            GameObjectWithDbGUIDCheck(WorldObject const& /*obj*/, uint32 db_guid) : i_db_guid(db_guid) {}
             bool operator()(GameObject const* go) const
             {
                 return go->GetDBTableGUIDLow() == i_db_guid;
             }
         private:
-            WorldObject const& i_obj;
             uint32 i_db_guid;
     };
 
@@ -856,13 +859,12 @@ namespace Trinity
     class CreatureWithDbGUIDCheck
     {
         public:
-            CreatureWithDbGUIDCheck(WorldObject const* obj, uint32 lowguid) : i_obj(obj), i_lowguid(lowguid) {}
+            CreatureWithDbGUIDCheck(WorldObject const* /*obj*/, uint32 lowguid) : i_lowguid(lowguid) {}
             bool operator()(Creature* u)
             {
                 return u->GetDBTableGUIDLow() == i_lowguid;
             }
         private:
-            WorldObject const* i_obj;
             uint32 i_lowguid;
     };
 
@@ -889,6 +891,9 @@ namespace Trinity
             AnyGroupedUnitInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, bool raid) : _source(obj), _refUnit(funit), _range(range), _raid(raid) {}
             bool operator()(Unit* u)
             {
+                if (G3D::fuzzyEq(_range, 0))
+                    return false;
+
                 if (_raid)
                 {
                     if (!_refUnit->IsInRaidWith(u))

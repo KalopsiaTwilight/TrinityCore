@@ -354,9 +354,7 @@ public:
         void MovementInform(uint32 type, uint32 id) OVERRIDE
         {
             if (type == POINT_MOTION_TYPE && id == 0)
-            {
                 me->SetDisableGravity(false); // Needed this for proper animation after spawn, the summon in air fall to ground bug leave no other option for now, if this isn't used the drake will only walk on move.
-            }
         }
 
         void UpdateAI(uint32 diff) OVERRIDE
@@ -388,9 +386,7 @@ public:
                     }
                     else WelcomeSequelTimer -= diff;
                 }
-            }
-            if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
-            {
+
                 if (instance->GetBossState(DATA_UROM_EVENT) == DONE)
                 {
                     if (!(SpecialOff))
@@ -403,9 +399,7 @@ public:
                         else SpecialTimer -= diff;
                     }
                 }
-            }
-            if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
-            {
+
                 if (!(HealthWarningOff))
                 {
                     if (me->GetHealthPct() <= 40.0f)
@@ -414,9 +408,7 @@ public:
                         HealthWarningOff = true;
                     }
                 }
-            }
-            if (me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE))
-            {
+
                 if (HealthWarningOff)
                 {
                     if (WarningTimer <= diff)
@@ -427,6 +419,7 @@ public:
                     else WarningTimer -= diff;
                 }
             }
+
             if (!(me->HasAuraType(SPELL_AURA_CONTROL_VEHICLE)))
             {
                 if (!(DisableTakeOff))
@@ -527,6 +520,63 @@ public:
     }
 };
 
+
+class spell_oculus_touch_the_nightmare : public SpellScriptLoader
+{
+    public:
+        spell_oculus_touch_the_nightmare() : SpellScriptLoader("spell_oculus_touch_the_nightmare") { }
+
+        class spell_oculus_touch_the_nightmare_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_oculus_touch_the_nightmare_SpellScript);
+
+            void HandleDamageCalc(SpellEffIndex /*effIndex*/)
+            {
+                SetHitDamage(int32(GetCaster()->CountPctFromMaxHealth(30)));
+            }
+
+            void Register() OVERRIDE
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_oculus_touch_the_nightmare_SpellScript::HandleDamageCalc, EFFECT_2, SPELL_EFFECT_SCHOOL_DAMAGE);
+            }
+        };
+
+        SpellScript* GetSpellScript() const OVERRIDE
+        {
+            return new spell_oculus_touch_the_nightmare_SpellScript();
+        }
+};
+
+class spell_oculus_dream_funnel: public SpellScriptLoader
+{
+    public:
+        spell_oculus_dream_funnel() : SpellScriptLoader("spell_oculus_dream_funnel") { }
+
+        class spell_oculus_dream_funnel_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_oculus_dream_funnel_AuraScript);
+
+            void HandleEffectCalcAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+            {
+                if (Unit* caster = GetCaster())
+                    amount = int32(caster->CountPctFromMaxHealth(5));
+
+                canBeRecalculated = false;
+            }
+
+            void Register() OVERRIDE
+            {
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_oculus_dream_funnel_AuraScript::HandleEffectCalcAmount, EFFECT_0, SPELL_AURA_PERIODIC_HEAL);
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_oculus_dream_funnel_AuraScript::HandleEffectCalcAmount, EFFECT_2, SPELL_AURA_PERIODIC_DAMAGE);
+            }
+        };
+
+        AuraScript* GetAuraScript() const OVERRIDE
+        {
+            return new spell_oculus_dream_funnel_AuraScript();
+        }
+};
+
 void AddSC_oculus()
 {
     new npc_verdisa_beglaristrasz_eternos();
@@ -534,4 +584,6 @@ void AddSC_oculus()
     new npc_ruby_emerald_amber_drake();
     new spell_gen_stop_time();
     new spell_call_ruby_emerald_amber_drake();
+    new spell_oculus_touch_the_nightmare();
+    new spell_oculus_dream_funnel();
 }
