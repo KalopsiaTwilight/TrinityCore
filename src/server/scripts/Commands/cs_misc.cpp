@@ -96,16 +96,16 @@ public:
             { "unstuck",          RBAC_PERM_COMMAND_UNSTUCK,           true, &HandleUnstuckCommand,          "", NULL },
             { "wchange",          RBAC_PERM_COMMAND_WCHANGE,          false, &HandleChangeWeather,           "", NULL },
             // Custom stuff
-            { "addrpitem",        RBAC_PERM_COMMAND_ADDRPITEM,        false, &HandleAddRPItemCommand,             "", NULL },
-            { "taxi",             RBAC_PERM_COMMAND_TAXI,             false, &HandleSelfTaxiCheatCommand,         "", NULL },
-            { "scale",            RBAC_PERM_COMMAND_SCALE,            false, &HandleSelfScaleCommand,             "", NULL },
-            { "playlocal",        RBAC_PERM_COMMAND_PLAYLOCAL,        false, &HandlePlayLocalCommand,             "", NULL },
-            { "morph",            RBAC_PERM_COMMAND_SELFMORPH,        false, &HandleSelfMorphCommand,             "", NULL },
-            { "additemall",       RBAC_PERM_COMMAND_ADDITEMALL,       false, &HandleAddItemAllCommand,            "", NULL },
-            { "unauraall",        RBAC_PERM_COMMAND_UNAURAALL,        false, &HandleUnAuraAllCommand,             "", NULL },
-            { "masssummon",       RBAC_PERM_COMMAND_MASSSUMMON,       false, &HandleMassSummonCommand,            "", NULL },
-            { "gmbindsight",      RBAC_PERM_COMMAND_GMBINDSIGHT,      false, &HandleGMBindSightCommand,           "", NULL },
-            { "mount",            RBAC_PERM_COMMAND_MOUNT,            false, &HandleMountCommand,                 "", NULL },
+            { "addrpitem",        RBAC_PERM_COMMAND_ADDRPITEM,        false, &HandleAddRPItemCommand,        "", NULL },
+            { "taxi",             RBAC_PERM_COMMAND_TAXI,             false, &HandleSelfTaxiCheatCommand,    "", NULL },
+            { "scale",            RBAC_PERM_COMMAND_SCALE,            false, &HandleSelfScaleCommand,        "", NULL },
+            { "playlocal",        RBAC_PERM_COMMAND_PLAYLOCAL,        false, &HandlePlayLocalCommand,        "", NULL },
+            { "morph",            RBAC_PERM_COMMAND_SELFMORPH,        false, &HandleSelfMorphCommand,        "", NULL },
+            { "additemall",       RBAC_PERM_COMMAND_ADDITEMALL,       false, &HandleAddItemAllCommand,       "", NULL },
+            { "unauraall",        RBAC_PERM_COMMAND_UNAURAALL,        false, &HandleUnAuraAllCommand,        "", NULL },
+            { "masssummon",       RBAC_PERM_COMMAND_MASSSUMMON,       false, &HandleMassSummonCommand,       "", NULL },
+            { "gmbindsight",      RBAC_PERM_COMMAND_GMBINDSIGHT,      false, &HandleGMBindSightCommand,      "", NULL },
+            { "mount",            RBAC_PERM_COMMAND_MOUNT,            false, &HandleMountCommand,            "", NULL },
             { NULL,               0,                                  false, NULL,                           "", NULL }
         };
         return commandTable;
@@ -2858,12 +2858,6 @@ public:
         return true;
     }
 
-    static bool HandleGuildBankCommand(ChatHandler* handler, char const* /*args*/)
-    {
-        handler->GetSession()->SendShowBank(handler->GetSession()->GetPlayer()->GetGUID());
-        return true;
-    }
-
     static bool HandleGMBindSightCommand(ChatHandler* handler, char const* args)
     {
 
@@ -2886,6 +2880,23 @@ public:
         }
 
         caster->ToPlayer()->SetViewpoint(target, true);
+        return true;
+    }
+    
+    static bool HandleMountCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint16 mId = (uint16)atoi((char*)args);
+
+        Unit* target = handler->getSelectedUnit();
+        if (!target)
+            target = handler->GetSession()->GetPlayer();
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+            return false;
+
+        target->Mount(mId);
         return true;
     }
 

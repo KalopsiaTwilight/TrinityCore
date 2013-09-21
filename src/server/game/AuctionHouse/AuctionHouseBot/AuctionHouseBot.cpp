@@ -754,34 +754,34 @@ void AuctionHouseBot::Update()
 
 void AuctionHouseBot::Initialize()
 {
-    debug_Out = ConfigMgr::GetBoolDefault("AuctionHouseBot.DEBUG", false);
-    debug_Out_Filters = ConfigMgr::GetBoolDefault("AuctionHouseBot.DEBUG_FILTERS", false);
+    debug_Out = sConfigMgr->GetBoolDefault("AuctionHouseBot.DEBUG", false);
+    debug_Out_Filters = sConfigMgr->GetBoolDefault("AuctionHouseBot.DEBUG_FILTERS", false);
 
-    AHBSeller = ConfigMgr::GetBoolDefault("AuctionHouseBot.EnableSeller", false);
-    AHBBuyer = ConfigMgr::GetBoolDefault("AuctionHouseBot.EnableBuyer", false);
-    SellMethod = ConfigMgr::GetBoolDefault("AuctionHouseBot.UseBuyPriceForSeller", false);
-    BuyMethod = ConfigMgr::GetBoolDefault("AuctionHouseBot.UseBuyPriceForBuyer", false);
+    AHBSeller = sConfigMgr->GetBoolDefault("AuctionHouseBot.EnableSeller", false);
+    AHBBuyer = sConfigMgr->GetBoolDefault("AuctionHouseBot.EnableBuyer", false);
+    SellMethod = sConfigMgr->GetBoolDefault("AuctionHouseBot.UseBuyPriceForSeller", false);
+    BuyMethod = sConfigMgr->GetBoolDefault("AuctionHouseBot.UseBuyPriceForBuyer", false);
 
-    AHBplayerAccount = ConfigMgr::GetIntDefault("AuctionHouseBot.Account", 0);
-    AHBplayerGUID = ConfigMgr::GetIntDefault("AuctionHouseBot.GUID", 0);
-    ItemsPerCycle = ConfigMgr::GetIntDefault("AuctionHouseBot.ItemsPerCycle", 200);
+    AHBplayerAccount = sConfigMgr->GetIntDefault("AuctionHouseBot.Account", 0);
+    AHBplayerGUID = sConfigMgr->GetIntDefault("AuctionHouseBot.GUID", 0);
+    ItemsPerCycle = sConfigMgr->GetIntDefault("AuctionHouseBot.ItemsPerCycle", 200);
 
     //Begin Filters
 
-    Vendor_Items = ConfigMgr::GetBoolDefault("AuctionHouseBot.VendorItems", false);
-    Loot_Items = ConfigMgr::GetBoolDefault("AuctionHouseBot.LootItems", true);
-    Other_Items = ConfigMgr::GetBoolDefault("AuctionHouseBot.OtherItems", false);
-    Vendor_TGs = ConfigMgr::GetBoolDefault("AuctionHouseBot.VendorTradeGoods", false);
-    Loot_TGs = ConfigMgr::GetBoolDefault("AuctionHouseBot.LootTradeGoods", true);
-    Other_TGs = ConfigMgr::GetBoolDefault("AuctionHouseBot.OtherTradeGoods", false);
+    Vendor_Items = sConfigMgr->GetBoolDefault("AuctionHouseBot.VendorItems", false);
+    Loot_Items = sConfigMgr->GetBoolDefault("AuctionHouseBot.LootItems", true);
+    Other_Items = sConfigMgr->GetBoolDefault("AuctionHouseBot.OtherItems", false);
+    Vendor_TGs = sConfigMgr->GetBoolDefault("AuctionHouseBot.VendorTradeGoods", false);
+    Loot_TGs = sConfigMgr->GetBoolDefault("AuctionHouseBot.LootTradeGoods", true);
+    Other_TGs = sConfigMgr->GetBoolDefault("AuctionHouseBot.OtherTradeGoods", false);
 
-    No_Bind = ConfigMgr::GetBoolDefault("AuctionHouseBot.No_Bind", true);
-    Bind_When_Picked_Up = ConfigMgr::GetBoolDefault("AuctionHouseBot.Bind_When_Picked_Up", false);
-    Bind_When_Equipped = ConfigMgr::GetBoolDefault("AuctionHouseBot.Bind_When_Equipped", true);
-    Bind_When_Use = ConfigMgr::GetBoolDefault("AuctionHouseBot.Bind_When_Use", true);
-    Bind_Quest_Item = ConfigMgr::GetBoolDefault("AuctionHouseBot.Bind_Quest_Item", false);
+    No_Bind = sConfigMgr->GetBoolDefault("AuctionHouseBot.No_Bind", true);
+    Bind_When_Picked_Up = sConfigMgr->GetBoolDefault("AuctionHouseBot.Bind_When_Picked_Up", false);
+    Bind_When_Equipped = sConfigMgr->GetBoolDefault("AuctionHouseBot.Bind_When_Equipped", true);
+    Bind_When_Use = sConfigMgr->GetBoolDefault("AuctionHouseBot.Bind_When_Use", true);
+    Bind_Quest_Item = sConfigMgr->GetBoolDefault("AuctionHouseBot.Bind_Quest_Item", false);
 
-    std::string disabledItems = ConfigMgr::GetStringDefault("AuctionHouseBot.DisabledItems", "");
+    std::string disabledItems = sConfigMgr->GetStringDefault("AuctionHouseBot.DisabledItems", "");
     DisableItemStore.clear();
     Tokenizer tokens(disabledItems, ' ');
     for (Tokenizer::const_iterator iter = tokens.begin(); iter != tokens.end(); ++iter)
@@ -790,44 +790,44 @@ void AuctionHouseBot::Initialize()
         DisableItemStore.insert(id);
     }
 
-    DisablePermEnchant = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisablePermEnchant", false);
-    DisableConjured = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableConjured", false);
-    DisableGems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableGems", false);
-    DisableMoney = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableMoney", false);
-    DisableMoneyLoot = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableMoneyLoot", false);
-    DisableLootable = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableLootable", false);
-    DisableKeys = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableKeys", false);
-    DisableDuration = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableDuration", false);
-    DisableBOP_Or_Quest_NoReqLevel = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableBOP_Or_Quest_NoReqLevel", false);
+    DisablePermEnchant = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisablePermEnchant", false);
+    DisableConjured = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableConjured", false);
+    DisableGems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableGems", false);
+    DisableMoney = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableMoney", false);
+    DisableMoneyLoot = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableMoneyLoot", false);
+    DisableLootable = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableLootable", false);
+    DisableKeys = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableKeys", false);
+    DisableDuration = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableDuration", false);
+    DisableBOP_Or_Quest_NoReqLevel = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableBOP_Or_Quest_NoReqLevel", false);
 
-    DisableWarriorItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableWarriorItems", false);
-    DisablePaladinItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisablePaladinItems", false);
-    DisableHunterItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableHunterItems", false);
-    DisableRogueItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableRogueItems", false);
-    DisablePriestItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisablePriestItems", false);
-    DisableDKItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableDKItems", false);
-    DisableShamanItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableShamanItems", false);
-    DisableMageItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableMageItems", false);
-    DisableWarlockItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableWarlockItems", false);
-    DisableUnusedClassItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableUnusedClassItems", false);
-    DisableDruidItems = ConfigMgr::GetBoolDefault("AuctionHouseBot.DisableDruidItems", false);
+    DisableWarriorItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableWarriorItems", false);
+    DisablePaladinItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisablePaladinItems", false);
+    DisableHunterItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableHunterItems", false);
+    DisableRogueItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableRogueItems", false);
+    DisablePriestItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisablePriestItems", false);
+    DisableDKItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableDKItems", false);
+    DisableShamanItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableShamanItems", false);
+    DisableMageItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableMageItems", false);
+    DisableWarlockItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableWarlockItems", false);
+    DisableUnusedClassItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableUnusedClassItems", false);
+    DisableDruidItems = sConfigMgr->GetBoolDefault("AuctionHouseBot.DisableDruidItems", false);
 
-    DisableItemsBelowLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsBelowLevel", 0);
-    DisableItemsAboveLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsAboveLevel", 0);
-    DisableTGsBelowLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsBelowLevel", 0);
-    DisableTGsAboveLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsAboveLevel", 0);
-    DisableItemsBelowGUID = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsBelowGUID", 0);
-    DisableItemsAboveGUID = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsAboveGUID", 0);
-    DisableTGsBelowGUID = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsBelowGUID", 0);
-    DisableTGsAboveGUID = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsAboveGUID", 0);
-    DisableItemsBelowReqLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsBelowReqLevel", 0);
-    DisableItemsAboveReqLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsAboveReqLevel", 0);
-    DisableTGsBelowReqLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsBelowReqLevel", 0);
-    DisableTGsAboveReqLevel = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsAboveReqLevel", 0);
-    DisableItemsBelowReqSkillRank = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsBelowReqSkillRank", 0);
-    DisableItemsAboveReqSkillRank = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableItemsAboveReqSkillRank", 0);
-    DisableTGsBelowReqSkillRank = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsBelowReqSkillRank", 0);
-    DisableTGsAboveReqSkillRank = ConfigMgr::GetIntDefault("AuctionHouseBot.DisableTGsAboveReqSkillRank", 0);
+    DisableItemsBelowLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsBelowLevel", 0);
+    DisableItemsAboveLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsAboveLevel", 0);
+    DisableTGsBelowLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsBelowLevel", 0);
+    DisableTGsAboveLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsAboveLevel", 0);
+    DisableItemsBelowGUID = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsBelowGUID", 0);
+    DisableItemsAboveGUID = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsAboveGUID", 0);
+    DisableTGsBelowGUID = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsBelowGUID", 0);
+    DisableTGsAboveGUID = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsAboveGUID", 0);
+    DisableItemsBelowReqLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsBelowReqLevel", 0);
+    DisableItemsAboveReqLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsAboveReqLevel", 0);
+    DisableTGsBelowReqLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsBelowReqLevel", 0);
+    DisableTGsAboveReqLevel = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsAboveReqLevel", 0);
+    DisableItemsBelowReqSkillRank = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsBelowReqSkillRank", 0);
+    DisableItemsAboveReqSkillRank = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableItemsAboveReqSkillRank", 0);
+    DisableTGsBelowReqSkillRank = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsBelowReqSkillRank", 0);
+    DisableTGsAboveReqSkillRank = sConfigMgr->GetIntDefault("AuctionHouseBot.DisableTGsAboveReqSkillRank", 0);
 
     //End Filters
     if (!sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION))

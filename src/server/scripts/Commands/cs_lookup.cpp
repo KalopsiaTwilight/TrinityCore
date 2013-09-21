@@ -72,7 +72,6 @@ public:
             { "title",    RBAC_PERM_COMMAND_LOOKUP_TITLE,    true, &HandleLookupTitleCommand,    "", NULL },
             { "map",      RBAC_PERM_COMMAND_LOOKUP_MAP,      true, &HandleLookupMapCommand,      "", NULL },
             { "rpitem",   RBAC_PERM_COMMAND_LOOKUP_RPITEM,   true, &HandleLookupRPItemCommand,   "", NULL },
-            { "pobject",  RBAC_PERM_COMMAND_LOOKUP_POBJECT,  true, &HandleLookupPObjectCommand,  "", NULL },
             { NULL,       0,                                false, NULL,                         "", NULL }
         };
 
