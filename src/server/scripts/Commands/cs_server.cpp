@@ -87,7 +87,7 @@ public:
             { "shutdown",     RBAC_PERM_COMMAND_SERVER_SHUTDOWN,     true, NULL,                        "", serverShutdownCommandTable },
             { "set",          RBAC_PERM_COMMAND_SERVER_SET,          true, NULL,                        "", serverSetCommandTable },
             // CUSTOM
-            { "emote",        RBAC_PERM_COMMAND_SERVER_EMOTE,        true,  &HandleServerEmoteCommand,               "", NULL },
+            { "emote",        RBAC_PERM_COMMAND_SERVER_EMOTE,        true,  &HandleServerEmoteCommand,  "", NULL },
             { NULL,           0,                                    false, NULL,                        "", NULL }
         };
 

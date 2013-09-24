@@ -644,6 +644,7 @@ class GameObject : public WorldObject, public GridObject<GameObject>
         bool IsDynTransport() const;
         bool IsDestructibleBuilding() const;
         bool IsStaticMO() const;
+        bool IsGenericGO() const;
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
 

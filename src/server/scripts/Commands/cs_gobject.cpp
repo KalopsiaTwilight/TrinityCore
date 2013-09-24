@@ -141,7 +141,7 @@ public:
             //handler->PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, objectId);
             TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), but attempted spawn.", objectId, objectInfo->type, objectInfo->displayId);
             handler->PSendSysMessage(LANG_GAMEOBJECT_INVALID_DATA_CUSTOM, objectId);
-            handler->SetSentErrorMessage(true);
+            //handler->SetSentErrorMessage(true);
             //return false;
         }
 

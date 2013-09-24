@@ -899,12 +899,22 @@ bool GameObject::IsDynTransport() const
 
 bool GameObject::IsStaticMO() const
 {
-    // If something is marked as a map object, don't transmit an out of range packet for it.
+    // If something is marked as a map object, don't transmit an out of range packet for it. (Custom)
     GameObjectTemplate const* gInfo = GetGOInfo();
     if (!gInfo)
         return false;
 
     return gInfo->type == GAMEOBJECT_TYPE_MAP_OBJECT;
+}
+
+bool GameObject::IsGenericGO() const
+{
+    // If something is marked as a generic object, don't transmit an out of range packet for it. (Custom, testing)
+    GameObjectTemplate const* gInfo = GetGOInfo();
+    if (!gInfo)
+        return false;
+
+    return gInfo->type == GAMEOBJECT_TYPE_GENERIC;
 }
 
 bool GameObject::IsDestructibleBuilding() const
@@ -935,7 +945,10 @@ bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
     if (IsTransport() || IsDestructibleBuilding())
         return true;
 
-    if (IsStaticMO())
+    if (IsStaticMO()) // CUSTOM
+        return true;
+
+    if (IsGenericGO()) // CUSTOM
         return true;
 
     if (!seer)
