@@ -949,7 +949,7 @@ SpellInfo::SpellInfo(SpellEntry const* spellEntry, SpellEffectEntry const** effe
 
     // SpellCategoriesEntry
     SpellCategoriesEntry const* _categorie = GetSpellCategories();
-    Category = _categorie ? _categorie->Category : 0;
+    CategoryEntry = _categorie ? sSpellCategoryStore.LookupEntry(_categorie->Category) : NULL;
     Dispel = _categorie ? _categorie->Dispel : 0;
     Mechanic = _categorie ? _categorie->Mechanic : 0;
     StartRecoveryCategory = _categorie ? _categorie->StartRecoveryCategory : 0;
@@ -1023,6 +1023,11 @@ SpellInfo::SpellInfo(SpellEntry const* spellEntry, SpellEffectEntry const** effe
 SpellInfo::~SpellInfo()
 {
     _UnloadImplicitTargetConditionLists();
+}
+
+uint32 SpellInfo::GetCategory() const
+{
+    return CategoryEntry ? CategoryEntry->Id : 0;
 }
 
 bool SpellInfo::HasEffect(SpellEffects effect) const
@@ -1269,6 +1274,11 @@ bool SpellInfo::IsStackableOnOneSlotWithDifferentCasters() const
     return StackAmount > 1 && !IsChanneled() && !(AttributesEx3 & SPELL_ATTR3_STACK_FOR_DIFF_CASTERS);
 }
 
+bool SpellInfo::IsCooldownStartedOnEvent() const
+{
+    return Attributes & SPELL_ATTR0_DISABLED_WHILE_ACTIVE || (CategoryEntry && CategoryEntry->Flags & SPELL_CATEGORY_FLAG_COOLDOWN_STARTS_ON_EVENT);
+}
+
 bool SpellInfo::IsDeathPersistent() const
 {
     return AttributesEx3 & SPELL_ATTR3_DEATH_PERSISTENT;
@@ -1481,7 +1491,7 @@ SpellCastResult SpellInfo::CheckShapeshift(uint32 form) const
         shapeInfo = sSpellShapeshiftFormStore.LookupEntry(form);
         if (!shapeInfo)
         {
-            TC_LOG_ERROR(LOG_FILTER_SPELLS_AURAS, "GetErrorAtShapeshiftedCast: unknown shapeshift %u", form);
+            TC_LOG_ERROR("spells", "GetErrorAtShapeshiftedCast: unknown shapeshift %u", form);
             return SPELL_CAST_OK;
         }
         actAsShifted = !(shapeInfo->flags1 & 1);            // shapeshift acts as normal form for spells
@@ -1889,7 +1899,7 @@ SpellCastResult SpellInfo::CheckVehicle(Unit const* caster) const
 bool SpellInfo::CheckTargetCreatureType(Unit const* target) const
 {
     // Curse of Doom & Exorcism: not find another way to fix spell target check :/
-    if (SpellFamilyName == SPELLFAMILY_WARLOCK && Category == 1179)
+    if (SpellFamilyName == SPELLFAMILY_WARLOCK && GetCategory() == 1179)
     {
         // not allow cast at player
         if (target->GetTypeId() == TYPEID_PLAYER)
@@ -1993,7 +2003,7 @@ AuraStateType SpellInfo::GetAuraState() const
         return AURA_STATE_FAERIE_FIRE;
 
     // Sting (hunter's pet ability)
-    if (Category == 1133)
+    if (GetCategory() == 1133)
         return AURA_STATE_FAERIE_FIRE;
 
     // Victorious
@@ -2324,7 +2334,7 @@ int32 SpellInfo::CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) c
         // Else drain all power
         if (PowerType < MAX_POWERS)
             return caster->GetPower(Powers(PowerType));
-        TC_LOG_ERROR(LOG_FILTER_SPELLS_AURAS, "SpellInfo::CalcPowerCost: Unknown power type '%d' in spell %d", PowerType, Id);
+        TC_LOG_ERROR("spells", "SpellInfo::CalcPowerCost: Unknown power type '%d' in spell %d", PowerType, Id);
         return 0;
     }
 
@@ -2349,10 +2359,10 @@ int32 SpellInfo::CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) c
                 break;
             case POWER_RUNES:
             case POWER_RUNIC_POWER:
-                TC_LOG_DEBUG(LOG_FILTER_SPELLS_AURAS, "CalculateManaCost: Not implemented yet!");
+                TC_LOG_DEBUG("spells", "CalculateManaCost: Not implemented yet!");
                 break;
             default:
-                TC_LOG_ERROR(LOG_FILTER_SPELLS_AURAS, "CalculateManaCost: Unknown power type '%d' in spell %d", PowerType, Id);
+                TC_LOG_ERROR("spells", "CalculateManaCost: Unknown power type '%d' in spell %d", PowerType, Id);
                 return 0;
         }
     }

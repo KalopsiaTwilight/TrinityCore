@@ -131,7 +131,7 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
 
     if (!receiverGuid)
     {
-        TC_LOG_INFO(LOG_FILTER_NETWORKIO, "Player %u is sending mail to %s (GUID: not existed!) with subject %s "
+        TC_LOG_INFO("network", "Player %u is sending mail to %s (GUID: not existed!) with subject %s "
             "and body %s includes %u items, " UI64FMTD " copper and " UI64FMTD " COD copper with unk1 = %u, unk2 = %u",
             player->GetGUIDLow(), receiverName.c_str(), subject.c_str(), body.c_str(),
             items_count, money, COD, unk1, unk2);
@@ -139,7 +139,7 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
         return;
     }
 
-    TC_LOG_INFO(LOG_FILTER_NETWORKIO, "Player %u is sending mail to %s (GUID: %u) with subject %s and body %s "
+    TC_LOG_INFO("network", "Player %u is sending mail to %s (GUID: %u) with subject %s and body %s "
         "includes %u items, " UI64FMTD " copper and " UI64FMTD " COD copper with unk1 = %u, unk2 = %u",
         player->GetGUIDLow(), receiverName.c_str(), GUID_LOPART(receiverGuid), subject.c_str(),
         body.c_str(), items_count, money, COD, unk1, unk2);
@@ -224,7 +224,7 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
         }
     }
 
-    if (!accountBound && player->GetTeam() != receiverTeam && !HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_MAIL))
+    if (!accountBound && player->GetTeam() != receiverTeam && !HasPermission(rbac::RBAC_PERM_TWO_SIDE_INTERACTION_MAIL))
     {
         player->SendMailResult(0, MAIL_SEND, MAIL_ERR_NOT_YOUR_TEAM);
         return;
@@ -303,7 +303,7 @@ void WorldSession::HandleSendMail(WorldPacket& recvData)
 
     if (items_count > 0 || money > 0)
     {
-        bool log = HasPermission(RBAC_PERM_LOG_GM_TRADE);
+        bool log = HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE);
         if (items_count > 0)
         {
             for (uint8 i = 0; i < items_count; ++i)
@@ -510,7 +510,7 @@ void WorldSession::HandleMailTakeItem(WorldPacket& recvData)
 
             uint32 sender_accId = 0;
 
-            if (HasPermission(RBAC_PERM_LOG_GM_TRADE))
+            if (HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
             {
                 std::string sender_name;
                 if (receiver)
@@ -770,7 +770,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket& recvData)
     bodyItem->SetUInt32Value(ITEM_FIELD_CREATOR, m->sender);
     bodyItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_MAIL_TEXT_MASK);
 
-    TC_LOG_INFO(LOG_FILTER_NETWORKIO, "HandleMailCreateTextItem mailid=%u", mailId);
+    TC_LOG_INFO("network", "HandleMailCreateTextItem mailid=%u", mailId);
 
     ItemPosCountVec dest;
     uint8 msg = _player->CanStoreItem(NULL_BAG, NULL_SLOT, dest, bodyItem, false);

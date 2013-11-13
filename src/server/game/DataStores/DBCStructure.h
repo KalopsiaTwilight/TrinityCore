@@ -1844,6 +1844,14 @@ struct SpellCastTimesEntry
     //int32     MinCastTime;                                // 3 unsure
 };
 
+struct SpellCategoryEntry
+{
+    uint32 Id;
+    uint32 Flags;
+    // uint32 unk;
+    // char* Name;
+};
+
 struct SpellDifficultyEntry
 {
     uint32     ID;                                          // 0
@@ -2172,6 +2180,28 @@ struct UnitPowerBarEntry
     //float   EndInset;
 };
 
+struct TransportAnimationEntry
+{
+    //uint32  Id;
+    uint32  TransportEntry;
+    uint32  TimeSeg;
+    float   X;
+    float   Y;
+    float   Z;
+    //uint32  MovementId;
+};
+
+struct TransportRotationEntry
+{
+    //uint32  Id;
+    uint32  TransportEntry;
+    uint32  TimeSeg;
+    float   X;
+    float   Y;
+    float   Z;
+    float   W;
+};
+
 #define MAX_VEHICLE_SEATS 8
 
 struct VehicleEntry
@@ -2387,8 +2417,8 @@ typedef std::map<uint32, VectorArray> NameGenVectorArraysMap;
 // Structures not used for casting to loaded DBC data and not required then packing
 struct MapDifficulty
 {
-    MapDifficulty() : resetTime(0), maxPlayers(0), hasErrorMessage(false) {}
-    MapDifficulty(uint32 _resetTime, uint32 _maxPlayers, bool _hasErrorMessage) : resetTime(_resetTime), maxPlayers(_maxPlayers), hasErrorMessage(_hasErrorMessage) {}
+    MapDifficulty() : resetTime(0), maxPlayers(0), hasErrorMessage(false) { }
+    MapDifficulty(uint32 _resetTime, uint32 _maxPlayers, bool _hasErrorMessage) : resetTime(_resetTime), maxPlayers(_maxPlayers), hasErrorMessage(_hasErrorMessage) { }
 
     uint32 resetTime;
     uint32 maxPlayers;
@@ -2397,8 +2427,8 @@ struct MapDifficulty
 
 struct TalentSpellPos
 {
-    TalentSpellPos() : talent_id(0), rank(0) {}
-    TalentSpellPos(uint16 _talent_id, uint8 _rank) : talent_id(_talent_id), rank(_rank) {}
+    TalentSpellPos() : talent_id(0), rank(0) { }
+    TalentSpellPos(uint16 _talent_id, uint8 _rank) : talent_id(_talent_id), rank(_rank) { }
 
     uint16 talent_id;
     uint8  rank;
@@ -2408,8 +2438,8 @@ typedef std::map<uint32, TalentSpellPos> TalentSpellPosMap;
 
 struct TaxiPathBySourceAndDestination
 {
-    TaxiPathBySourceAndDestination() : ID(0), price(0) {}
-    TaxiPathBySourceAndDestination(uint32 _id, uint32 _price) : ID(_id), price(_price) {}
+    TaxiPathBySourceAndDestination() : ID(0), price(0) { }
+    TaxiPathBySourceAndDestination(uint32 _id, uint32 _price) : ID(_id), price(_price) { }
 
     uint32    ID;
     uint32    price;
@@ -2419,8 +2449,8 @@ typedef std::map<uint32, TaxiPathSetForSource> TaxiPathSetBySource;
 
 struct TaxiPathNodePtr
 {
-    TaxiPathNodePtr() : i_ptr(NULL) {}
-    TaxiPathNodePtr(TaxiPathNodeEntry const* ptr) : i_ptr(ptr) {}
+    TaxiPathNodePtr() : i_ptr(NULL) { }
+    TaxiPathNodePtr(TaxiPathNodeEntry const* ptr) : i_ptr(ptr) { }
     TaxiPathNodeEntry const* i_ptr;
     operator TaxiPathNodeEntry const& () const { return *i_ptr; }
 };

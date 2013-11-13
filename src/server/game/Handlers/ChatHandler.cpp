@@ -87,21 +87,21 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             type = CHAT_MSG_RAID_WARNING;
             break;
         default:
-            TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "HandleMessagechatOpcode : Unknown chat opcode (%u)", recvData.GetOpcode());
+            TC_LOG_ERROR("network", "HandleMessagechatOpcode : Unknown chat opcode (%u)", recvData.GetOpcode());
             recvData.hexlike();
             return;
     }
 
     if (type >= MAX_CHAT_MSG_TYPE)
     {
-        TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "CHAT: Wrong message type received: %u", type);
+        TC_LOG_ERROR("network", "CHAT: Wrong message type received: %u", type);
         recvData.rfinish();
         return;
     }
 
     Player* sender = GetPlayer();
 
-    //TC_LOG_DEBUG(LOG_FILTER_GENERAL, "CHAT: packet received. type %u, lang %u", type, lang);
+    //TC_LOG_DEBUG("misc", "CHAT: packet received. type %u, lang %u", type, lang);
 
     // no language sent with emote packet.
     if (type != CHAT_MSG_EMOTE && type != CHAT_MSG_AFK && type != CHAT_MSG_DND)
@@ -163,7 +163,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                         return;
                     break;
                 default:
-                    TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "Player %s (GUID: %u) sent a chatmessage with an invalid language/message type combination",
+                    TC_LOG_ERROR("network", "Player %s (GUID: %u) sent a chatmessage with an invalid language/message type combination",
                         GetPlayer()->GetName().c_str(), GetPlayer()->GetGUIDLow());
 
                     recvData.rfinish();
@@ -179,7 +179,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             else
             {
                 // send in universal language in two side iteration allowed mode
-                if (HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT))
+                if (HasPermission(rbac::RBAC_PERM_TWO_SIDE_INTERACTION_CHAT))
                 {
                     if (lang == LANG_ORCISH || lang == LANG_COMMON)
                         lang = LANG_UNIVERSAL;
@@ -285,7 +285,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
 
             if (sWorld->getIntConfig(CONFIG_CHAT_STRICT_LINK_CHECKING_SEVERITY) && !ChatHandler(this).isValidChatMessage(msg.c_str()))
             {
-                TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "Player %s (GUID: %u) sent a chatmessage with an invalid link: %s", GetPlayer()->GetName().c_str(),
+                TC_LOG_ERROR("network", "Player %s (GUID: %u) sent a chatmessage with an invalid link: %s", GetPlayer()->GetName().c_str(),
                     GetPlayer()->GetGUIDLow(), msg.c_str());
 
                 if (sWorld->getIntConfig(CONFIG_CHAT_STRICT_LINK_CHECKING_KICK))
@@ -327,7 +327,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             }
 
             Player* receiver = sObjectAccessor->FindPlayerByName(to);
-            if (!receiver || (!receiver->isAcceptWhispers() && receiver->GetSession()->HasPermission(RBAC_PERM_CAN_FILTER_WHISPERS) && !receiver->IsInWhisperWhiteList(sender->GetGUID())))
+            if (!receiver || (!receiver->isAcceptWhispers() && receiver->GetSession()->HasPermission(rbac::RBAC_PERM_CAN_FILTER_WHISPERS) && !receiver->IsInWhisperWhiteList(sender->GetGUID())))
             {
                 if (lang != LANG_ADDON)
                     SendPlayerNotFoundNotice(to);
@@ -339,7 +339,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 return;
             }
 
-            if (GetPlayer()->GetTeam() != receiver->GetTeam() && !HasPermission(RBAC_PERM_TWO_SIDE_INTERACTION_CHAT) && !receiver->IsInWhisperWhiteList(sender->GetGUID()))
+            if (GetPlayer()->GetTeam() != receiver->GetTeam() && !HasPermission(rbac::RBAC_PERM_TWO_SIDE_INTERACTION_CHAT) && !receiver->IsInWhisperWhiteList(sender->GetGUID()))
             {
                 SendWrongFactionNotice();
                 return;
@@ -354,7 +354,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             // If player is a Gamemaster and doesn't accept whisper, we auto-whitelist every player that the Gamemaster is talking to
             // We also do that if a player is under the required level for whispers.
             if (receiver->getLevel() < sWorld->getIntConfig(CONFIG_CHAT_WHISPER_LEVEL_REQ) ||
-                (HasPermission(RBAC_PERM_CAN_FILTER_WHISPERS) && !sender->isAcceptWhispers() && !sender->IsInWhisperWhiteList(receiver->GetGUID())))
+                (HasPermission(rbac::RBAC_PERM_CAN_FILTER_WHISPERS) && !sender->isAcceptWhispers() && !sender->IsInWhisperWhiteList(receiver->GetGUID())))
                 sender->AddWhisperWhiteList(receiver->GetGUID());
 
             GetPlayer()->Whisper(msg, lang, receiver->GetGUID());
@@ -457,7 +457,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
         } break;
         case CHAT_MSG_CHANNEL:
         {
-            if (!HasPermission(RBAC_PERM_SKIP_CHECK_CHAT_CHANNEL_REQ))
+            if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHAT_CHANNEL_REQ))
             {
                 if (_player->getLevel() < sWorld->getIntConfig(CONFIG_CHAT_CHANNEL_LEVEL_REQ))
                 {
@@ -532,7 +532,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             break;
         }
         default:
-            TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "CHAT: unknown message type %u, lang: %u", type, lang);
+            TC_LOG_ERROR("network", "CHAT: unknown message type %u, lang: %u", type, lang);
             break;
     }
 }
@@ -563,7 +563,7 @@ void WorldSession::HandleAddonMessagechatOpcode(WorldPacket& recvData)
             type = CHAT_MSG_WHISPER;
             break;
         default:
-            TC_LOG_ERROR(LOG_FILTER_NETWORKIO, "HandleAddonMessagechatOpcode: Unknown addon chat opcode (%u)", recvData.GetOpcode());
+            TC_LOG_ERROR("network", "HandleAddonMessagechatOpcode: Unknown addon chat opcode (%u)", recvData.GetOpcode());
             recvData.hexlike();
             return;
     }
@@ -669,7 +669,7 @@ void WorldSession::HandleAddonMessagechatOpcode(WorldPacket& recvData)
         }
         default:
         {
-            TC_LOG_ERROR(LOG_FILTER_GENERAL, "HandleAddonMessagechatOpcode: unknown addon message type %u", type);
+            TC_LOG_ERROR("misc", "HandleAddonMessagechatOpcode: unknown addon message type %u", type);
             break;
         }
     }
@@ -692,7 +692,7 @@ namespace Trinity
     {
         public:
             EmoteChatBuilder(Player const& player, uint32 text_emote, uint32 emote_num, Unit const* target)
-                : i_player(player), i_text_emote(text_emote), i_emote_num(emote_num), i_target(target) {}
+                : i_player(player), i_text_emote(text_emote), i_emote_num(emote_num), i_target(target) { }
 
             void operator()(WorldPacket& data, LocaleConstant loc_idx)
             {
@@ -784,7 +784,7 @@ void WorldSession::HandleChatIgnoredOpcode(WorldPacket& recvData)
 {
     ObjectGuid guid;
     uint8 unk;
-    //TC_LOG_DEBUG(LOG_FILTER_PACKETIO, "WORLD: Received CMSG_CHAT_IGNORED");
+    //TC_LOG_DEBUG("network", "WORLD: Received CMSG_CHAT_IGNORED");
 
     recvData >> unk;                                       // probably related to spam reporting
     guid[5] = recvData.ReadBit();
@@ -816,7 +816,7 @@ void WorldSession::HandleChatIgnoredOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleChannelDeclineInvite(WorldPacket &recvPacket)
 {
-    TC_LOG_DEBUG(LOG_FILTER_NETWORKIO, "Opcode %u", recvPacket.GetOpcode());
+    TC_LOG_DEBUG("network", "Opcode %u", recvPacket.GetOpcode());
 }
 
 void WorldSession::SendPlayerNotFoundNotice(std::string const& name)

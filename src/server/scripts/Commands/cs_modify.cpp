@@ -41,49 +41,48 @@ public:
     {
         static ChatCommand modifyspeedCommandTable[] =
         {
-            { "all",      RBAC_PERM_COMMAND_MODIFY_SPEED_ALL,      false, &HandleModifyASpeedCommand, "", NULL },
-            { "backwalk", RBAC_PERM_COMMAND_MODIFY_SPEED_BACKWALK, false, &HandleModifyBWalkCommand,  "", NULL },
-            { "fly",      RBAC_PERM_COMMAND_MODIFY_SPEED_FLY,      false, &HandleModifyFlyCommand,    "", NULL },
-            { "walk",     RBAC_PERM_COMMAND_MODIFY_SPEED_WALK,     false, &HandleModifySpeedCommand,  "", NULL },
-            { "swim",     RBAC_PERM_COMMAND_MODIFY_SPEED_SWIM,     false, &HandleModifySwimCommand,   "", NULL },
-            { "",         RBAC_PERM_COMMAND_MODIFY_SPEED,          false, &HandleModifySpeedCommand, "", NULL },
+            { "all",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_ALL,      false, &HandleModifyASpeedCommand, "", NULL },
+            { "backwalk", rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_BACKWALK, false, &HandleModifyBWalkCommand,  "", NULL },
+            { "fly",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_FLY,      false, &HandleModifyFlyCommand,    "", NULL },
+            { "walk",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_WALK,     false, &HandleModifySpeedCommand,  "", NULL },
+            { "swim",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_SWIM,     false, &HandleModifySwimCommand,   "", NULL },
+            { "",         rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,          false, &HandleModifyASpeedCommand, "", NULL },
             { NULL,       0,                                       false, NULL,                       "", NULL }
         };
         static ChatCommand modifyCommandTable[] =
         {
-            { "bit",          RBAC_PERM_COMMAND_MODIFY_BIT,          false, &HandleModifyBitCommand,           "", NULL },
-            { "currency",     RBAC_PERM_COMMAND_MODIFY_CURRENCY,     false, &HandleModifyCurrencyCommand,      "", NULL },
-            { "drunk",        RBAC_PERM_COMMAND_MODIFY_DRUNK,        false, &HandleModifyDrunkCommand,         "", NULL },
-            { "energy",       RBAC_PERM_COMMAND_MODIFY_ENERGY,       false, &HandleModifyEnergyCommand,        "", NULL },
-            { "faction",      RBAC_PERM_COMMAND_MODIFY_FACTION,      false, &HandleModifyFactionCommand,       "", NULL },
-            { "gender",       RBAC_PERM_COMMAND_MODIFY_GENDER,       false, &HandleModifyGenderCommand,        "", NULL },
-            { "honor",        RBAC_PERM_COMMAND_MODIFY_HONOR,        false, &HandleModifyHonorCommand,         "", NULL },
-            { "hp",           RBAC_PERM_COMMAND_MODIFY_HP,           false, &HandleModifyHPCommand,            "", NULL },
-            { "mana",         RBAC_PERM_COMMAND_MODIFY_MANA,         false, &HandleModifyManaCommand,          "", NULL },
-            { "money",        RBAC_PERM_COMMAND_MODIFY_MONEY,        false, &HandleModifyMoneyCommand,         "", NULL },
-            { "mount",        RBAC_PERM_COMMAND_MODIFY_MOUNT,        false, &HandleModifyMountCommand,         "", NULL },
-            { "phase",        RBAC_PERM_COMMAND_MODIFY_PHASE,        false, &HandleModifyPhaseCommand,         "", NULL },
-            { "rage",         RBAC_PERM_COMMAND_MODIFY_RAGE,         false, &HandleModifyRageCommand,          "", NULL },
-            { "reputation",   RBAC_PERM_COMMAND_MODIFY_REPUTATION,   false, &HandleModifyRepCommand,           "", NULL },
-            { "runicpower",   RBAC_PERM_COMMAND_MODIFY_RUNICPOWER,   false, &HandleModifyRunicPowerCommand,    "", NULL },
-            { "scale",        RBAC_PERM_COMMAND_MODIFY_SCALE,        false, &HandleModifyScaleCommand,         "", NULL },
-            { "speed",        RBAC_PERM_COMMAND_MODIFY_SPEED,        false, NULL,                              "", modifyspeedCommandTable },
-            { "spell",        RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "", NULL },
-            { "standstate",   RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "", NULL },
-            { "talentpoints", RBAC_PERM_COMMAND_MODIFY_TALENTPOINTS, false, &HandleModifyTalentCommand,        "", NULL },
+            { "bit",          rbac::RBAC_PERM_COMMAND_MODIFY_BIT,          false, &HandleModifyBitCommand,           "", NULL },
+            { "drunk",        rbac::RBAC_PERM_COMMAND_MODIFY_DRUNK,        false, &HandleModifyDrunkCommand,         "", NULL },
+            { "energy",       rbac::RBAC_PERM_COMMAND_MODIFY_ENERGY,       false, &HandleModifyEnergyCommand,        "", NULL },
+            { "faction",      rbac::RBAC_PERM_COMMAND_MODIFY_FACTION,      false, &HandleModifyFactionCommand,       "", NULL },
+            { "gender",       rbac::RBAC_PERM_COMMAND_MODIFY_GENDER,       false, &HandleModifyGenderCommand,        "", NULL },
+            { "honor",        rbac::RBAC_PERM_COMMAND_MODIFY_HONOR,        false, &HandleModifyHonorCommand,         "", NULL },
+            { "hp",           rbac::RBAC_PERM_COMMAND_MODIFY_HP,           false, &HandleModifyHPCommand,            "", NULL },
+            { "mana",         rbac::RBAC_PERM_COMMAND_MODIFY_MANA,         false, &HandleModifyManaCommand,          "", NULL },
+            { "money",        rbac::RBAC_PERM_COMMAND_MODIFY_MONEY,        false, &HandleModifyMoneyCommand,         "", NULL },
+            { "mount",        rbac::RBAC_PERM_COMMAND_MODIFY_MOUNT,        false, &HandleModifyMountCommand,         "", NULL },
+            { "phase",        rbac::RBAC_PERM_COMMAND_MODIFY_PHASE,        false, &HandleModifyPhaseCommand,         "", NULL },
+            { "rage",         rbac::RBAC_PERM_COMMAND_MODIFY_RAGE,         false, &HandleModifyRageCommand,          "", NULL },
+            { "reputation",   rbac::RBAC_PERM_COMMAND_MODIFY_REPUTATION,   false, &HandleModifyRepCommand,           "", NULL },
+            { "runicpower",   rbac::RBAC_PERM_COMMAND_MODIFY_RUNICPOWER,   false, &HandleModifyRunicPowerCommand,    "", NULL },
+            { "scale",        rbac::RBAC_PERM_COMMAND_MODIFY_SCALE,        false, &HandleModifyScaleCommand,         "", NULL },
+            { "speed",        rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,        false, NULL,           "", modifyspeedCommandTable },
+            { "spell",        rbac::RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "", NULL },
+            { "standstate",   rbac::RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "", NULL },
+            { "talentpoints", rbac::RBAC_PERM_COMMAND_MODIFY_TALENTPOINTS, false, &HandleModifyTalentCommand,        "", NULL },
             // CUSTOM STUFF
-            { "morph",        RBAC_PERM_COMMAND_MODIFY_MORPH,        false, &HandleModifyMorphCommand,         "", NULL },
-            { "scaleperm",    RBAC_PERM_COMMAND_MODIFY_SCALEPERM,    false, &HandleModifyPermScaleCommand,     "", NULL },
-            { "morphperm",    RBAC_PERM_COMMAND_MODIFY_MORPHPERM,    false, &HandleModifyPermMorphCommand,     "", NULL },
-            { "bytes1",       RBAC_PERM_COMMAND_MODIFY_BYTES1,       false, &HandleModifyBytes1Command,        "", NULL },
-            { "bytes2",       RBAC_PERM_COMMAND_MODIFY_BYTES2,       false, &HandleModifyBytes2Command,        "", NULL },
+            { "morph",        rbac::RBAC_PERM_COMMAND_MODIFY_MORPH,        false, &HandleModifyMorphCommand,         "", NULL },
+            { "scaleperm",    rbac::RBAC_PERM_COMMAND_MODIFY_SCALEPERM,    false, &HandleModifyPermScaleCommand,     "", NULL },
+            { "morphperm",    rbac::RBAC_PERM_COMMAND_MODIFY_MORPHPERM,    false, &HandleModifyPermMorphCommand,     "", NULL },
+            { "bytes1",       rbac::RBAC_PERM_COMMAND_MODIFY_BYTES1,       false, &HandleModifyBytes1Command,        "", NULL },
+            { "bytes2",       rbac::RBAC_PERM_COMMAND_MODIFY_BYTES2,       false, &HandleModifyBytes2Command,        "", NULL },
             { NULL,           0,                                     false, NULL,                              "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-//          { "morph",   RBAC_PERM_COMMAND_MORPH,   false, &HandleModifyMorphCommand,          "", NULL }, -- Custom, have a separate command for .morph
-            { "demorph", RBAC_PERM_COMMAND_DEMORPH, false, &HandleDeMorphCommand,              "", NULL },
-            { "modify",  RBAC_PERM_COMMAND_MODIFY,  false, NULL,                 "", modifyCommandTable },
+//          { "morph",   rbac::RBAC_PERM_COMMAND_MORPH,   false, &HandleModifyMorphCommand,          "", NULL }, -- Custom, have a separate command for .morph
+            { "demorph", rbac::RBAC_PERM_COMMAND_DEMORPH, false, &HandleDeMorphCommand,              "", NULL },
+            { "modify",  rbac::RBAC_PERM_COMMAND_MODIFY,  false, NULL,                 "", modifyCommandTable },
             { NULL,      0,                         false, NULL,                               "", NULL }
         };
         return commandTable;
@@ -210,7 +209,7 @@ public:
         target->SetMaxPower(POWER_ENERGY, energym);
         target->SetPower(POWER_ENERGY, energy);
 
-        TC_LOG_DEBUG(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
+        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
 
         return true;
     }
@@ -1016,7 +1015,7 @@ public:
         {
             int64 newmoney = int64(targetMoney) + moneyToAdd;
 
-            TC_LOG_DEBUG(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_CURRENT_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(newmoney));
+            TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(newmoney));
             if (newmoney <= 0)
             {
                 handler->PSendSysMessage(LANG_YOU_TAKE_ALL_MONEY, handler->GetNameLink(target).c_str());
@@ -1052,7 +1051,7 @@ public:
             target->ModifyMoney(moneyToAdd);
         }
 
-        TC_LOG_DEBUG(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_NEW_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(target->GetMoney()));
+        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_NEW_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(target->GetMoney()));
 
         return true;
     }

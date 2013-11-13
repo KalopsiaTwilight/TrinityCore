@@ -51,7 +51,7 @@ public:
 
     struct instance_sunwell_plateau_InstanceMapScript : public InstanceScript
     {
-        instance_sunwell_plateau_InstanceMapScript(Map* map) : InstanceScript(map) {}
+        instance_sunwell_plateau_InstanceMapScript(Map* map) : InstanceScript(map) { }
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
 
@@ -136,7 +136,7 @@ public:
                 }
             }
             else
-                TC_LOG_DEBUG(LOG_FILTER_TSCR, "Instance Sunwell Plateau: GetPlayerInMap, but PlayerList is empty!");
+                TC_LOG_DEBUG("scripts", "Instance Sunwell Plateau: GetPlayerInMap, but PlayerList is empty!");
 
             return NULL;
         }

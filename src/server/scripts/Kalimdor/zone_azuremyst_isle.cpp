@@ -67,7 +67,7 @@ public:
 
     struct npc_draenei_survivorAI : public ScriptedAI
     {
-        npc_draenei_survivorAI(Creature* creature) : ScriptedAI(creature) {}
+        npc_draenei_survivorAI(Creature* creature) : ScriptedAI(creature) { }
 
         uint64 pCaster;
 
@@ -95,7 +95,7 @@ public:
             me->SetStandState(UNIT_STAND_STATE_SLEEP);
         }
 
-        void EnterCombat(Unit* /*who*/) OVERRIDE {}
+        void EnterCombat(Unit* /*who*/) OVERRIDE { }
 
         void MoveInLineOfSight(Unit* who) OVERRIDE
 
@@ -300,7 +300,7 @@ public:
 
     struct npc_injured_draeneiAI : public ScriptedAI
     {
-        npc_injured_draeneiAI(Creature* creature) : ScriptedAI(creature) {}
+        npc_injured_draeneiAI(Creature* creature) : ScriptedAI(creature) { }
 
         void Reset() OVERRIDE
         {
@@ -318,12 +318,12 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) OVERRIDE {}
+        void EnterCombat(Unit* /*who*/) OVERRIDE { }
 
-        void MoveInLineOfSight(Unit* /*who*/) OVERRIDE {}
+        void MoveInLineOfSight(Unit* /*who*/) OVERRIDE { }
 
 
-        void UpdateAI(uint32 /*diff*/) OVERRIDE {}
+        void UpdateAI(uint32 /*diff*/) OVERRIDE { }
     };
 
 };
@@ -367,7 +367,7 @@ public:
 
     struct npc_magwinAI : public npc_escortAI
     {
-        npc_magwinAI(Creature* creature) : npc_escortAI(creature) {}
+        npc_magwinAI(Creature* creature) : npc_escortAI(creature) { }
 
         void WaypointReached(uint32 waypointId) OVERRIDE
         {
@@ -398,7 +398,7 @@ public:
             Talk(SAY_AGGRO, who->GetGUID());
         }
 
-        void Reset() OVERRIDE {}
+        void Reset() OVERRIDE { }
     };
 
 };
@@ -441,7 +441,7 @@ public:
 
     struct npc_geezleAI : public ScriptedAI
     {
-        npc_geezleAI(Creature* creature) : ScriptedAI(creature) {}
+        npc_geezleAI(Creature* creature) : ScriptedAI(creature) { }
 
         uint64 SparkGUID;
 
@@ -457,7 +457,7 @@ public:
             StartEvent();
         }
 
-        void EnterCombat(Unit* /*who*/)OVERRIDE {}
+        void EnterCombat(Unit* /*who*/)OVERRIDE { }
 
         void StartEvent()
         {
@@ -554,7 +554,7 @@ public:
                 }
             }
             else
-                TC_LOG_ERROR(LOG_FILTER_TSCR, "SD2 ERROR: FlagList is empty!");
+                TC_LOG_ERROR("scripts", "SD2 ERROR: FlagList is empty!");
         }
 
         void UpdateAI(uint32 diff) OVERRIDE
@@ -614,7 +614,7 @@ public:
 
     struct npc_death_ravagerAI : public ScriptedAI
     {
-        npc_death_ravagerAI(Creature* creature) : ScriptedAI(creature){}
+        npc_death_ravagerAI(Creature* creature) : ScriptedAI(creature){ }
 
         uint32 RendTimer;
         uint32 EnragingBiteTimer;
@@ -676,7 +676,7 @@ class npc_stillpine_capitive : public CreatureScript
 
         struct npc_stillpine_capitiveAI : public ScriptedAI
         {
-            npc_stillpine_capitiveAI(Creature* creature) : ScriptedAI(creature) {}
+            npc_stillpine_capitiveAI(Creature* creature) : ScriptedAI(creature) { }
 
             void Reset() OVERRIDE
             {
