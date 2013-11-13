@@ -1927,8 +1927,9 @@ void ObjectMgr::LoadGameobjects()
 
         if (gInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(gInfo->displayId))
         {
-            TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (GUID: %u Entry %u GoType: %u) has an invalid displayId (%u), not loaded.", guid, entry, gInfo->type, gInfo->displayId);
-            continue;
+            //TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (GUID: %u Entry %u GoType: %u) has an invalid displayId (%u), not loaded.", guid, entry, gInfo->type, gInfo->displayId);
+            TC_LOG_ERROR(LOG_FILTER_SQL, "Gameobject (GUID: %u Entry %u GoType: %u) has an invalid displayId (%u), but still attempted spawn.", guid, entry, gInfo->type, gInfo->displayId);
+            //continue;
         }
 
         GameObjectData& data = _gameObjectDataStore[guid];

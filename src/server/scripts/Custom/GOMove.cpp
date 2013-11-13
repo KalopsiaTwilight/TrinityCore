@@ -302,10 +302,12 @@ public:
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            sLog->outError(LOG_FILTER_GENERAL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
-            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
+            //sLog->outError(LOG_FILTER_GENERAL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
+            //ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
+            sLog->outError(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), but attempted spawn.", e, objectInfo->type, objectInfo->displayId);
+            ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_INVALID_DATA_CUSTOM, e);
             ChatHandler(player->GetSession()).SetSentErrorMessage(true);
-            return NULL;
+            //return NULL;
         }
         Map* map = player->GetMap();
         GameObject* object = new GameObject;
