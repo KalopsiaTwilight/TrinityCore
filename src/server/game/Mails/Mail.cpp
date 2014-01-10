@@ -283,13 +283,13 @@ void MailDraft::SendMailTo(SQLTransaction& trans, MailReceiver const& receiver, 
 // Custom
 void WorldSession::SendExternalMails()
 {
-    sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> Sending mails in queue...");
+    TC_LOG_INFO("misc", "EXTERNAL MAIL> Sending mails in queue...");
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_GET_EXTERNAL_MAIL);
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
     if (!result)
     {
-        sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> No mails in queue...");
+        TC_LOG_INFO("misc", "EXTERNAL MAIL> No mails in queue...");
         return;
     }
 
@@ -314,13 +314,13 @@ void WorldSession::SendExternalMails()
 
         if (money)
         {
-        sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> Adding money");
+        TC_LOG_INFO("misc", "EXTERNAL MAIL> Adding money");
         mail->AddMoney(money);
         }
 
         if (itemId)
         {
-        sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> Adding %u of item with id %u", itemCount, itemId);
+        TC_LOG_INFO("misc", "EXTERNAL MAIL> Adding %u of item with id %u", itemCount, itemId);
         Item* mailItem = Item::CreateItem(itemId, itemCount);
         mailItem->SaveToDB(trans);
         mail->AddItem(mailItem);
@@ -333,10 +333,10 @@ void WorldSession::SendExternalMails()
         stmt->setUInt32(0, id);
         trans->Append(stmt);
 
-        sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> Mail sent");
+        TC_LOG_INFO("misc", "EXTERNAL MAIL> Mail sent");
     }
     while (result->NextRow());
 
     CharacterDatabase.CommitTransaction(trans);
-    sLog->outInfo(LOG_FILTER_NETWORKIO, "EXTERNAL MAIL> All Mails Sent...");
+    TC_LOG_INFO("misc", "EXTERNAL MAIL> All Mails Sent...");
 }

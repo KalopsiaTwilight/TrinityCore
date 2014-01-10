@@ -23,7 +23,7 @@ public:
     {
         static ChatCommand GOMoveCommandTable[] =
         {
-            { "gomove",			RBAC_PERM_COMMAND_GOMOVE,		false,   &GOMove_Command,				"", NULL },
+            { "gomove",			rbac::RBAC_PERM_COMMAND_GOMOVE,		false,   &GOMove_Command,				"", NULL },
             { NULL,				0,					false,	NULL,							"", NULL }
         };
         return GOMoveCommandTable;
@@ -302,9 +302,9 @@ public:
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            //sLog->outError(LOG_FILTER_GENERAL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
+            //TC_LOG_ERROR("sql.sql", "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
             //ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
-            sLog->outError(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), but attempted spawn.", e, objectInfo->type, objectInfo->displayId);
+            TC_LOG_ERROR("sql.sql", "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), but attempted spawn.", e, objectInfo->type, objectInfo->displayId);
             ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_INVALID_DATA_CUSTOM, e);
             ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             //return NULL;

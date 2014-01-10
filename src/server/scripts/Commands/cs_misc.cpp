@@ -2609,9 +2609,14 @@ public:
             handler->PSendSysMessage(LANG_CUSTOM_SCALE_CURRENT, currentScale);
             return true;
         }
+        
+        float scaleUnapprovedMax = 1.10f;
+        float scaleUnapprovedMin = 0.9f;
+        float scaleApprovedMax = 1.15f;
+        float scaleApprovedMin = 1.15f;
 
         float Scale = (float)atof((char*)args);
-        if (Scale > 1.15f || Scale < 0.85f)
+        if (Scale > scaleApprovedMax || Scale < scaleApprovedMin)
         {
             handler->SendSysMessage(LANG_BAD_VALUE);
             handler->SetSentErrorMessage(true);
@@ -2619,7 +2624,7 @@ public:
         }
 
         uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
-        if ((chrRace == RACE_TAUREN && Scale > 1.1f) || (chrRace == RACE_DRAENEI && Scale > 1.1f) || (chrRace == RACE_GNOME && Scale < 0.9f))
+        if ((chrRace == RACE_TAUREN && Scale > scaleUnapprovedMax) || (chrRace == RACE_DRAENEI && Scale > scaleUnapprovedMax) || (chrRace == RACE_GNOME && Scale < scaleUnapprovedMin))
         {
             handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
             handler->SetSentErrorMessage(true);
@@ -2638,7 +2643,7 @@ public:
 
             if (scaleTimesChanged < 10)
             {
-                if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
+                if ((chrLevel < 85 && Scale > scaleUnapprovedMax) || (chrLevel < 85 && Scale < scaleUnapprovedMin))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
@@ -2667,8 +2672,7 @@ public:
 
         else
 	    {
-            //if ((Scale > 1.1f) || (Scale < 0.9f))
-            if ((chrLevel < 85 && Scale > 1.1f) || (chrLevel < 85 && Scale < 0.9f))
+            if ((chrLevel < 85 && Scale > scaleUnapprovedMax) || (chrLevel < 85 && Scale < scaleUnapprovedMin))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);

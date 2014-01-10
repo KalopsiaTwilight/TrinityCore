@@ -717,6 +717,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_MOUNT                                  = 1032,
     RBAC_PERM_COMMAND_SERVER_EMOTE                           = 1033,
     RBAC_PERM_COMMANDS_RELOAD_NPC_TELE                       = 1034,
+    RBAC_PERM_COMMAND_CHARACTER_ACCOUNT                      = 1035,
 
     RBAC_PERM_MAX
 };

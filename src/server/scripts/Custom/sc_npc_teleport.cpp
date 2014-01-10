@@ -154,7 +154,7 @@ bool TELE::IsAllowedToTeleport(Player * const player) const
         return player->GetGUID() == m_data0;
     }
 
-    sLog->outError(LOG_FILTER_SQL, "Invalid flag (category: %u). Important problem...", GetCatID());
+    TC_LOG_ERROR("sql.sql", "Invalid flag (category: %u). Important problem...", GetCatID());
     return false;
 }
 
@@ -176,118 +176,118 @@ bool nsNpcTel::IsValidData(const uint32 &cat,   const Flag &flag,
     {
       case FLAG_TEAM:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (data0 < MAX_FLAG_TEAM)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Team) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (Team) (category: %u).", cat);
         return false;
 
       case FLAG_GUILD:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (data0)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (GuildID) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (GuildID) (category: %u).", cat);
         return false;
 
       case FLAG_GMLEVEL:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (0 < data0 && data0 < 256)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (GmLevel) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (GmLevel) (category: %u).", cat);
         return false;
 
       case FLAG_ISGM:
         if (data0)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data0 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data0 (category: %u).", cat);
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         return true;
 
       case FLAG_ACCOUNT:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (data0)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (AccountID) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (AccountID) (category: %u).", cat);
         return false;
 
       case FLAG_LEVEL:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (0 < data0 && data0 < 256)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Level) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (Level) (category: %u).", cat);
         return false;
 
       case FLAG_ITEM:
         if (!data0)
         {
-            sLog->outError(LOG_FILTER_SQL, "Invalid data0 (ItemID) (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data0 (ItemID) (category: %u).", cat);
             return false;
         }
         if (data1)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data1 (Item Count) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data1 (Item Count) (category: %u).", cat);
         return false;
 
       case FLAG_QUEST:
         if (!data0)
         {
-            sLog->outError(LOG_FILTER_SQL, "Invalid data0 (QuestID) (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data0 (QuestID) (category: %u).", cat);
             return false;
         }
         if (data1 < MAX_QUEST_STATUS + 1)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data1 (Quest Status) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data1 (Quest Status) (category: %u).", cat);
         return false;
 
       case FLAG_GENDER:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (data0 < GENDER_NONE)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Gender) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (Gender) (category: %u).", cat);
         return false;
 
       case FLAG_RACE:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (0 < data0 && data0 < MAX_RACES)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Race) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (Race) (category: %u).", cat);
         return false;
 
       case FLAG_CLASS:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (0 < data0 && data0 < MAX_CLASSES)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Class) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (Class) (category: %u).", cat);
         return false;
 
       case FLAG_REPUTATION:
         if (!data0)
         {
-            sLog->outError(LOG_FILTER_SQL, "Invalid data0 (Faction/Reputation) (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data0 (Faction/Reputation) (category: %u).", cat);
             return false;
         }
         if (data1 <= REP_EXALTED)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data1 (Faction/Reputation) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data1 (Faction/Reputation) (category: %u).", cat);
         return false;
 
       case FLAG_PLAYER:
         if (data1)
-            sLog->outError(LOG_FILTER_SQL, "Invalid data1 (category: %u).", cat);
+            TC_LOG_ERROR("sql.sql", "Invalid data1 (category: %u).", cat);
         if (data0)
             return true;
-        sLog->outError(LOG_FILTER_SQL, "Invalid data0 (PlayerGuid) (category: %u).", cat);
+        TC_LOG_ERROR("sql.sql", "Invalid data0 (PlayerGuid) (category: %u).", cat);
         return false;
     }
 
-    sLog->outError(LOG_FILTER_SQL, "Invalid flag (category: %u).", cat);
+    TC_LOG_ERROR("sql.sql", "Invalid flag (category: %u).", cat);
     return false;
 }
 
@@ -314,7 +314,7 @@ void LoadNpcTele(void)
 
     if (result)
     {
-        sLog->outDebug(LOG_FILTER_TSCR, "TSCR: Loading %s, %s and %s...", Table[0], Table[1], Table[2]);
+        sLog->outDebug("sql.sql", "TSCR: Loading %s, %s and %s...", Table[0], Table[1], Table[2]);
 
         uint32 catid = 0;
         uint32 nbDest = 0;
@@ -364,9 +364,8 @@ void LoadNpcTele(void)
             ++nbDest;
         } while (result->NextRow());
 
-        sLog->outDebug(LOG_FILTER_TSCR, "");
-        sLog->outDebug(LOG_FILTER_TSCR, "TSCR: >> Loaded %u npc_teleport.", nbDest);
-    } else sLog->outDebug(LOG_FILTER_TSCR, "TSCR: WARNING >> Loaded 0 npc_teleport.");
+        sLog->outDebug("sql.sql", "TSCR: >> Loaded %u npc_teleport.", nbDest);
+    } else sLog->outDebug("sql.sql", "TSCR: WARNING >> Loaded 0 npc_teleport.");
 }
 
 

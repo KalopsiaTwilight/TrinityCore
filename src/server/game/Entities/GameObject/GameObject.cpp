@@ -345,7 +345,8 @@ void GameObject::Update(uint32 diff)
 
                             G3D::Vector3 src(GetPositionX(), GetPositionY(), GetPositionZ());
 
-                            sLog->outInfo("misc", "Src: %s Dest: %s", src.toString().c_str(), pos.toString().c_str());
+                            sLog->
+                            ("misc", "Src: %s Dest: %s", src.toString().c_str(), pos.toString().c_str());
 
                             GetMap()->GameObjectRelocation(this, pos.x, pos.y, pos.z, GetOrientation());
                         }
@@ -1734,7 +1735,7 @@ void GameObject::Use(Unit* user)
                     AreaTriggerStruct const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
                     if (!at)
                     {
-                        TC_LOG_ERROR(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        TC_LOG_ERROR("sql.sql", "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
                         return;
                     }
 

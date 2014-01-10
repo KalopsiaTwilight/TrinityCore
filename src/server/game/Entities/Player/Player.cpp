@@ -21660,7 +21660,7 @@ void Player::InitDisplayIds()
                 SetNativeDisplayId(info->displayId_m);
                 break;
             default:
-                sLog->outError("entities.player", "Invalid gender %u for player", gender);
+                TC_LOG_ERROR("entities.player", "Invalid gender %u for player", gender);
                 return;
         }
     }

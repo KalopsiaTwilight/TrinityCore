@@ -67,6 +67,7 @@ public:
             { "faction",       rbac::RBAC_PERM_COMMAND_CHARACTER_FACTION,         true,  &HandleCharacterFactionCommand,        "", NULL },
             { "factionperm",   rbac::RBAC_PERM_COMMAND_CHARACTER_FACTIONPERM,     true,  &HandleCharacterFactionPermCommand,    "", NULL },
             { "viewitems",     rbac::RBAC_PERM_COMMAND_CHARACTER_VIEWITEMS,       true,  &HandleCharacterListItemCommand,       "", NULL },
+            { "account",       rbac::RBAC_PERM_COMMAND_CHARACTER_ACCOUNT,         true,  &HandleCharacterAccountCommand,        "", NULL },
             { NULL,            0,                                           false, NULL,                                  "", NULL }
         };
 
@@ -1341,6 +1342,15 @@ public:
 
         return true;
     }
+
+    static bool HandleCharacterAccountCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        return true;
+    }
+
 };
 
 void AddSC_character_commandscript()
