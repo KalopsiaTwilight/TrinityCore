@@ -302,7 +302,7 @@ public:
         }
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            sLog->outError(LOG_FILTER_SQL, "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
+            TC_LOG_ERROR("sql.sql", "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", e, objectInfo->type, objectInfo->displayId);
             ChatHandler(player->GetSession()).PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, e);
             ChatHandler(player->GetSession()).SetSentErrorMessage(true);
             return NULL;

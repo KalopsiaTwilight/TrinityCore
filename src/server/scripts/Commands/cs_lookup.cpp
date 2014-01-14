@@ -71,7 +71,7 @@ public:
             { "tele",     rbac::RBAC_PERM_COMMAND_LOOKUP_TELE,     true, &HandleLookupTeleCommand,     "", NULL },
             { "title",    rbac::RBAC_PERM_COMMAND_LOOKUP_TITLE,    true, &HandleLookupTitleCommand,    "", NULL },
             { "map",      rbac::RBAC_PERM_COMMAND_LOOKUP_MAP,      true, &HandleLookupMapCommand,      "", NULL },
-            { "rpitem",   RBAC_PERM_COMMAND_LOOKUP_RPITEM,   true, &HandleLookupRPItemCommand,   "", NULL },
+            { "rpitem",   rbac::RBAC_PERM_COMMAND_LOOKUP_RPITEM,   true, &HandleLookupRPItemCommand,   "", NULL },
             { NULL,       0,                                false, NULL,                         "", NULL }
         };
 

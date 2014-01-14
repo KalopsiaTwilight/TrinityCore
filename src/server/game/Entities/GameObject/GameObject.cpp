@@ -1743,7 +1743,7 @@ void GameObject::Use(Unit* user)
                     AreaTrigger const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
                     if (!at)
                     {
-                        sLog->outError(LOG_FILTER_SQL, "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
+                        TC_LOG_ERROR("sql.sql", "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
                         return;
                     }
 
