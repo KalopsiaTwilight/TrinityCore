@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@
 #include "ArenaTeamMgr.h"
 #include "GuildMgr.h"
 #include "TicketMgr.h"
-#include "CreatureEventAIMgr.h"
 #include "SpellMgr.h"
 #include "GroupMgr.h"
 #include "Chat.h"
@@ -111,16 +110,28 @@ World::World()
     m_MaxPlayerCount = 0;
     m_NextDailyQuestReset = 0;
     m_NextWeeklyQuestReset = 0;
+    m_NextMonthlyQuestReset = 0;
+    m_NextRandomBGReset = 0;
+    m_NextGuildReset = 0;
 
     m_defaultDbcLocale = LOCALE_enUS;
     m_availableDbcLocaleMask = 0;
 
+    mail_timer = 0;
+    mail_timer_expires = 0;
+    m_updateTime = 0;
     m_updateTimeSum = 0;
     m_updateTimeCount = 0;
+    m_currentTime = 0;
 
     m_isClosed = false;
 
     m_CleaningFlags = 0;
+
+    memset(rate_values, 0, sizeof(rate_values));
+    memset(m_int_configs, 0, sizeof(m_int_configs));
+    memset(m_bool_configs, 0, sizeof(m_bool_configs));
+    memset(m_float_configs, 0, sizeof(m_float_configs));
 }
 
 /// World destructor
@@ -421,27 +432,27 @@ void World::LoadConfigSettings(bool reload)
     m_int_configs[CONFIG_ENABLE_SINFO_LOGIN] = sConfigMgr->GetIntDefault("Server.LoginInfo", 0);
 
     ///- Read all rates from the config file
-    rate_values[RATE_HEALTH]      = sConfigMgr->GetFloatDefault("Rate.Health", 1);
+    rate_values[RATE_HEALTH]      = sConfigMgr->GetFloatDefault("Rate.Health", 1.0f);
     if (rate_values[RATE_HEALTH] < 0)
     {
         TC_LOG_ERROR("server.loading", "Rate.Health (%f) must be > 0. Using 1 instead.", rate_values[RATE_HEALTH]);
         rate_values[RATE_HEALTH] = 1;
     }
-    rate_values[RATE_POWER_MANA]  = sConfigMgr->GetFloatDefault("Rate.Mana", 1);
+    rate_values[RATE_POWER_MANA]  = sConfigMgr->GetFloatDefault("Rate.Mana", 1.0f);
     if (rate_values[RATE_POWER_MANA] < 0)
     {
         TC_LOG_ERROR("server.loading", "Rate.Mana (%f) must be > 0. Using 1 instead.", rate_values[RATE_POWER_MANA]);
         rate_values[RATE_POWER_MANA] = 1;
     }
-    rate_values[RATE_POWER_RAGE_INCOME] = sConfigMgr->GetFloatDefault("Rate.Rage.Income", 1);
-    rate_values[RATE_POWER_RAGE_LOSS]   = sConfigMgr->GetFloatDefault("Rate.Rage.Loss", 1);
+    rate_values[RATE_POWER_RAGE_INCOME] = sConfigMgr->GetFloatDefault("Rate.Rage.Income", 1.0f);
+    rate_values[RATE_POWER_RAGE_LOSS]   = sConfigMgr->GetFloatDefault("Rate.Rage.Loss", 1.0f);
     if (rate_values[RATE_POWER_RAGE_LOSS] < 0)
     {
         TC_LOG_ERROR("server.loading", "Rate.Rage.Loss (%f) must be > 0. Using 1 instead.", rate_values[RATE_POWER_RAGE_LOSS]);
         rate_values[RATE_POWER_RAGE_LOSS] = 1;
     }
-    rate_values[RATE_POWER_RUNICPOWER_INCOME] = sConfigMgr->GetFloatDefault("Rate.RunicPower.Income", 1);
-    rate_values[RATE_POWER_RUNICPOWER_LOSS]   = sConfigMgr->GetFloatDefault("Rate.RunicPower.Loss", 1);
+    rate_values[RATE_POWER_RUNICPOWER_INCOME] = sConfigMgr->GetFloatDefault("Rate.RunicPower.Income", 1.0f);
+    rate_values[RATE_POWER_RUNICPOWER_LOSS]   = sConfigMgr->GetFloatDefault("Rate.RunicPower.Loss", 1.0f);
     if (rate_values[RATE_POWER_RUNICPOWER_LOSS] < 0)
     {
         TC_LOG_ERROR("server.loading", "Rate.RunicPower.Loss (%f) must be > 0. Using 1 instead.", rate_values[RATE_POWER_RUNICPOWER_LOSS]);
@@ -635,8 +646,8 @@ void World::LoadConfigSettings(bool reload)
     m_float_configs[CONFIG_MAX_RECRUIT_A_FRIEND_DISTANCE] = sConfigMgr->GetFloatDefault("MaxRecruitAFriendBonusDistance", 100.0f);
 
     /// @todo Add MonsterSight and GuarderSight (with meaning) in worldserver.conf or put them as define
-    m_float_configs[CONFIG_SIGHT_MONSTER] = sConfigMgr->GetFloatDefault("MonsterSight", 50);
-    m_float_configs[CONFIG_SIGHT_GUARDER] = sConfigMgr->GetFloatDefault("GuarderSight", 50);
+    m_float_configs[CONFIG_SIGHT_MONSTER] = sConfigMgr->GetFloatDefault("MonsterSight", 50.0f);
+    m_float_configs[CONFIG_SIGHT_GUARDER] = sConfigMgr->GetFloatDefault("GuarderSight", 50.0f);
 
     if (reload)
     {
@@ -939,12 +950,12 @@ void World::LoadConfigSettings(bool reload)
 
     if (reload)
     {
-        uint32 val = sConfigMgr->GetIntDefault("Expansion", 1);
+        uint32 val = sConfigMgr->GetIntDefault("Expansion", 2);
         if (val != m_int_configs[CONFIG_EXPANSION])
             TC_LOG_ERROR("server.loading", "Expansion option can't be changed at worldserver.conf reload, using current value (%u).", m_int_configs[CONFIG_EXPANSION]);
     }
     else
-        m_int_configs[CONFIG_EXPANSION] = sConfigMgr->GetIntDefault("Expansion", 1);
+        m_int_configs[CONFIG_EXPANSION] = sConfigMgr->GetIntDefault("Expansion", 2);
 
     m_int_configs[CONFIG_CHATFLOOD_MESSAGE_COUNT] = sConfigMgr->GetIntDefault("ChatFlood.MessageCount", 10);
     m_int_configs[CONFIG_CHATFLOOD_MESSAGE_DELAY] = sConfigMgr->GetIntDefault("ChatFlood.MessageDelay", 1);
@@ -1696,12 +1707,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Scripts text locales...");      // must be after Load*Scripts calls
     sObjectMgr->LoadDbScriptStrings();
 
-    TC_LOG_INFO("server.loading", "Loading CreatureEventAI Texts...");
-    sEventAIMgr->LoadCreatureEventAI_Texts();
-
-    TC_LOG_INFO("server.loading", "Loading CreatureEventAI Scripts...");
-    sEventAIMgr->LoadCreatureEventAI_Scripts();
-
     TC_LOG_INFO("server.loading", "Loading spell script names...");
     sObjectMgr->LoadSpellScriptNames();
 
@@ -2213,23 +2218,10 @@ namespace Trinity
             void do_helper(WorldPacketList& data_list, char* text)
             {
                 char* pos = text;
-
                 while (char* line = lineFromMessage(pos))
                 {
                     WorldPacket* data = new WorldPacket();
-
-                    uint32 lineLength = strlen(line) + 1;
-
-                    data->Initialize(SMSG_MESSAGECHAT, 100);                // guess size
-                    *data << uint8(CHAT_MSG_SYSTEM);
-                    *data << uint32(LANG_UNIVERSAL);
-                    *data << uint64(0);
-                    *data << uint32(0);                                     // can be chat msg group or something
-                    *data << uint64(0);
-                    *data << uint32(lineLength);
-                    *data << line;
-                    *data << uint8(0);
-
+                    ChatHandler::BuildChatPacket(*data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, NULL, line);
                     data_list.push_back(data);
                 }
             }
@@ -2295,7 +2287,7 @@ void World::SendGlobalText(const char* text, WorldSession* self)
 
     while (char* line = ChatHandler::LineFromMessage(pos))
     {
-        ChatHandler::FillMessageData(&data, NULL, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, 0, line, NULL);
+        ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, NULL, line);
         SendGlobalMessage(&data, self);
     }
 
@@ -2324,7 +2316,7 @@ void World::SendZoneMessage(uint32 zone, WorldPacket* packet, WorldSession* self
 void World::SendZoneText(uint32 zone, const char* text, WorldSession* self, uint32 team)
 {
     WorldPacket data;
-    ChatHandler::FillMessageData(&data, NULL, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, 0, text, NULL);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, NULL, NULL, text);
     SendZoneMessage(zone, &data, self, team);
 }
 
@@ -3037,16 +3029,6 @@ void World::LoadDBVersion()
         m_DBVersion = "Unknown world database.";
 }
 
-void World::ProcessStartEvent()
-{
-    isEventKillStart = true;
-}
-
-void World::ProcessStopEvent()
-{
-    isEventKillStart = false;
-}
-
 void World::UpdateAreaDependentAuras()
 {
     SessionMap::const_iterator itr;
@@ -3204,6 +3186,10 @@ void World::UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 
 
     if (race != RACE_NONE)
         itr->second.m_race = race;
+
+    WorldPacket data(SMSG_INVALIDATE_PLAYER, 8);
+    data << MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER);
+    SendGlobalMessage(&data);
 }
 
 void World::UpdateCharacterNameDataLevel(uint32 guid, uint8 level)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@
 #include "Battleground.h"
 
 Vehicle::Vehicle(Unit* unit, VehicleEntry const* vehInfo, uint32 creatureEntry) :
-UsableSeatNum(0), _me(unit), _vehicleInfo(vehInfo), _creatureEntry(creatureEntry), _status(STATUS_NONE)
+UsableSeatNum(0), _me(unit), _vehicleInfo(vehInfo), _creatureEntry(creatureEntry), _status(STATUS_NONE), _lastShootPos()
 {
     for (uint32 i = 0; i < MAX_VEHICLE_SEATS; ++i)
     {
@@ -102,7 +102,7 @@ void Vehicle::Install()
                     if (!spellInfo)
                         continue;
 
-                    if (spellInfo->PowerType == POWER_ENERGY)
+                    if (spellInfo->PowerType == POWER_ENERGY && spellInfo->CalcPowerCost(_me, spellInfo->GetSchoolMask()) > 0)
                     {
                         _me->setPowerType(POWER_ENERGY);
                         _me->SetMaxPower(POWER_ENERGY, 100);
@@ -521,8 +521,13 @@ Vehicle* Vehicle::RemovePassenger(Unit* unit)
 
     if (_me->IsInWorld())
     {
-        unit->RemoveUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
-        unit->m_movementInfo.transport.Reset();
+        if (!_me->GetTransport())
+        {
+            unit->RemoveUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
+            unit->m_movementInfo.transport.Reset();
+        }
+        else
+            unit->m_movementInfo.transport = _me->m_movementInfo.transport;
     }
 
     // only for flyable vehicles

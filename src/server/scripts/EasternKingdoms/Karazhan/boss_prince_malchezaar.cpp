@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -179,7 +179,7 @@ public:
 
     CreatureAI* GetAI(Creature* creature) const OVERRIDE
     {
-        return new boss_malchezaarAI(creature);
+        return GetInstanceAI<boss_malchezaarAI>(creature);
     }
 
     struct boss_malchezaarAI : public ScriptedAI
@@ -239,8 +239,7 @@ public:
             SunderArmorTimer = urand(5000, 10000);
             phase = 1;
 
-            if (instance)
-                instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), true);
+            instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), true);
         }
 
         void KilledUnit(Unit* /*victim*/) OVERRIDE
@@ -260,16 +259,14 @@ public:
             for (uint8 i = 0; i < TOTAL_INFERNAL_POINTS; ++i)
                 positions.push_back(&InfernalPoints[i]);
 
-            if (instance)
-                instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), true);
+            instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), true);
         }
 
         void EnterCombat(Unit* /*who*/) OVERRIDE
         {
             Talk(SAY_AGGRO);
 
-            if (instance)
-                instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), false); // Open the door leading further in
+            instance->HandleGameObject(instance->GetData64(DATA_GO_NETHER_DOOR), false); // Open the door leading further in
         }
 
         void InfernalCleanup()
@@ -300,12 +297,7 @@ public:
         void ClearWeapons()
         {
             SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_UNEQUIP, EQUIP_NO_CHANGE);
-
-            //damage
-            const CreatureTemplate* cinfo = me->GetCreatureTemplate();
-            me->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, cinfo->mindmg);
-            me->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, cinfo->maxdmg);
-            me->UpdateDamagePhysical(BASE_ATTACK);
+            me->SetCanDualWield(false);
         }
 
         void EnfeebleHealthEffect()
@@ -422,19 +414,8 @@ public:
                     //models
                     SetEquipmentSlots(false, EQUIP_ID_AXE, EQUIP_ID_AXE, EQUIP_NO_CHANGE);
 
-                    //damage
-                    const CreatureTemplate* cinfo = me->GetCreatureTemplate();
-                    me->SetBaseWeaponDamage(BASE_ATTACK, MINDAMAGE, 2*cinfo->mindmg);
-                    me->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, 2*cinfo->maxdmg);
-                    me->UpdateDamagePhysical(BASE_ATTACK);
-
-                    me->SetBaseWeaponDamage(OFF_ATTACK, MINDAMAGE, cinfo->mindmg);
-                    me->SetBaseWeaponDamage(OFF_ATTACK, MAXDAMAGE, cinfo->maxdmg);
-                    //Sigh, updating only works on main attack, do it manually ....
-                    me->SetFloatValue(UNIT_FIELD_MINOFFHANDDAMAGE, cinfo->mindmg);
-                    me->SetFloatValue(UNIT_FIELD_MAXOFFHANDDAMAGE, cinfo->maxdmg);
-
                     me->SetAttackTime(OFF_ATTACK, (me->GetAttackTime(BASE_ATTACK)*150)/100);
+                    me->SetCanDualWield(true);
                 }
             }
             else if (phase == 2)
@@ -569,7 +550,7 @@ public:
 
         void DoMeleeAttacksIfReady()
         {
-            if (me->IsWithinMeleeRange(me->GetVictim()) && !me->IsNonMeleeSpellCasted(false))
+            if (me->IsWithinMeleeRange(me->GetVictim()) && !me->IsNonMeleeSpellCast(false))
             {
                 //Check for base attack
                 if (me->isAttackReady() && me->GetVictim())

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -879,7 +879,7 @@ class spell_dk_presence : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                if (GetSpellInfo()->Id == SPELL_DK_BLOOD_PRESENCE)
+                if (GetId() == SPELL_DK_BLOOD_PRESENCE)
                     target->CastSpell(target, SPELL_DK_IMPROVED_BLOOD_PRESENCE_TRIGGERED, true);
                 else if (AuraEffect const* impAurEff = target->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_BLOOD_PRESENCE_R1, EFFECT_0))
                     if (!target->HasAura(SPELL_DK_IMPROVED_BLOOD_PRESENCE_TRIGGERED))
@@ -890,7 +890,7 @@ class spell_dk_presence : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                if (GetSpellInfo()->Id == SPELL_DK_FROST_PRESENCE)
+                if (GetId() == SPELL_DK_FROST_PRESENCE)
                     target->CastSpell(target, SPELL_DK_FROST_PRESENCE_TRIGGERED, true);
                 else if (AuraEffect const* impAurEff = target->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_R1, EFFECT_0))
                     if (!target->HasAura(SPELL_DK_FROST_PRESENCE_TRIGGERED))
@@ -901,12 +901,12 @@ class spell_dk_presence : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                if (GetSpellInfo()->Id == SPELL_DK_UNHOLY_PRESENCE)
+                if (GetId() == SPELL_DK_UNHOLY_PRESENCE)
                     target->CastSpell(target, SPELL_DK_UNHOLY_PRESENCE_TRIGGERED, true);
 
                 if (AuraEffect const* impAurEff = target->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_UNHOLY_PRESENCE_R1, EFFECT_0))
                 {
-                    if (GetSpellInfo()->Id == SPELL_DK_UNHOLY_PRESENCE)
+                    if (GetId() == SPELL_DK_UNHOLY_PRESENCE)
                     {
                         // Not listed as any effect, only base points set
                         int32 bp = impAurEff->GetSpellInfo()->Effects[EFFECT_1].CalcValue();

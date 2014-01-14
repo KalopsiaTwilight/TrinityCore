@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -251,7 +251,7 @@ typedef std::list<PlayerCreateInfoAction> PlayerCreateInfoActions;
 struct PlayerInfo
 {
                                                             // existence checked by displayId != 0
-    PlayerInfo() : displayId_m(0), displayId_f(0), levelInfo(NULL) { }
+    PlayerInfo() : mapId(0), areaId(0), positionX(0.0f), positionY(0.0f), positionZ(0.0f), orientation(0.0f), displayId_m(0), displayId_f(0), levelInfo(NULL) { }
 
     uint32 mapId;
     uint32 areaId;
@@ -1021,7 +1021,7 @@ class TradeData
         uint32     m_money;                                 // m_player place money to trade
 
         uint32     m_spell;                                 // m_player apply spell to non-traded slot item
-        uint64     m_spellCastItem;                         // applied spell casted by item use
+        uint64     m_spellCastItem;                         // applied spell cast by item use
 
         uint64     m_items[TRADE_SLOT_COUNT];               // traded items from m_player side including non-traded slot
 };
@@ -1187,8 +1187,6 @@ class Player : public Unit, public GridObject<Player>
         void TextEmote(std::string const& text);
         /// Handles whispers from Addons and players based on sender, receiver's guid and language.
         void Whisper(std::string const& text, const uint32 language, uint64 receiver);
-        /// Constructs the player Chat data for the specific functions to use
-        void BuildPlayerChat(WorldPacket* data, uint8 msgtype, std::string const& text, uint32 language) const;
 
         /*********************************************************/
         /***                    STORAGE SYSTEM                 ***/
@@ -1357,6 +1355,7 @@ class Player : public Unit, public GridObject<Player>
         bool CanCompleteRepeatableQuest(Quest const* quest);
         bool CanRewardQuest(Quest const* quest, bool msg);
         bool CanRewardQuest(Quest const* quest, uint32 reward, bool msg);
+        void AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver);
         void AddQuest(Quest const* quest, Object* questGiver);
         void CompleteQuest(uint32 quest_id);
         void IncompleteQuest(uint32 quest_id);
@@ -1644,6 +1643,7 @@ class Player : public Unit, public GridObject<Player>
         void RemoveAllSpellCooldown();
         void _LoadSpellCooldowns(PreparedQueryResult result);
         void _SaveSpellCooldowns(SQLTransaction& trans);
+        uint32 GetLastPotionId() { return m_lastPotionId; }
         void SetLastPotionId(uint32 item_id) { m_lastPotionId = item_id; }
         void UpdatePotionCooldown(Spell* spell = NULL);
 
@@ -1748,14 +1748,13 @@ class Player : public Unit, public GridObject<Player>
         void ApplyFeralAPBonus(int32 amount, bool apply);
         void UpdateAttackPowerAndDamage(bool ranged = false);
         void UpdateShieldBlockValue();
-        void UpdateDamagePhysical(WeaponAttackType attType);
         void ApplySpellPowerBonus(int32 amount, bool apply);
         void UpdateSpellDamageAndHealingBonus();
         void ApplyRatingMod(CombatRating cr, int32 value, bool apply);
         void UpdateRating(CombatRating cr);
         void UpdateAllRatings();
 
-        void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& min_damage, float& max_damage);
+        void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage) OVERRIDE;
 
         void UpdateDefenseBonusesMod();
         inline void RecalculateRating(CombatRating cr) { ApplyRatingMod(cr, 0, true);}

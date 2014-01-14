@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -200,16 +200,13 @@ public:
         {
             if (!SisterDeath)
             {
-                if (instance)
+                Unit* Temp = ObjectAccessor::GetUnit(*me, instance->GetData64(DATA_ALYTHESS));
+                if (Temp && Temp->isDead())
                 {
-                    Unit* Temp = Unit::GetUnit(*me, instance->GetData64(DATA_ALYTHESS));
-                    if (Temp && Temp->isDead())
-                    {
-                        Talk(YELL_SISTER_ALYTHESS_DEAD);
-                        DoCast(me, SPELL_EMPOWER);
-                        me->InterruptSpell(CURRENT_GENERIC_SPELL);
-                        SisterDeath = true;
-                    }
+                    Talk(YELL_SISTER_ALYTHESS_DEAD);
+                    DoCast(me, SPELL_EMPOWER);
+                    me->InterruptSpell(CURRENT_GENERIC_SPELL);
+                    SisterDeath = true;
                 }
             }
 
@@ -220,7 +217,7 @@ public:
             {
                 if (ConflagrationTimer <= diff)
                 {
-                    if (!me->IsNonMeleeSpellCasted(false))
+                    if (!me->IsNonMeleeSpellCast(false))
                     {
                         me->InterruptSpell(CURRENT_GENERIC_SPELL);
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
@@ -233,7 +230,7 @@ public:
             {
                 if (ShadownovaTimer <= diff)
                 {
-                    if (!me->IsNonMeleeSpellCasted(false))
+                    if (!me->IsNonMeleeSpellCast(false))
                     {
                         Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
                         if (target)
@@ -242,7 +239,7 @@ public:
                         if (!SisterDeath)
                         {
                             if (target)
-                                Talk(EMOTE_SHADOW_NOVA, target->GetGUID());
+                                Talk(EMOTE_SHADOW_NOVA, target);
                             Talk(YELL_SHADOW_NOVA);
                         }
                         ShadownovaTimer = 30000+(rand()%5000);
@@ -252,7 +249,7 @@ public:
 
             if (ConfoundingblowTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                         DoCast(target, SPELL_CONFOUNDING_BLOW);
@@ -279,7 +276,7 @@ public:
 
             if (ShadowbladesTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     DoCast(me, SPELL_SHADOW_BLADES);
                     ShadowbladesTimer = 10000;
@@ -294,7 +291,7 @@ public:
                 Enraged = true;
             } else EnrageTimer -= diff;
 
-            if (me->isAttackReady() && !me->IsNonMeleeSpellCasted(false))
+            if (me->isAttackReady() && !me->IsNonMeleeSpellCast(false))
             {
                 //If we are within range melee the target
                 if (me->IsWithinMeleeRange(me->GetVictim()))
@@ -347,15 +344,12 @@ public:
         {
             Enraged = false;
 
-            if (instance)
+            if (Creature* temp = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_SACROLASH)))
             {
-                if (Creature* temp = ObjectAccessor::GetCreature((*me), instance->GetData64(DATA_SACROLASH)))
-                {
-                    if (temp->isDead())
-                        temp->Respawn();
-                    else if (temp->GetVictim())
-                        me->getThreatManager().addThreat(temp->GetVictim(), 0.0f);
-                }
+                if (temp->isDead())
+                    temp->Respawn();
+                else if (temp->GetVictim())
+                    me->getThreatManager().addThreat(temp->GetVictim(), 0.0f);
             }
 
             if (!me->IsInCombat())
@@ -527,7 +521,7 @@ public:
 
             if (!SisterDeath)
             {
-                Unit* Temp = Unit::GetUnit(*me, instance->GetData64(DATA_SACROLASH));
+                Unit* Temp = ObjectAccessor::GetUnit(*me, instance->GetData64(DATA_SACROLASH));
                 if (Temp && Temp->isDead())
                 {
                     Talk(YELL_SISTER_SACROLASH_DEAD);
@@ -538,7 +532,7 @@ public:
             }
             if (!me->GetVictim())
             {
-                Creature* sisiter = ObjectAccessor::GetCreature((*me), instance->GetData64(DATA_SACROLASH));
+                Creature* sisiter = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_SACROLASH));
                 if (sisiter && !sisiter->isDead() && sisiter->GetVictim())
                 {
                     me->AddThreat(sisiter->GetVictim(), 0.0f);
@@ -554,7 +548,7 @@ public:
             {
                 if (ShadownovaTimer <= diff)
                 {
-                    if (!me->IsNonMeleeSpellCasted(false))
+                    if (!me->IsNonMeleeSpellCast(false))
                     {
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                             DoCast(target, SPELL_SHADOW_NOVA);
@@ -566,7 +560,7 @@ public:
             {
                 if (ConflagrationTimer <= diff)
                 {
-                    if (!me->IsNonMeleeSpellCasted(false))
+                    if (!me->IsNonMeleeSpellCast(false))
                     {
                         me->InterruptSpell(CURRENT_GENERIC_SPELL);
                         Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
@@ -577,7 +571,7 @@ public:
                         if (!SisterDeath)
                         {
                             if (target)
-                                Talk(EMOTE_CONFLAGRATION, target->GetGUID());
+                                Talk(EMOTE_CONFLAGRATION, target);
                             Talk(YELL_CANFLAGRATION);
                         }
 
@@ -588,7 +582,7 @@ public:
 
             if (FlamesearTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     DoCast(me, SPELL_FLAME_SEAR);
                     FlamesearTimer = 15000;
@@ -597,7 +591,7 @@ public:
 
             if (PyrogenicsTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     DoCast(me, SPELL_PYROGENICS, true);
                     PyrogenicsTimer = 15000;
@@ -606,7 +600,7 @@ public:
 
             if (BlazeTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     DoCastVictim(SPELL_BLAZE);
                     BlazeTimer = 3800;
@@ -697,7 +691,7 @@ public:
 
             if (DarkstrikeTimer <= diff)
             {
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     //If we are within range melee the target
                     if (me->IsWithinMeleeRange(me->GetVictim()))

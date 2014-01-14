@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -69,11 +69,8 @@ enum MillhouseSpells
 class npc_millhouse_manastorm : public CreatureScript
 {
     public:
+        npc_millhouse_manastorm() : CreatureScript("npc_millhouse_manastorm") { }
 
-        npc_millhouse_manastorm()
-            : CreatureScript("npc_millhouse_manastorm")
-        {
-        }
         struct npc_millhouse_manastormAI : public ScriptedAI
         {
             npc_millhouse_manastormAI(Creature* creature) : ScriptedAI(creature)
@@ -101,14 +98,11 @@ class npc_millhouse_manastorm : public CreatureScript
                 Pyroblast_Timer = 1000;
                 Fireball_Timer = 2500;
 
-                if (instance)
-                {
-                    if (instance->GetData(DATA_WARDEN_2) == DONE)
-                        Init = true;
+                if (instance->GetData(DATA_WARDEN_2) == DONE)
+                    Init = true;
 
-                    if (instance->GetData(DATA_HARBINGERSKYRISS) == DONE)
-                        Talk(SAY_COMPLETE);
-                }
+                if (instance->GetBossState(DATA_HARBINGER_SKYRISS) == DONE)
+                    Talk(SAY_COMPLETE);
             }
 
             void AttackStart(Unit* who) OVERRIDE
@@ -122,11 +116,10 @@ class npc_millhouse_manastorm : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/) OVERRIDE { }
-
-            void KilledUnit(Unit* /*victim*/) OVERRIDE
+            void KilledUnit(Unit* who) OVERRIDE
             {
-                Talk(SAY_KILL);
+                if (who->GetTypeId() == TYPEID_PLAYER)
+                    Talk(SAY_KILL);
             }
 
             void JustDied(Unit* /*killer*/) OVERRIDE
@@ -134,7 +127,7 @@ class npc_millhouse_manastorm : public CreatureScript
                 Talk(SAY_DEATH);
 
                 /*for questId 10886 (heroic mode only)
-                if (instance && instance->GetData(TYPE_HARBINGERSKYRISS) != DONE)
+                if (instance->GetBossState(DATA_HARBINGER_SKYRISS) != DONE)
                 ->FailQuest();*/
             }
 
@@ -176,8 +169,7 @@ class npc_millhouse_manastorm : public CreatureScript
                                 EventProgress_Timer = 6000;
                                 break;
                             case 7:
-                                if (instance)
-                                    instance->SetData(DATA_WARDEN_2, DONE);
+                                instance->SetData(DATA_WARDEN_2, DONE);
                                 Init = true;
                                 break;
                             }
@@ -198,7 +190,7 @@ class npc_millhouse_manastorm : public CreatureScript
 
                 if (Pyroblast_Timer <= diff)
                 {
-                    if (me->IsNonMeleeSpellCasted(false))
+                    if (me->IsNonMeleeSpellCast(false))
                         return;
 
                     Talk(SAY_PYRO);
@@ -223,7 +215,7 @@ class npc_millhouse_manastorm : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return new npc_millhouse_manastormAI(creature);
+            return GetArcatrazAI<npc_millhouse_manastormAI>(creature);
         }
 };
 /*#####
@@ -273,10 +265,7 @@ enum WardenSpells
 class npc_warden_mellichar : public CreatureScript
 {
     public:
-
-        npc_warden_mellichar() : CreatureScript("npc_warden_mellichar")
-        {
-        }
+        npc_warden_mellichar() : CreatureScript("npc_warden_mellichar") { }
 
         struct npc_warden_mellicharAI : public ScriptedAI
         {
@@ -304,14 +293,12 @@ class npc_warden_mellichar : public CreatureScript
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 DoCast(me, SPELL_TARGET_OMEGA);
 
-                if (instance)
-                    instance->SetData(DATA_HARBINGERSKYRISS, NOT_STARTED);
+                instance->SetBossState(DATA_HARBINGER_SKYRISS, NOT_STARTED);
             }
 
             void AttackStart(Unit* /*who*/) OVERRIDE { }
 
             void MoveInLineOfSight(Unit* who) OVERRIDE
-
             {
                 if (IsRunning)
                     return;
@@ -334,50 +321,42 @@ class npc_warden_mellichar : public CreatureScript
                 Talk(YELL_INTRO1);
                 DoCast(me, SPELL_BUBBLE_VISUAL);
 
-                if (instance)
-                {
-                    instance->SetData(DATA_HARBINGERSKYRISS, IN_PROGRESS);
-                    instance->HandleGameObject(instance->GetData64(DATA_SPHERE_SHIELD), false);
-                    IsRunning = true;
-                }
+                instance->SetBossState(DATA_HARBINGER_SKYRISS, IN_PROGRESS);
+                instance->HandleGameObject(instance->GetData64(DATA_WARDENS_SHIELD), false);
+                IsRunning = true;
             }
 
             bool CanProgress()
             {
-                if (instance)
-                {
-                    if (Phase == 7 && instance->GetData(DATA_WARDEN_4) == DONE)
-                        return true;
-                    if (Phase == 6 && instance->GetData(DATA_WARDEN_3) == DONE)
-                        return true;
-                    if (Phase == 5 && instance->GetData(DATA_WARDEN_2) == DONE)
-                        return true;
-                    if (Phase == 4)
-                        return true;
-                    if (Phase == 3 && instance->GetData(DATA_WARDEN_1) == DONE)
-                        return true;
-                    if (Phase == 2 && instance->GetData(DATA_HARBINGERSKYRISS) == IN_PROGRESS)
-                        return true;
-                    if (Phase == 1 && instance->GetData(DATA_HARBINGERSKYRISS) == IN_PROGRESS)
-                        return true;
-                    return false;
-                }
+                if (Phase == 7 && instance->GetData(DATA_WARDEN_4) == DONE)
+                    return true;
+                if (Phase == 6 && instance->GetData(DATA_WARDEN_3) == DONE)
+                    return true;
+                if (Phase == 5 && instance->GetData(DATA_WARDEN_2) == DONE)
+                    return true;
+                if (Phase == 4)
+                    return true;
+                if (Phase == 3 && instance->GetData(DATA_WARDEN_1) == DONE)
+                    return true;
+                if (Phase == 2 && instance->GetBossState(DATA_HARBINGER_SKYRISS) == IN_PROGRESS)
+                    return true;
+                if (Phase == 1 && instance->GetBossState(DATA_HARBINGER_SKYRISS) == IN_PROGRESS)
+                    return true;
+
                 return false;
             }
 
             void DoPrepareForPhase()
             {
-                if (instance)
-                {
-                    me->InterruptNonMeleeSpells(true);
-                    me->RemoveAurasByType(SPELL_AURA_DUMMY);
+                me->InterruptNonMeleeSpells(true);
+                me->RemoveAurasByType(SPELL_AURA_DUMMY);
 
-                    switch (Phase)
-                    {
+                switch (Phase)
+                {
                     case 2:
                         DoCast(me, SPELL_TARGET_ALPHA);
                         instance->SetData(DATA_WARDEN_1, IN_PROGRESS);
-                        instance->HandleGameObject(instance->GetData64(DATA_SPHERE_SHIELD), false);
+                        instance->HandleGameObject(instance->GetData64(DATA_WARDENS_SHIELD), false);
                         break;
                     case 3:
                         DoCast(me, SPELL_TARGET_BETA);
@@ -394,9 +373,8 @@ class npc_warden_mellichar : public CreatureScript
                     case 7:
                         instance->SetData(DATA_WARDEN_5, IN_PROGRESS);
                         break;
-                    }
-                    CanSpawn = true;
                 }
+                CanSpawn = true;
             }
 
             void UpdateAI(uint32 diff) OVERRIDE
@@ -406,13 +384,10 @@ class npc_warden_mellichar : public CreatureScript
 
                 if (EventProgress_Timer <= diff)
                 {
-                    if (instance)
+                    if (instance->GetBossState(DATA_HARBINGER_SKYRISS) == FAIL)
                     {
-                        if (instance->GetData(DATA_HARBINGERSKYRISS) == FAIL)
-                        {
-                            Reset();
-                            return;
-                        }
+                        Reset();
+                        return;
                     }
 
                     if (CanSpawn)
@@ -517,7 +492,7 @@ class npc_warden_mellichar : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return new npc_warden_mellicharAI(creature);
+            return GetArcatrazAI<npc_warden_mellicharAI>(creature);
         }
 };
 

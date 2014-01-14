@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -128,11 +128,6 @@ class MapManager
     private:
         typedef UNORDERED_MAP<uint32, Map*> MapMapType;
         typedef std::vector<bool> InstanceIds;
-
-        // debugging code, should be deleted some day
-        void checkAndCorrectGridStatesArray();              // just for debugging to find some memory overwrites
-        GridState* i_GridStates[MAX_GRID_STATE];            // shadow entries to the global array in Map.cpp
-        int i_GridStateErrorCount;
 
         MapManager();
         ~MapManager();

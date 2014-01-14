@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -333,6 +333,7 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
                 item2->DeleteFromInventoryDB(trans);
                 item2->DeleteFromDB(trans);
                 CharacterDatabase.CommitTransaction(trans);
+                delete item2;
             }
             else // Item stack count is bigger than required count, update item stack count and save to database - cloned item will be used for auction
             {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1036,6 +1036,10 @@ struct SmartTarget
         raw.param1 = p1;
         raw.param2 = p2;
         raw.param3 = p3;
+        x = 0.0f;
+        y = 0.0f;
+        z = 0.0f;
+        o = 0.0f;
     }
     SMARTAI_TARGETS type;
     float x, y, z, o;
@@ -1283,7 +1287,8 @@ enum SmartCastFlags
     //SMARTCAST_FORCE_CAST             = 0x04,                     //Forces cast even if creature is out of mana or out of range
     //SMARTCAST_NO_MELEE_IF_OOM        = 0x08,                     //Prevents creature from entering melee if out of mana or out of range
     //SMARTCAST_FORCE_TARGET_SELF      = 0x10,                     //Forces the target to cast this spell on itself
-    SMARTCAST_AURA_NOT_PRESENT       = 0x20                      //Only casts the spell if the target does not have an aura from the spell
+    SMARTCAST_AURA_NOT_PRESENT       = 0x20,                     //Only casts the spell if the target does not have an aura from the spell
+    SMARTCAST_COMBAT_MOVE            = 0x40                      //Prevents combat movement if cast successful. Allows movement on range, OOM, LOS
 };
 
 // one line in DB is one event
@@ -1316,7 +1321,56 @@ struct SmartScriptHolder
 typedef UNORDERED_MAP<uint32, WayPoint*> WPPath;
 
 typedef std::list<WorldObject*> ObjectList;
-typedef UNORDERED_MAP<uint32, ObjectList*> ObjectListMap;
+typedef std::list<uint64> GuidList;
+class ObjectGuidList
+{
+    ObjectList* m_objectList;
+    GuidList* m_guidList;
+    WorldObject* m_baseObject;
+
+public:
+    ObjectGuidList(ObjectList* objectList, WorldObject* baseObject)
+    {
+        ASSERT(objectList != NULL);
+        ASSERT(baseObject != NULL);
+        m_objectList = objectList;
+        m_baseObject = baseObject;
+        m_guidList = new GuidList();
+
+        for (ObjectList::iterator itr = objectList->begin(); itr != objectList->end(); ++itr)
+        {
+            m_guidList->push_back((*itr)->GetGUID());
+        }
+    }
+
+    ObjectList* GetObjectList()
+    {
+        //sanitize list using m_guidList
+        m_objectList->clear();
+
+        for (GuidList::iterator itr = m_guidList->begin(); itr != m_guidList->end(); ++itr)
+        {
+            if (WorldObject* obj = ObjectAccessor::GetWorldObject(*m_baseObject, *itr))
+                m_objectList->push_back(obj);
+            else
+                TC_LOG_DEBUG("scripts.ai", "SmartScript::mTargetStorage stores a guid to an invalid object: " UI64FMTD, *itr);
+        }
+
+        return m_objectList;
+    }
+
+    bool Equals(ObjectList* objectList)
+    {
+        return m_objectList == objectList;
+    }
+
+    ~ObjectGuidList()
+    {
+        delete m_objectList;
+        delete m_guidList;
+    }
+};
+typedef UNORDERED_MAP<uint32, ObjectGuidList*> ObjectListMap;
 
 class SmartWaypointMgr
 {
@@ -1344,12 +1398,16 @@ typedef std::vector<SmartScriptHolder> SmartAIEventList;
 // all events for all entries / guids
 typedef UNORDERED_MAP<int32, SmartAIEventList> SmartAIEventMap;
 
+// Helper Stores
+typedef std::map<uint32 /*entry*/, std::pair<uint32 /*spellId*/, SpellEffIndex /*effIndex*/> > CacheSpellContainer;
+typedef std::pair<CacheSpellContainer::const_iterator, CacheSpellContainer::const_iterator> CacheSpellContainerBounds;
+
 class SmartAIMgr
 {
     friend class ACE_Singleton<SmartAIMgr, ACE_Null_Mutex>;
-    SmartAIMgr(){ }
+    SmartAIMgr() { }
     public:
-        ~SmartAIMgr(){ }
+        ~SmartAIMgr() { }
 
         void LoadSmartAIFromDB();
 
@@ -1504,6 +1562,18 @@ class SmartAIMgr
         }
 
         //bool IsTextValid(SmartScriptHolder const& e, uint32 id);
+
+        // Helpers
+        void LoadHelperStores();
+        void UnLoadHelperStores();
+
+        CacheSpellContainerBounds GetSummonCreatureSpellContainerBounds(uint32 creatureEntry) const;
+        CacheSpellContainerBounds GetSummonGameObjectSpellContainerBounds(uint32 gameObjectEntry) const;
+        CacheSpellContainerBounds GetKillCreditSpellContainerBounds(uint32 killCredit) const;
+
+        CacheSpellContainer SummonCreatureSpellStore;
+        CacheSpellContainer SummonGameObjectSpellStore;
+        CacheSpellContainer KillCreditSpellStore;
 };
 
 #define sSmartScriptMgr ACE_Singleton<SmartAIMgr, ACE_Null_Mutex>::instance()

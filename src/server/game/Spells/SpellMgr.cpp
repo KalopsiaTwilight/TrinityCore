@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -455,6 +455,8 @@ uint32 SpellMgr::GetSpellDifficultyId(uint32 spellId) const
 
 void SpellMgr::SetSpellDifficultyId(uint32 spellId, uint32 id)
 {
+    if (uint32 i = GetSpellDifficultyId(spellId))
+        TC_LOG_ERROR("spells", "SpellMgr::SetSpellDifficultyId: Spell %u has already spellDifficultyId %u. Will override with spellDifficultyId %u.", spellId, i, id);
     mSpellDifficultySearcherMap[spellId] = id;
 }
 
@@ -480,7 +482,7 @@ uint32 SpellMgr::GetSpellIdForDifficulty(uint32 spellId, Unit const* caster) con
     SpellDifficultyEntry const* difficultyEntry = sSpellDifficultyStore.LookupEntry(difficultyId);
     if (!difficultyEntry)
     {
-        TC_LOG_DEBUG("spells", "SpellMgr::GetSpellIdForDifficulty: SpellDifficultyEntry not found for spell %u. This should never happen.", spellId);
+        TC_LOG_ERROR("spells", "SpellMgr::GetSpellIdForDifficulty: SpellDifficultyEntry not found for spell %u. This should never happen.", spellId);
         return spellId; //return source spell
     }
 
@@ -1534,8 +1536,8 @@ void SpellMgr::LoadSpellLearnSpells()
                 if (!GetSpellInfo(dbc_node.spell))
                     continue;
 
-                // talent or passive spells or skill-step spells auto-casted and not need dependent learning,
-                // pet teaching spells must not be dependent learning (casted)
+                // talent or passive spells or skill-step spells auto-cast and not need dependent learning,
+                // pet teaching spells must not be dependent learning (cast)
                 // other required explicit dependent learning
                 dbc_node.autoLearned = entry->Effects[i].TargetA.GetTarget() == TARGET_UNIT_PET || GetTalentSpellCost(spell) > 0 || entry->IsPassive() || entry->HasEffect(SPELL_EFFECT_SKILL_STEP);
 
@@ -3042,6 +3044,9 @@ void SpellMgr::LoadSpellInfoCorrections()
             case 42730:
                 spellInfo->Effects[EFFECT_1].TriggerSpell = 42739;
                 break;
+            case 42436: // Drink! (Brewfest)
+                spellInfo->Effects[EFFECT_0].TargetA = SpellImplicitTargetInfo(TARGET_UNIT_TARGET_ANY);
+                break;
             case 59735:
                 spellInfo->Effects[EFFECT_1].TriggerSpell = 59736;
                 break;
@@ -3221,6 +3226,9 @@ void SpellMgr::LoadSpellInfoCorrections()
             case 28200: // Ascendance (Talisman of Ascendance trinket)
                 spellInfo->ProcCharges = 6;
                 break;
+            case 37408: // Oscillation Field
+                spellInfo->AttributesEx3 |= SPELL_ATTR3_STACK_FOR_DIFF_CASTERS;
+                break;
             case 47201: // Everlasting Affliction
             case 47202:
             case 47203:
@@ -3390,6 +3398,11 @@ void SpellMgr::LoadSpellInfoCorrections()
             case 34471: // The Beast Within
                 spellInfo->AttributesEx5 |= SPELL_ATTR5_USABLE_WHILE_CONFUSED | SPELL_ATTR5_USABLE_WHILE_FEARED | SPELL_ATTR5_USABLE_WHILE_STUNNED;
                 break;
+            case 56606: // Ride Jokkum
+            case 61791: // Ride Vehicle (Yogg-Saron)
+                /// @todo: remove this when basepoints of all Ride Vehicle auras are calculated correctly
+                spellInfo->Effects[EFFECT_0].BasePoints = 1;
+                break;
             // ULDUAR SPELLS
             //
             case 62374: // Pursued (Flame Leviathan)
@@ -3427,10 +3440,6 @@ void SpellMgr::LoadSpellInfoCorrections()
                 // may be db data bug, or blizz may keep reapplying area auras every update with checking immunity
                 // that will be clear if we get more spells with problem like this
                 spellInfo->AttributesEx |= SPELL_ATTR1_DISPEL_AURAS_ON_IMMUNITY;
-                break;
-            case 61791: // Ride Vehicle (Yogg-Saron)
-                // TODO: remove this when basepoints of all Ride Vehicle auras are calculated correctly
-                spellInfo->Effects[EFFECT_0].BasePoints = 1;
                 break;
             case 64468: // Empowering Shadows (Yogg-Saron)
             case 64486: // Empowering Shadows (Yogg-Saron)
@@ -3686,6 +3695,9 @@ void SpellMgr::LoadSpellInfoCorrections()
             //
             // RUBY SANCTUM SPELLS
             //
+            case 74799: // Soul Consumption
+                spellInfo->Effects[EFFECT_1].RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_12_YARDS);
+                break;
             case 74769: // Twilight Cutter
             case 77844: // Twilight Cutter
             case 77845: // Twilight Cutter
@@ -3715,7 +3727,7 @@ void SpellMgr::LoadSpellInfoCorrections()
                 break;
             // This would never crit on retail and it has attribute for SPELL_ATTR3_NO_DONE_BONUS because is handled from player,
             // until someone figures how to make scions not critting without hack and without making them main casters this should stay here.
-            case 63934: // Arcane Barrage (casted by players and NONMELEEDAMAGELOG with caster Scion of Eternity (original caster)).
+            case 63934: // Arcane Barrage (cast by players and NONMELEEDAMAGELOG with caster Scion of Eternity (original caster)).
                 spellInfo->AttributesEx2 |= SPELL_ATTR2_CANT_CRIT;
                 break;
             // ENDOF EYE OF ETERNITY SPELLS

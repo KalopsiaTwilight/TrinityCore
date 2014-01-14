@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -148,7 +148,9 @@ struct LootItem
     explicit LootItem(LootStoreItem const& li);
 
     // Empty constructor for creating an empty LootItem to be filled in with DB data
-    LootItem() : canSave(true){ };
+    LootItem() : itemid(0), randomSuffix(0), randomPropertyId(0), count(0), is_looted(false), is_blocked(false),
+                 freeforall(false), is_underthreshold(false), is_counted(false), needs_quest(false), follow_loot_rules(false),
+                 canSave(true){ };
 
     // Basic checks for player/item compatibility - if false no chance to see the item in the loot
     bool AllowedForPlayer(Player const* player) const;
@@ -303,7 +305,7 @@ struct Loot
     //  Only set for inventory items that can be right-click looted
     uint32 containerID;
 
-    Loot(uint32 _gold = 0) : gold(_gold), unlootedCount(0), loot_type(LOOT_CORPSE), maxDuplicates(1), containerID(0) { }
+    Loot(uint32 _gold = 0) : gold(_gold), unlootedCount(0), roundRobinPlayer(0), loot_type(LOOT_CORPSE), maxDuplicates(1), containerID(0) { }
     ~Loot() { clear(); }
 
     // For deleting items at loot removal since there is no backward interface to the Item()

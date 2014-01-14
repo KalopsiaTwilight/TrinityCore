@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,10 @@
 BattlegroundRV::BattlegroundRV()
 {
     BgObjects.resize(BG_RV_OBJECT_MAX);
+
+    Timer = 0;
+    State = 0;
+    PillarCollision = false;
 
     StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_1M;
     StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_30S;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1723,7 +1723,7 @@ void WorldSession::HandleHearthAndResurrect(WorldPacket& /*recvData*/)
         return;
 
     _player->BuildPlayerRepop();
-    _player->ResurrectPlayer(100);
+    _player->ResurrectPlayer(1.0f);
     _player->TeleportTo(_player->m_homebindMapId, _player->m_homebindX, _player->m_homebindY, _player->m_homebindZ, _player->GetOrientation());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -323,7 +323,10 @@ void AddSC_boss_ptheradras();
 void AddSC_instance_maraudon();
 void AddSC_boss_onyxia();                    //Onyxia's Lair
 void AddSC_instance_onyxias_lair();
-void AddSC_boss_amnennar_the_coldbringer();  //Razorfen Downs
+void AddSC_boss_tuten_kash();                 //Razorfen Downs
+void AddSC_boss_mordresh_fire_eye();
+void AddSC_boss_glutton();
+void AddSC_boss_amnennar_the_coldbringer();
 void AddSC_razorfen_downs();
 void AddSC_instance_razorfen_downs();
 void AddSC_razorfen_kraul();                 //Razorfen Kraul
@@ -448,6 +451,7 @@ void AddSC_oculus();
 void AddSC_boss_malygos();              // The Nexus: Eye of Eternity
 void AddSC_instance_eye_of_eternity();
 void AddSC_boss_sartharion();            //Obsidian Sanctum
+void AddSC_obsidian_sanctum();
 void AddSC_instance_obsidian_sanctum();
 void AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
 void AddSC_boss_loken();
@@ -1036,7 +1040,10 @@ void AddKalimdorScripts()
     AddSC_instance_maraudon();
     AddSC_boss_onyxia();                    //Onyxia's Lair
     AddSC_instance_onyxias_lair();
-    AddSC_boss_amnennar_the_coldbringer();  //Razorfen Downs
+    AddSC_boss_tuten_kash();                //Razorfen Downs
+    AddSC_boss_mordresh_fire_eye();
+    AddSC_boss_glutton();
+    AddSC_boss_amnennar_the_coldbringer();
     AddSC_razorfen_downs();
     AddSC_instance_razorfen_downs();
     AddSC_razorfen_kraul();                 //Razorfen Kraul
@@ -1285,6 +1292,7 @@ void AddNorthrendScripts()
     AddSC_boss_malygos();              // The Nexus: Eye of Eternity
     AddSC_instance_eye_of_eternity();
     AddSC_boss_sartharion();            //Obsidian Sanctum
+    AddSC_obsidian_sanctum();
     AddSC_instance_obsidian_sanctum();
     AddSC_boss_bjarngrim();             //Ulduar Halls of Lightning
     AddSC_boss_loken();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,22 @@ BattlegroundSA::BattlegroundSA()
     SignaledRoundTwo = false;
     SignaledRoundTwoHalfMin = false;
     InitSecondRound = false;
+    gateDestroyed = false;
+    Attackers = TEAM_ALLIANCE;
+    TotalTime = 0;
+    EndRoundTimer = 0;
+    ShipsStarted = false;
+    Status = BG_SA_NOTSTARTED;
+
+    for (uint8 i = 0; i < 6; i++)
+        GateStatus[i] = BG_SA_GATE_OK;
+
+    for (uint8 i = 0; i < 2; i++)
+    {
+        RoundScores[i].winner = TEAM_ALLIANCE;
+        RoundScores[i].time = 0;
+        _allVehiclesAlive[i] = true;
+    }
 
     //! This is here to prevent an uninitialised variable warning
     //! The warning only occurs when SetUpBattleGround fails though.

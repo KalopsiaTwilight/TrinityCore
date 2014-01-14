@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,6 +28,12 @@ BattlegroundDS::BattlegroundDS()
 {
     BgObjects.resize(BG_DS_OBJECT_MAX);
     BgCreatures.resize(BG_DS_NPC_MAX);
+
+    _waterfallTimer = 0;
+    _waterfallStatus = 0;
+    _waterfallKnockbackTimer = 0;
+    _pipeKnockBackTimer = 0;
+    _pipeKnockBackCount = 0;
 
     StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_1M;
     StartDelayTimes[BG_STARTING_EVENT_SECOND] = BG_START_DELAY_30S;

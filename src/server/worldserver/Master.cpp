@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -86,7 +86,12 @@ private:
     uint32 _lastChange;
     uint32 _delaytime;
 public:
-    FreezeDetectorRunnable() { _delaytime = 0; }
+    FreezeDetectorRunnable()
+    {
+        _loops = 0;
+        _lastChange = 0;
+        _delaytime = 0;
+    }
 
     void SetDelayTime(uint32 t) { _delaytime = t; }
 
@@ -246,7 +251,7 @@ int Master::Run()
         {
             CPU_ZERO(&mask);
             sched_getaffinity(0, sizeof(mask), &mask);
-            TC_LOG_INFO("server.worldserver", "Using processors (bitmask, hex): %x", *(uint32*)(&mask));
+            TC_LOG_INFO("server.worldserver", "Using processors (bitmask, hex): %lx", *(__cpu_mask*)(&mask));
         }
     }
 

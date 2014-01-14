@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ class boss_harbinger_skyriss : public CreatureScript
 
         struct boss_harbinger_skyrissAI : public BossAI
         {
-            boss_harbinger_skyrissAI(Creature* creature) : BossAI(creature, DATA_HARBINGERSKYRISS)
+            boss_harbinger_skyrissAI(Creature* creature) : BossAI(creature, DATA_HARBINGER_SKYRISS)
             {
                 Intro = false;
             }
@@ -98,7 +98,6 @@ class boss_harbinger_skyriss : public CreatureScript
             }
 
             void MoveInLineOfSight(Unit* who) OVERRIDE
-
             {
                 if (!Intro)
                     return;
@@ -138,7 +137,7 @@ class boss_harbinger_skyriss : public CreatureScript
 
             void DoSplit(uint32 val)
             {
-                if (me->IsNonMeleeSpellCasted(false))
+                if (me->IsNonMeleeSpellCast(false))
                     me->InterruptNonMeleeSpells(false);
 
                 Talk(SAY_IMAGE);
@@ -153,27 +152,24 @@ class boss_harbinger_skyriss : public CreatureScript
             {
                 if (!Intro)
                 {
-                    if (!instance)
-                        return;
-
                     if (Intro_Timer <= diff)
                     {
                         switch (Intro_Phase)
                         {
                         case 1:
                             Talk(SAY_INTRO);
-                            instance->HandleGameObject(instance->GetData64(DATA_SPHERE_SHIELD), true);
+                            instance->HandleGameObject(instance->GetData64(DATA_WARDENS_SHIELD), true);
                             ++Intro_Phase;
                             Intro_Timer = 25000;
                             break;
                         case 2:
                             Talk(SAY_AGGRO);
-                            if (Unit* mellic = Unit::GetUnit(*me, instance->GetData64(DATA_MELLICHAR)))
+                            if (Unit* mellic = ObjectAccessor::GetUnit(*me, instance->GetData64(DATA_MELLICHAR)))
                             {
                                 //should have a better way to do this. possibly spell exist.
                                 mellic->setDeathState(JUST_DIED);
                                 mellic->SetHealth(0);
-                                instance->SetData(DATA_SHIELD_OPEN, IN_PROGRESS);
+                                instance->HandleGameObject(instance->GetData64(DATA_WARDENS_SHIELD), false);
                             }
                             ++Intro_Phase;
                             Intro_Timer = 3000;
@@ -215,7 +211,7 @@ class boss_harbinger_skyriss : public CreatureScript
 
                 if (Fear_Timer <= diff)
                 {
-                    if (me->IsNonMeleeSpellCasted(false))
+                    if (me->IsNonMeleeSpellCast(false))
                         return;
 
                     Talk(SAY_FEAR);
@@ -232,7 +228,7 @@ class boss_harbinger_skyriss : public CreatureScript
 
                 if (Domination_Timer <= diff)
                 {
-                    if (me->IsNonMeleeSpellCasted(false))
+                    if (me->IsNonMeleeSpellCast(false))
                         return;
 
                     Talk(SAY_MIND);
@@ -251,7 +247,7 @@ class boss_harbinger_skyriss : public CreatureScript
                 {
                     if (ManaBurn_Timer <= diff)
                     {
-                        if (me->IsNonMeleeSpellCasted(false))
+                        if (me->IsNonMeleeSpellCast(false))
                             return;
 
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1))
@@ -268,18 +264,15 @@ class boss_harbinger_skyriss : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return new boss_harbinger_skyrissAI(creature);
+            return GetArcatrazAI<boss_harbinger_skyrissAI>(creature);
         }
 };
 
 class boss_harbinger_skyriss_illusion : public CreatureScript
 {
     public:
+        boss_harbinger_skyriss_illusion() : CreatureScript("boss_harbinger_skyriss_illusion") { }
 
-        boss_harbinger_skyriss_illusion()
-            : CreatureScript("boss_harbinger_skyriss_illusion")
-        {
-        }
         struct boss_harbinger_skyriss_illusionAI : public ScriptedAI
         {
             boss_harbinger_skyriss_illusionAI(Creature* creature) : ScriptedAI(creature) { }

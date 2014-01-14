@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -74,19 +74,24 @@ void WaypointMovementGenerator<Creature>::OnArrived(Creature* creature)
     if (m_isArrivalDone)
         return;
 
-    creature->ClearUnitState(UNIT_STATE_ROAMING_MOVE);
     m_isArrivalDone = true;
 
     if (i_path->at(i_currentNode)->event_id && urand(0, 99) < i_path->at(i_currentNode)->event_chance)
     {
         TC_LOG_DEBUG("maps.script", "Creature movement start script %u at point %u for " UI64FMTD ".", i_path->at(i_currentNode)->event_id, i_currentNode, creature->GetGUID());
+        creature->ClearUnitState(UNIT_STATE_ROAMING_MOVE);
         creature->GetMap()->ScriptsStart(sWaypointScripts, i_path->at(i_currentNode)->event_id, creature, NULL);
     }
 
     // Inform script
     MovementInform(creature);
     creature->UpdateWaypointID(i_currentNode);
-    Stop(i_path->at(i_currentNode)->delay);
+
+    if (i_path->at(i_currentNode)->delay)
+    {
+        creature->ClearUnitState(UNIT_STATE_ROAMING_MOVE);
+        Stop(i_path->at(i_currentNode)->delay);
+    }
 }
 
 bool WaypointMovementGenerator<Creature>::StartMove(Creature* creature)

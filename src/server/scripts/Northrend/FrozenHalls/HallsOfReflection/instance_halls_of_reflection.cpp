@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -110,10 +110,13 @@ public:
 
         void OnCreatureCreate(Creature* creature) OVERRIDE
         {
-            Map::PlayerList const& players = instance->GetPlayers();
-            if (!players.isEmpty())
-                if (Player* player = players.begin()->GetSource())
-                    _teamInInstance = player->GetTeam();
+            if (!_teamInInstance)
+            {
+                Map::PlayerList const& players = instance->GetPlayers();
+                if (!players.isEmpty())
+                    if (Player* player = players.begin()->GetSource())
+                        _teamInInstance = player->GetTeam();
+            }
 
             switch (creature->GetEntry())
             {
@@ -184,7 +187,7 @@ public:
                 case GO_ARTHAS_DOOR:
                     _arthasDoorGUID = go->GetGUID();
                     go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
-                    if (GetBossState(DATA_FROSWORN_EVENT) == DONE)
+                    if (GetData(DATA_FROSWORN_EVENT) == DONE)
                         HandleGameObject(0, true, go);
                     else
                         HandleGameObject(0, false, go);
@@ -511,13 +514,13 @@ public:
             OUT_SAVE_INST_DATA;
 
             std::ostringstream saveStream;
-            saveStream << "H R " << GetBossSaveData() << _introEvent << ' ' << _frostwornGeneral << _escapeevent;
+            saveStream << "H R " << GetBossSaveData() << _introEvent << ' ' << _frostwornGeneral << ' ' << _escapeevent;
 
             OUT_SAVE_INST_DATA_COMPLETE;
             return saveStream.str();
         }
 
-        void Load(char const* in) OVERRIDE OVERRIDE
+        void Load(char const* in) OVERRIDE
         {
             if (!in)
             {

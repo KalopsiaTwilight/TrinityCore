@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -351,8 +351,7 @@ public:
                     break;
                 }
                 case 6:
-                    me->SetOrientation(me->GetAngle(breathX, breathY));
-                    me->StopMoving();
+                    me->SetFacingTo(me->GetAngle(breathX, breathY));
                     //DoTextEmote("takes a deep breath.", NULL);
                     events.ScheduleEvent(EVENT_FLIGHT_SEQUENCE, 10000);
                     break;
@@ -405,7 +404,7 @@ public:
 
             events.Update(diff);
 
-            if (me->IsNonMeleeSpellCasted(false))
+            if (me->IsNonMeleeSpellCast(false))
                 return;
 
             if (phase == PHASE_GROUND)
