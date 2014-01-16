@@ -243,7 +243,7 @@ public:
         }
 
         WorldPacket data;
-        ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+        ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_ADDON, player, NULL, msg);
         player->GetSession()->SendPacket(&data);
     }
 
@@ -330,7 +330,7 @@ public:
             char msg[250];
             snprintf(msg, 250, "GOMOVE SWAP %u  %u", oldGuidLow, object->GetGUIDLow());
             WorldPacket data;
-            ChatHandler(player->GetSession()).FillMessageData(&data, CHAT_MSG_SYSTEM, LANG_ADDON, player->GetGUID(), msg);
+            ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_ADDON, player, NULL, msg);
             player->GetSession()->SendPacket(&data);
         }
 
