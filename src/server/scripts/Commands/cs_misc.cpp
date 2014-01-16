@@ -2610,13 +2610,13 @@ public:
             return true;
         }
         
-        float scaleUnapprovedMax = 1.10f;
-        float scaleUnapprovedMin = 0.9f;
-        float scaleApprovedMax = 1.15f;
-        float scaleApprovedMin = 1.15f;
+        const float SCALE_UNAPPROVED_MAX = 1.10f;
+        const float SCALE_UNAPPROVED_MIN = 0.9f;
+        const float SCALE_APPROVED_MAX = 1.15f;
+        const float SCALE_APPROVED_MIN = 0.85f;
 
         float Scale = (float)atof((char*)args);
-        if (Scale > scaleApprovedMax || Scale < scaleApprovedMin)
+        if (Scale > SCALE_APPROVED_MAX || Scale < SCALE_APPROVED_MIN)
         {
             handler->SendSysMessage(LANG_BAD_VALUE);
             handler->SetSentErrorMessage(true);
@@ -2624,7 +2624,7 @@ public:
         }
 
         uint8 chrRace = handler->GetSession()->GetPlayer()->getRace();
-        if ((chrRace == RACE_TAUREN && Scale > scaleUnapprovedMax) || (chrRace == RACE_DRAENEI && Scale > scaleUnapprovedMax) || (chrRace == RACE_GNOME && Scale < scaleUnapprovedMin))
+        if ((chrRace == RACE_TAUREN && Scale > SCALE_UNAPPROVED_MAX) || (chrRace == RACE_DRAENEI && Scale > SCALE_UNAPPROVED_MAX) || (chrRace == RACE_GNOME && Scale < SCALE_UNAPPROVED_MIN))
         {
             handler->SendSysMessage(LANG_BAD_SCALE_VALUE_RACE);
             handler->SetSentErrorMessage(true);
@@ -2643,7 +2643,7 @@ public:
 
             if (scaleTimesChanged < 10)
             {
-                if ((chrLevel < 85 && Scale > scaleUnapprovedMax) || (chrLevel < 85 && Scale < scaleUnapprovedMin))
+                if ((chrLevel < 85 && Scale > SCALE_UNAPPROVED_MAX) || (chrLevel < 85 && Scale < SCALE_UNAPPROVED_MIN))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);
@@ -2672,7 +2672,7 @@ public:
 
         else
 	    {
-            if ((chrLevel < 85 && Scale > scaleUnapprovedMax) || (chrLevel < 85 && Scale < scaleUnapprovedMin))
+            if ((chrLevel < 85 && Scale > SCALE_UNAPPROVED_MAX) || (chrLevel < 85 && Scale < SCALE_UNAPPROVED_MIN))
                 {
                     handler->SendSysMessage(LANG_BAD_SCALE_VALUE_LOCKED);
                     handler->SetSentErrorMessage(true);

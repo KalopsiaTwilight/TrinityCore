@@ -1348,6 +1348,72 @@ public:
         if (!*args)
             return false;
 
+        char* account = strtok((char*)args, " ");
+        char* character = strtok(NULL, " ");
+
+        if (!account)
+            return false;
+
+        std::string accountName;
+        uint32 accountId;
+        std::string characterName;
+        uint64 characterGuid;
+
+        if (!character)
+        {
+            Player* player = handler->getSelectedPlayer();
+            if (!player)
+                return false;
+
+            characterName = player->GetSession()->GetPlayerName();
+            characterGuid = player->GetGUID();
+        }
+        else
+        {
+            characterName = character;
+            characterGuid = sObjectMgr->GetPlayerGUIDByName(characterName);
+
+            if (!characterGuid)
+            {
+                handler->PSendSysMessage(LANG_CHAR_ACCOUNT_CHAR_NOT_FOUND, characterName.c_str());
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
+        ///- Convert Account name to Upper Format
+        accountName = account;
+        if (!AccountMgr::normalizeString(accountName))
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        accountId = AccountMgr::GetId(accountName);
+        if (!accountId)
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (handler->GetSession() && handler->GetSession()->GetAccountId() != accountId && handler->HasLowerSecurityAccount(NULL, accountId, true))
+            return false;
+
+        if (!character)
+        {
+            Player* player = handler->getSelectedPlayer();
+            if (WorldSession* session = player->GetSession())
+                session->KickPlayer();
+        }
+
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ACC_BY_GUID);
+        stmt->setUInt32(0, accountId);
+        stmt->setUInt32(1, GUID_LOPART(characterGuid));
+        CharacterDatabase.Execute(stmt);
+
+        handler->PSendSysMessage(LANG_CHAR_ACCOUNT_CHANGED, characterName.c_str(), accountName.c_str());
         return true;
     }
 

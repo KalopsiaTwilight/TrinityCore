@@ -1507,6 +1507,8 @@ public:
 		}
         else
         {
+            target->SetDisplayId(display_id);
+            target->SetNativeDisplayId(display_id);
             CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,display) VALUES ('%u','%u')", target->GetGUIDLow(), display_id);
         }
 
