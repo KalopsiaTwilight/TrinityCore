@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,11 +32,11 @@ public:
     TileBuilder(ContinentBuilder* _cBuilder, std::string world, int x, int y, uint32 mapId);
     ~TileBuilder();
 
-    void CalculateTileBounds(float*& bmin, float*& bmax, dtNavMeshParams& navMeshParams);
+    void CalculateTileBounds(float*& bmin, float*& bmax, dtNavMeshParams& navMeshParams) const;
     uint8* BuildTiled(dtNavMeshParams& navMeshParams);
     uint8* BuildInstance(dtNavMeshParams& navMeshParams);
-    void AddGeometry(WorldModelRoot* root, const WorldModelDefinition& def);
-    void OutputDebugVertices();
+    void AddGeometry(WorldModelRoot const* root, const WorldModelDefinition& def);
+    void OutputDebugVertices() const;
     std::string World;
     int X;
     int Y;

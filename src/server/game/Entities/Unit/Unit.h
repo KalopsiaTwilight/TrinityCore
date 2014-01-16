@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1309,7 +1309,7 @@ class Unit : public WorldObject
         bool isAttackReady(WeaponAttackType type = BASE_ATTACK) const { return m_attackTimer[type] == 0; }
         bool haveOffhandWeapon() const;
         bool CanDualWield() const { return m_canDualWield; }
-        void SetCanDualWield(bool value) { m_canDualWield = value; }
+        virtual void SetCanDualWield(bool value) { m_canDualWield = value; }
         float GetCombatReach() const { return m_floatValues[UNIT_FIELD_COMBATREACH]; }
         float GetMeleeReach() const;
         bool IsWithinCombatRange(const Unit* obj, float dist2compare) const;
@@ -1423,6 +1423,7 @@ class Unit : public WorldObject
         void GetPartyMembers(std::list<Unit*> &units);
         bool IsContestedGuard() const;
         bool IsPvP() const { return HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP); }
+        bool IsFFAPvP() const { return HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP); }
         void SetPvP(bool state);
         uint32 GetCreatureType() const;
         uint32 GetCreatureTypeMask() const;
@@ -1472,10 +1473,9 @@ class Unit : public WorldObject
         void DealSpellDamage(SpellNonMeleeDamage* damageInfo, bool durabilityLoss);
 
         // player or player's pet resilience (-1%)
-        uint32 GetCritDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_RESILIENCE_CRIT_TAKEN, 2.2f, 33.0f, damage); }
-        uint32 GetDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_RESILIENCE_PLAYER_DAMAGE_TAKEN, 2.0f, 100.0f, damage); }
+        uint32 GetDamageReduction(uint32 damage) const { return GetCombatRatingDamageReduction(CR_RESILIENCE_PLAYER_DAMAGE_TAKEN, 1.0f, 100.0f, damage); }
 
-        void ApplyResilience(Unit const* victim, int32 * damage, bool isCrit) const;
+        void ApplyResilience(Unit const* victim, int32* damage) const;
 
         float MeleeSpellMissChance(Unit const* victim, WeaponAttackType attType, uint32 spellId) const;
         SpellMissInfo MeleeSpellHitResult(Unit* victim, SpellInfo const* spellInfo);
@@ -1828,15 +1828,15 @@ class Unit : public WorldObject
         float GetNegStat(Stats stat) const { return GetFloatValue(UNIT_FIELD_NEGSTAT0+stat); }
         float GetCreateStat(Stats stat) const { return m_createStats[stat]; }
 
-        void SetCurrentCastedSpell(Spell* pSpell);
+        void SetCurrentCastSpell(Spell* pSpell);
         virtual void ProhibitSpellSchool(SpellSchoolMask /*idSchoolMask*/, uint32 /*unTimeMs*/) { }
         void InterruptSpell(CurrentSpellTypes spellType, bool withDelayed = true, bool withInstant = true);
         void FinishSpell(CurrentSpellTypes spellType, bool ok = true);
 
-        // set withDelayed to true to account delayed spells as casted
-        // delayed+channeled spells are always accounted as casted
+        // set withDelayed to true to account delayed spells as cast
+        // delayed+channeled spells are always accounted as cast
         // we can skip channeled or delayed checks using flags
-        bool IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false, bool skipInstant = true) const;
+        bool IsNonMeleeSpellCast(bool withDelayed, bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false, bool skipInstant = true) const;
 
         // set withDelayed to true to interrupt delayed spells too
         // delayed+channeled spells are always interrupted
@@ -1882,14 +1882,18 @@ class Unit : public WorldObject
         virtual bool UpdateStats(Stats stat) = 0;
         virtual bool UpdateAllStats() = 0;
         virtual void UpdateResistances(uint32 school) = 0;
+        virtual void UpdateAllResistances();
         virtual void UpdateArmor() = 0;
         virtual void UpdateMaxHealth() = 0;
         virtual void UpdateMaxPower(Powers power) = 0;
         virtual void UpdateAttackPowerAndDamage(bool ranged = false) = 0;
-        virtual void UpdateDamagePhysical(WeaponAttackType attType) = 0;
+        virtual void UpdateDamagePhysical(WeaponAttackType attType);
         float GetTotalAttackPowerValue(WeaponAttackType attType) const;
         float GetWeaponDamageRange(WeaponAttackType attType, WeaponDamageRange type) const;
         void SetBaseWeaponDamage(WeaponAttackType attType, WeaponDamageRange damageRange, float value) { m_weaponDamage[attType][damageRange] = value; }
+        virtual void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage) = 0;
+        uint32 CalculateDamage(WeaponAttackType attType, bool normalized, bool addTotalPct);
+        float GetAPMultiplier(WeaponAttackType attType, bool normalized);
 
         bool isInFrontInMap(Unit const* target, float distance, float arc = M_PI) const;
         bool isInBackInMap(Unit const* target, float distance, float arc = M_PI) const;
@@ -1906,7 +1910,7 @@ class Unit : public WorldObject
         uint32 m_lastSanctuaryTime;
 
         // Threat related methods
-        bool CanHaveThreatList() const;
+        bool CanHaveThreatList(bool skipAliveCheck = false) const;
         void AddThreat(Unit* victim, float fThreat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
         float ApplyTotalThreatModifier(float fThreat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL);
         void DeleteThreatList();
@@ -1947,8 +1951,6 @@ class Unit : public WorldObject
         void RemoveGameObject(uint32 spellid, bool del);
         void RemoveAllGameObjects();
 
-        uint32 CalculateDamage(WeaponAttackType attType, bool normalized, bool addTotalPct);
-        float GetAPMultiplier(WeaponAttackType attType, bool normalized);
         void ModifyAuraState(AuraStateType flag, bool apply);
         uint32 BuildAuraStateUpdateForTarget(Unit* target) const;
         bool HasAuraState(AuraStateType flag, SpellInfo const* spellProto = NULL, Unit const* Caster = NULL) const;
@@ -1967,7 +1969,6 @@ class Unit : public WorldObject
 
         uint32 MeleeDamageBonusDone(Unit* pVictim, uint32 damage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
         uint32 MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
-
 
         bool   isSpellBlocked(Unit* victim, SpellInfo const* spellProto, WeaponAttackType attackType = BASE_ATTACK);
         bool   isBlockCritical();
@@ -2014,8 +2015,8 @@ class Unit : public WorldObject
         static Player* GetPlayer(WorldObject& object, uint64 guid);
         static Creature* GetCreature(WorldObject& object, uint64 guid);
 
-        MotionMaster* GetMotionMaster() { return &i_motionMaster; }
-        const MotionMaster* GetMotionMaster() const { return &i_motionMaster; }
+        MotionMaster* GetMotionMaster() { return i_motionMaster; }
+        const MotionMaster* GetMotionMaster() const { return i_motionMaster; }
 
         bool IsStopped() const { return !(HasUnitState(UNIT_STATE_MOVING)); }
         void StopMoving();
@@ -2168,7 +2169,7 @@ class Unit : public WorldObject
 
         typedef std::list<GameObject*> GameObjectList;
         GameObjectList m_gameObj;
-        bool m_isSorted;
+
         uint32 m_transform;
 
         Spell* m_currentSpells[CURRENT_MAX_SPELL];
@@ -2180,8 +2181,8 @@ class Unit : public WorldObject
         uint32 m_removedAurasCount;
 
         AuraEffectList m_modAuras[TOTAL_AURAS];
-        AuraList m_scAuras;                        // casted singlecast auras
-        AuraApplicationList m_interruptableAuras;             // auras which have interrupt mask applied on unit
+        AuraList m_scAuras;                        // cast singlecast auras
+        AuraApplicationList m_interruptableAuras;  // auras which have interrupt mask applied on unit
         AuraStateAurasMap m_auraStateAuras;        // Used for improve performance of aura state checks on aura apply/remove
         uint32 m_interruptMask;
 
@@ -2197,7 +2198,7 @@ class Unit : public WorldObject
 
         virtual SpellSchoolMask GetMeleeDamageSchoolMask() const;
 
-        MotionMaster i_motionMaster;
+        MotionMaster* i_motionMaster;
 
         uint32 m_reactiveTimer[MAX_REACTIVE];
         uint32 m_regenTimer;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -99,13 +99,13 @@ class SmartScript
             if (mTargetStorage->find(id) != mTargetStorage->end())
             {
                 // check if already stored
-                if ((*mTargetStorage)[id] == targets)
+                if ((*mTargetStorage)[id]->Equals(targets))
                     return;
 
                 delete (*mTargetStorage)[id];
             }
 
-            (*mTargetStorage)[id] = targets;
+            (*mTargetStorage)[id] = new ObjectGuidList(targets, GetBaseObject());
         }
 
         bool IsSmart(Creature* c = NULL)
@@ -141,7 +141,7 @@ class SmartScript
         {
             ObjectListMap::iterator itr = mTargetStorage->find(id);
             if (itr != mTargetStorage->end())
-                return (*itr).second;
+                return (*itr).second->GetObjectList();
             return NULL;
         }
 
@@ -237,14 +237,13 @@ class SmartScript
 
         uint32 mTextTimer;
         uint32 mLastTextID;
-        uint64 mTextGUID;
         uint32 mTalkerEntry;
         bool mUseTextTimer;
 
         SMARTAI_TEMPLATE mTemplate;
         void InstallEvents();
 
-        void RemoveStoredEvent (uint32 id)
+        void RemoveStoredEvent(uint32 id)
         {
             if (!mStoredEvents.empty())
             {
@@ -258,7 +257,7 @@ class SmartScript
                 }
             }
         }
-        SmartScriptHolder FindLinkedEvent (uint32 link)
+        SmartScriptHolder FindLinkedEvent(uint32 link)
         {
             if (!mEvents.empty())
             {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +25,7 @@ ADT::ADT( std::string file, int x, int y ) : ObjectData(NULL), Data(NULL), HasOb
 {
     Data = new ChunkedData(file);
     ObjectData = new ChunkedData(file);
-    if (ObjectData->Stream)
+    if (ObjectData->_Stream)
         HasObjectData = true;
     else
         ObjectData = NULL;
@@ -33,6 +33,11 @@ ADT::ADT( std::string file, int x, int y ) : ObjectData(NULL), Data(NULL), HasOb
 
 ADT::~ADT()
 {
+    // Temporarily delete the underlying streams, they are guaranteed to be different
+    // @TODO: Remove this code once the ChunkedData destructor properly releases _Stream
+    delete ObjectData->_Stream;
+    delete Data->_Stream;
+
     delete ObjectData;
     delete Data;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,8 @@ public:
         TRIANGLE_TYPE_UNKNOWN,
         TRIANGLE_TYPE_TERRAIN,
         TRIANGLE_TYPE_WATER,
+        TRIANGLE_TYPE_MAGMA,
+        TRIANGLE_TYPE_SLIME,
         TRIANGLE_TYPE_DOODAD,
         TRIANGLE_TYPE_WMO
     };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -21,6 +21,7 @@
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 #include "Creature.h"
+#include "Chat.h"
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
@@ -67,16 +68,7 @@ namespace Trinity
         private:
             void do_helper(WorldPacket& data, char const* text)
             {
-                uint64 target_guid = _source ? _source->GetGUID() : 0;
-
-                data << uint8 (_msgtype);
-                data << uint32(LANG_UNIVERSAL);
-                data << uint64(target_guid);                // there 0 for BG messages
-                data << uint32(0);                          // can be chat msg group or something
-                data << uint64(target_guid);
-                data << uint32(strlen(text) + 1);
-                data << text;
-                data << uint8 (_source ? _source->GetChatTag() : 0);
+                ChatHandler::BuildChatPacket(data, _msgtype, LANG_UNIVERSAL, _source, _source, text);
             }
 
             ChatMsg _msgtype;
@@ -100,16 +92,7 @@ namespace Trinity
                 char str[2048];
                 snprintf(str, 2048, text, arg1str, arg2str);
 
-                uint64 target_guid = _source  ? _source->GetGUID() : 0;
-
-                data << uint8 (_msgtype);
-                data << uint32(LANG_UNIVERSAL);
-                data << uint64(target_guid);                // there 0 for BG messages
-                data << uint32(0);                          // can be chat msg group or something
-                data << uint64(target_guid);
-                data << uint32(strlen(str) + 1);
-                data << str;
-                data << uint8 (_source ? _source->GetChatTag() : uint8(0));
+                ChatHandler::BuildChatPacket(data, _msgtype, LANG_UNIVERSAL, _source, _source, str);
             }
 
         private:
@@ -150,6 +133,7 @@ Battleground::Battleground()
     m_ResetStatTimer    = 0;
     m_ValidStartPositionTimer = 0;
     m_Events            = 0;
+    m_StartDelayTime    = 0;
     m_IsRated           = false;
     m_BuffChange        = false;
     m_IsRandom          = false;
@@ -167,6 +151,7 @@ Battleground::Battleground()
     m_MapId             = 0;
     m_Map               = NULL;
     m_StartMaxDist      = 0.0f;
+    ScriptId            = 0;
 
     m_TeamStartLocX[TEAM_ALLIANCE]   = 0;
     m_TeamStartLocX[TEAM_HORDE]      = 0;
@@ -186,6 +171,9 @@ Battleground::Battleground()
     m_ArenaTeamRatingChanges[TEAM_ALLIANCE]   = 0;
     m_ArenaTeamRatingChanges[TEAM_HORDE]      = 0;
 
+    m_ArenaTeamMMR[TEAM_ALLIANCE]   = 0;
+    m_ArenaTeamMMR[TEAM_HORDE]      = 0;
+
     m_BgRaids[TEAM_ALLIANCE]         = NULL;
     m_BgRaids[TEAM_HORDE]            = NULL;
 
@@ -196,6 +184,7 @@ Battleground::Battleground()
     m_TeamScores[TEAM_HORDE]         = 0;
 
     m_PrematureCountDown = false;
+    m_PrematureCountDownTimer = 0;
 
     m_HonorMode = BG_NORMAL;
 
@@ -726,8 +715,8 @@ void Battleground::YellToAll(Creature* creature, char const* text, uint32 langua
     for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         if (Player* player = _GetPlayer(itr, "YellToAll"))
         {
-            WorldPacket data(SMSG_MESSAGECHAT, 200);
-            creature->BuildMonsterChat(&data, CHAT_MSG_MONSTER_YELL, text, language, creature->GetName(), itr->first);
+            WorldPacket data;
+            ChatHandler::BuildChatPacket(data, CHAT_MSG_MONSTER_YELL, Language(language), creature, player, text);
             player->SendDirectMessage(&data);
         }
 }
@@ -1043,6 +1032,8 @@ void Battleground::RemovePlayerAtLeave(uint64 guid, bool Transport, bool SendPac
             player->SpawnCorpseBones();
         }
     }
+    else // try to resurrect the offline player. If he is alive nothing will happen
+        sObjectAccessor->ConvertCorpseForPlayer(guid);
 
     RemovePlayer(player, guid, team);                           // BG subclass specific code
 
@@ -1648,7 +1639,7 @@ Creature* Battleground::AddCreature(uint32 entry, uint32 type, uint32 teamval, f
     if (!map)
         return NULL;
 
-    Creature* creature = new Creature;
+    Creature* creature = new Creature();
     if (!creature->Create(sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT), map, PHASEMASK_NORMAL, entry, 0, teamval, x, y, z, o))
     {
         TC_LOG_ERROR("bg.battleground", "Battleground::AddCreature: cannot create creature (entry: %u) for BG (map: %u, instance id: %u)!",
@@ -1778,32 +1769,25 @@ void Battleground::SendWarningToAll(int32 entry, ...)
     if (!entry)
         return;
 
-    char const* format = sObjectMgr->GetTrinityStringForDBCLocale(entry);
-
-    char str[1024];
-    va_list ap;
-    va_start(ap, entry);
-    vsnprintf(str, 1024, format, ap);
-    va_end(ap);
-    std::string msg(str);
-
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-
-    data << (uint8)CHAT_MSG_RAID_BOSS_EMOTE;
-    data << (uint32)LANG_UNIVERSAL;
-    data << (uint64)0;
-    data << (uint32)0;                                     // 2.1.0
-    data << (uint32)1;
-    data << (uint8)0;
-    data << (uint64)0;
-    data << (uint32)(msg.length() + 1);
-    data << msg.c_str();
-    data << (uint8)0;
-    data << (float)0.0f;                                   // added in 4.2.0, unk
-    data << (uint8)0;                                      // added in 4.2.0, unk
+    std::map<uint32, WorldPacket> localizedPackets;
     for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
         if (Player* player = ObjectAccessor::FindPlayer(MAKE_NEW_GUID(itr->first, 0, HIGHGUID_PLAYER)))
-            player->SendDirectMessage(&data);
+        {
+            if (localizedPackets.find(player->GetSession()->GetSessionDbLocaleIndex()) == localizedPackets.end())
+            {
+                char const* format = sObjectMgr->GetTrinityString(entry, player->GetSession()->GetSessionDbLocaleIndex());
+
+                char str[1024];
+                va_list ap;
+                va_start(ap, entry);
+                vsnprintf(str, 1024, format, ap);
+                va_end(ap);
+
+                ChatHandler::BuildChatPacket(localizedPackets[player->GetSession()->GetSessionDbLocaleIndex()], CHAT_MSG_RAID_BOSS_EMOTE, LANG_UNIVERSAL, NULL, NULL, str);
+            }
+
+            player->SendDirectMessage(&localizedPackets[player->GetSession()->GetSessionDbLocaleIndex()]);
+        }
 }
 
 void Battleground::SendMessage2ToAll(int32 entry, ChatMsg type, Player const* source, int32 arg1, int32 arg2)

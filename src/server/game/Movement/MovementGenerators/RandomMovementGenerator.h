@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ class RandomMovementGenerator : public MovementGeneratorMedium< T, RandomMovemen
     private:
         TimeTrackerSmall i_nextMoveTime;
 
-        uint32 i_nextMove;
         float wander_distance;
 };
 #endif

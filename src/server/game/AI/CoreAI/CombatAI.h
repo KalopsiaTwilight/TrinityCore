@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ struct ArcherAI : public CreatureAI
         void AttackStart(Unit* who);
         void UpdateAI(uint32 diff);
 
-        static int Permissible(const Creature*);
+        static int Permissible(Creature const*);
     protected:
         float m_minRange;
 };
@@ -81,11 +81,11 @@ struct TurretAI : public CreatureAI
 {
     public:
         explicit TurretAI(Creature* c);
-        bool CanAIAttack(const Unit* who) const;
+        bool CanAIAttack(Unit const* who) const;
         void AttackStart(Unit* who);
         void UpdateAI(uint32 diff);
 
-        static int Permissible(const Creature*);
+        static int Permissible(Creature const*);
     protected:
         float m_minRange;
 };
@@ -98,7 +98,7 @@ struct VehicleAI : public CreatureAI
         explicit VehicleAI(Creature* c);
 
         void UpdateAI(uint32 diff);
-        static int Permissible(const Creature*);
+        static int Permissible(Creature const*);
         void Reset();
         void MoveInLineOfSight(Unit*) { }
         void AttackStart(Unit*) { }

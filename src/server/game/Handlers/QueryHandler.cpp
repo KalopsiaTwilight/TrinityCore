@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -443,7 +443,7 @@ void WorldSession::HandleQuestPOIQuery(WorldPacket& recvData)
                     data << int32(itr->ObjectiveIndex);     // objective index
                     data << uint32(itr->MapId);             // mapid
                     data << uint32(itr->AreaId);            // areaid
-                    data << uint32(itr->Unk2);              // unknown
+                    data << uint32(itr->FloorId);           // floorid
                     data << uint32(itr->Unk3);              // unknown
                     data << uint32(itr->Unk4);              // unknown
                     data << uint32(itr->points.size());     // POI points count

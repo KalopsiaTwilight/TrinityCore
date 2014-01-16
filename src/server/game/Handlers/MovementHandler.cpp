@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -84,8 +84,11 @@ void WorldSession::HandleMoveWorldportAckOpcode()
         GetPlayer()->TeleportTo(GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation());
         return;
     }
-    else
-        GetPlayer()->Relocate(&loc);
+
+    float z = loc.GetPositionZ();
+    if (GetPlayer()->HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
+        z += GetPlayer()->GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
+    GetPlayer()->Relocate(loc.GetPositionX(), loc.GetPositionY(), z, loc.GetOrientation());
 
     GetPlayer()->ResetMap();
     GetPlayer()->SetMap(newMap);

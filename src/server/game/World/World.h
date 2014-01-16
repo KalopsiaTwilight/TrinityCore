@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -755,12 +755,6 @@ class World
         void LoadAutobroadcasts();
 
         void UpdateAreaDependentAuras();
-
-        void ProcessStartEvent();
-        void ProcessStopEvent();
-        bool GetEventKill() const { return isEventKillStart; }
-
-        bool isEventKillStart;
 
         CharacterNameData const* GetCharacterNameData(uint32 guid) const;
         void AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass, uint8 level);

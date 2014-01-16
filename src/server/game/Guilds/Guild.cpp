@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -74,7 +74,7 @@ std::string _GetGuildEventString(GuildEvents event)
             return "Bank tab updated";
         case GE_BANK_MONEY_SET:
             return "Bank money set";
-        case GE_BANK_MONEY_CHANGED:
+        case GE_BANK_TAB_AND_MONEY_UPDATED:
             return "Bank money changed";
         case GE_BANK_TEXT_CHANGED:
             return "Bank tab text changed";
@@ -387,6 +387,7 @@ void Guild::RankInfo::SaveToDB(SQLTransaction& trans) const
     stmt->setUInt8 (1, m_rankId);
     stmt->setString(2, m_name);
     stmt->setUInt32(3, m_rights);
+    stmt->setUInt32(4, m_bankMoneyPerDay);
     CharacterDatabase.ExecuteOrAppend(trans, stmt);
 }
 
@@ -2060,8 +2061,8 @@ void Guild::HandleMemberDepositMoney(WorldSession* session, uint64 amount, bool 
     _LogBankEvent(trans, cashFlow ? GUILD_BANK_LOG_CASH_FLOW_DEPOSIT : GUILD_BANK_LOG_DEPOSIT_MONEY, uint8(0), player->GetGUIDLow(), amount);
     CharacterDatabase.CommitTransaction(trans);
 
-    std::string aux = ByteArrayToHexStr(reinterpret_cast<uint8*>(&amount), 8, true);
-    _BroadcastEvent(GE_BANK_MONEY_CHANGED, 0, aux.c_str());
+    std::string aux = ByteArrayToHexStr(reinterpret_cast<uint8*>(&m_bankMoney), 8, true);
+    _BroadcastEvent(GE_BANK_MONEY_SET, 0, aux.c_str());
 
     if (player->GetSession()->HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
     {
@@ -2110,8 +2111,8 @@ bool Guild::HandleMemberWithdrawMoney(WorldSession* session, uint64 amount, bool
     _LogBankEvent(trans, repair ? GUILD_BANK_LOG_REPAIR_MONEY : GUILD_BANK_LOG_WITHDRAW_MONEY, uint8(0), player->GetGUIDLow(), amount);
     CharacterDatabase.CommitTransaction(trans);
 
-    std::string aux = ByteArrayToHexStr(reinterpret_cast<uint8*>(&amount), 8, true);
-    _BroadcastEvent(GE_BANK_MONEY_CHANGED, 0, aux.c_str());
+    std::string aux = ByteArrayToHexStr(reinterpret_cast<uint8*>(&m_bankMoney), 8, true);
+    _BroadcastEvent(GE_BANK_MONEY_SET, 0, aux.c_str());
     return true;
 }
 
@@ -2568,7 +2569,7 @@ void Guild::BroadcastToGuild(WorldSession* session, bool officerOnly, std::strin
     if (session && session->GetPlayer() && _HasRankRight(session->GetPlayer(), officerOnly ? GR_RIGHT_OFFCHATSPEAK : GR_RIGHT_GCHATSPEAK))
     {
         WorldPacket data;
-        ChatHandler::FillMessageData(&data, session, officerOnly ? CHAT_MSG_OFFICER : CHAT_MSG_GUILD, language, NULL, 0, msg.c_str(), NULL);
+        ChatHandler::BuildChatPacket(data, officerOnly ? CHAT_MSG_OFFICER : CHAT_MSG_GUILD, Language(language), session->GetPlayer(), NULL, msg);
         for (Members::const_iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
             if (Player* player = itr->second->FindPlayer())
                 if (player->GetSession() && _HasRankRight(player, officerOnly ? GR_RIGHT_OFFCHATLISTEN : GR_RIGHT_GCHATLISTEN) &&
@@ -2582,7 +2583,7 @@ void Guild::BroadcastAddonToGuild(WorldSession* session, bool officerOnly, std::
     if (session && session->GetPlayer() && _HasRankRight(session->GetPlayer(), officerOnly ? GR_RIGHT_OFFCHATSPEAK : GR_RIGHT_GCHATSPEAK))
     {
         WorldPacket data;
-        ChatHandler::FillMessageData(&data, session, officerOnly ? CHAT_MSG_OFFICER : CHAT_MSG_GUILD, uint32(CHAT_MSG_ADDON), NULL, 0, msg.c_str(), NULL, prefix.c_str());
+        ChatHandler::BuildChatPacket(data, officerOnly ? CHAT_MSG_OFFICER : CHAT_MSG_GUILD, LANG_ADDON, session->GetPlayer(), NULL, msg, 0, "", DEFAULT_LOCALE, prefix);
         for (Members::const_iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
             if (Player* player = itr->second->FindPlayer())
                 if (player->GetSession() && _HasRankRight(player, officerOnly ? GR_RIGHT_OFFCHATLISTEN : GR_RIGHT_GCHATLISTEN) &&

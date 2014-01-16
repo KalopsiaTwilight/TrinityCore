@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,7 +20,9 @@
 #include "ScriptedCreature.h"
 #include "ScriptedEscortAI.h"
 #include "Player.h"
+#include "Spell.h"
 #include "SpellInfo.h"
+#include "SpellScript.h"
 #include "CreatureTextMgr.h"
 
 /*######
@@ -158,7 +160,7 @@ public:
                     if (player)
                     {
                         player->GroupEventHappens(QUEST_PERILOUS_ADVENTURE, me);
-                        Talk(SAY_QUEST_COMPLETE, player->GetGUID());
+                        Talk(SAY_QUEST_COMPLETE, player);
                     }
                     me->SetWalk(false);
                     break;
@@ -749,6 +751,43 @@ public:
         }
 };
 
+enum ShredderDelivery
+{
+    NPC_BROKEN_DOWN_SHREDDER               = 27354
+};
+
+class spell_shredder_delivery : public SpellScriptLoader
+{
+    public:
+        spell_shredder_delivery() : SpellScriptLoader("spell_shredder_delivery") { }
+
+        class spell_shredder_delivery_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_shredder_delivery_SpellScript);
+
+            bool Load() OVERRIDE
+            {
+                return GetCaster()->GetTypeId() == TYPEID_UNIT;
+            }
+
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+                if (GetCaster()->ToCreature()->GetEntry() == NPC_BROKEN_DOWN_SHREDDER)
+                    GetCaster()->ToCreature()->DespawnOrUnsummon();
+            }
+
+            void Register() OVERRIDE
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_shredder_delivery_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+            }
+        };
+
+        SpellScript* GetSpellScript() const OVERRIDE
+        {
+            return new spell_shredder_delivery_SpellScript();
+        }
+};
+
 void AddSC_grizzly_hills()
 {
     new npc_emily();
@@ -759,4 +798,5 @@ void AddSC_grizzly_hills()
     new npc_wounded_skirmisher();
     new npc_venture_co_straggler();
     new npc_lake_frog();
+    new spell_shredder_delivery();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,19 +20,20 @@
 
 #include <vector>
 #include "Chunk.h"
+#include "Stream.h"
 
 class ChunkedData
 {
 public:
-    ChunkedData(FILE* stream, uint32 maxLength, uint32 chunksHint = 300);
+    ChunkedData(Stream* stream, uint32 maxLength, uint32 chunksHint = 300);
     ChunkedData(const std::string &file, uint32 chunksHint = 300);
     ~ChunkedData();
 
-    int GetFirstIndex(const std::string& name);
+    int GetFirstIndex(const std::string& name) const;
     Chunk* GetChunkByName(const std::string& name);
 
     void Load(uint32 maxLength, uint32 chunksHint);
     std::vector<Chunk*> Chunks;
-    FILE* Stream;
+    Stream* _Stream;
 };
 #endif

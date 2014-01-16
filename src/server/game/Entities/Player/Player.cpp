@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -79,6 +79,7 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "MovementStructures.h"
+#include "GameObjectAI.h"
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
@@ -683,6 +684,7 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
     m_session = session;
 
     m_divider = 0;
+    m_ingametime = 0;
 
     m_ExtraFlags = 0;
 
@@ -708,6 +710,7 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
     m_zoneUpdateTimer = 0;
 
     m_areaUpdateId = 0;
+    m_team = 0;
 
     m_nextSave = sWorld->getIntConfig(CONFIG_INTERVAL_SAVE);
 
@@ -769,6 +772,8 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
 
     m_logintime = time(NULL);
     m_Last_tick = m_logintime;
+    m_Played_time[PLAYED_TIME_TOTAL] = 0;
+    m_Played_time[PLAYED_TIME_LEVEL] = 0;
     m_WeaponProficiency = 0;
     m_ArmorProficiency = 0;
     m_canParry = false;
@@ -811,6 +816,7 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
     m_InstanceValid = true;
     m_dungeonDifficulty = DUNGEON_DIFFICULTY_NORMAL;
     m_raidDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
+    m_raidMapDifficulty = RAID_DIFFICULTY_10MAN_NORMAL;
 
     m_lastPotionId = 0;
     _talentMgr = new PlayerTalentInfo();
@@ -845,6 +851,18 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
     m_movedPlayer = this;
     m_seer = this;
 
+    m_recallMap = 0;
+    m_recallX = 0;
+    m_recallY = 0;
+    m_recallZ = 0;
+    m_recallO = 0;
+
+    m_homebindMapId = 0;
+    m_homebindAreaId = 0;
+    m_homebindX = 0;
+    m_homebindY = 0;
+    m_homebindZ = 0;
+
     m_contestedPvPTimer = 0;
 
     m_declinedname = NULL;
@@ -864,7 +882,11 @@ Player::Player(WorldSession* session): Unit(true), phaseMgr(this)
 
     m_ChampioningFaction = 0;
 
-    for (uint8 i = 0; i < MAX_POWERS_PER_CLASS; ++i)
+    m_timeSyncTimer = 0;
+    m_timeSyncClient = 0;
+    m_timeSyncServer = 0;
+
+    for (uint8 i = 0; i < MAX_POWERS; ++i)
         m_powerFraction[i] = 0;
 
     isDebugAreaTriggers = false;
@@ -2176,7 +2198,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         SetSemaphoreTeleportFar(false);
         //setup delayed teleport flag
         SetDelayedTeleportFlag(IsCanDelayTeleport());
-        //if teleport spell is casted in Unit::Update() func
+        //if teleport spell is cast in Unit::Update() func
         //then we need to delay it until update process will be finished
         if (IsHasDelayedTeleport())
         {
@@ -2209,6 +2231,8 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         {
             Position oldPos;
             GetPosition(&oldPos);
+            if (HasUnitMovementFlag(MOVEMENTFLAG_HOVER))
+                z += GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
             Relocate(x, y, z, orientation);
             SendTeleportPacket(oldPos); // this automatically relocates to oldPos in order to broadcast the packet in the right place
         }
@@ -2237,7 +2261,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             SetSemaphoreTeleportNear(false);
             //setup delayed teleport flag
             SetDelayedTeleportFlag(IsCanDelayTeleport());
-            //if teleport spell is casted in Unit::Update() func
+            //if teleport spell is cast in Unit::Update() func
             //then we need to delay it until update process will be finished
             if (IsHasDelayedTeleport())
             {
@@ -2283,7 +2307,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             // stop spellcasting
             // not attempt interrupt teleportation spell at caster teleport
             if (!(options & TELE_TO_SPELL))
-                if (IsNonMeleeSpellCasted(true))
+                if (IsNonMeleeSpellCast(true))
                     InterruptNonMeleeSpells(true);
 
             //remove auras before removing from map...
@@ -5238,7 +5262,7 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
 void Player::KillPlayer()
 {
     if (IsFlying() && !GetTransport())
-        i_motionMaster.MoveFall();
+        GetMotionMaster()->MoveFall();
 
     SetRooted(true);
 
@@ -7241,8 +7265,8 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
         {
             // Check if allowed to receive it in current map
             uint8 MapType = sWorld->getIntConfig(CONFIG_PVP_TOKEN_MAP_TYPE);
-            if ((MapType == 1 && !InBattleground() && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
-                || (MapType == 2 && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+            if ((MapType == 1 && !InBattleground() && !IsFFAPvP())
+                || (MapType == 2 && !IsFFAPvP())
                 || (MapType == 3 && !InBattleground()))
                 return true;
 
@@ -7408,8 +7432,8 @@ void Player::SendPvpRewards() const
     packet << GetCurrencyWeekCap(CURRENCY_TYPE_CONQUEST_POINTS, true);
     packet << GetCurrencyOnWeek(CURRENCY_TYPE_CONQUEST_POINTS, true);
     packet << GetCurrencyWeekCap(CURRENCY_TYPE_CONQUEST_META_ARENA, true);
-    packet << GetCurrencyOnWeek(CURRENCY_TYPE_CONQUEST_META_ARENA, true);
     packet << GetCurrencyOnWeek(CURRENCY_TYPE_CONQUEST_META_RBG, true);
+    packet << GetCurrencyOnWeek(CURRENCY_TYPE_CONQUEST_META_ARENA, true);
     packet << GetCurrencyWeekCap(CURRENCY_TYPE_CONQUEST_POINTS, true);
     packet << GetCurrencyWeekCap(CURRENCY_TYPE_CONQUEST_META_RBG, true);
     GetSession()->SendPacket(&packet);
@@ -8705,7 +8729,7 @@ void Player::CastItemCombatSpell(Unit* target, WeaponAttackType attType, uint32 
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(pEnchant->spellid[s]);
             if (!spellInfo)
             {
-                TC_LOG_ERROR("entities.player.items", "Player::CastItemCombatSpell(GUID: %u, name: %s, enchant: %i): unknown spell %i is casted, ignoring...",
+                TC_LOG_ERROR("entities.player.items", "Player::CastItemCombatSpell(GUID: %u, name: %s, enchant: %i): unknown spell %i is cast, ignoring...",
                     GetGUIDLow(), GetName().c_str(), pEnchant->ID, pEnchant->spellid[s]);
                 continue;
             }
@@ -8766,7 +8790,7 @@ void Player::CastItemUseSpell(Item* item, SpellCastTargets const& targets, uint8
     // use triggered flag only for items with many spell casts and for not first cast
     uint8 count = 0;
 
-    // item spells casted at use
+    // item spells cast at use
     for (uint8 i = 0; i < MAX_ITEM_PROTO_SPELLS; ++i)
     {
         _Spell const& spellData = proto->Spells[i];
@@ -8795,7 +8819,7 @@ void Player::CastItemUseSpell(Item* item, SpellCastTargets const& targets, uint8
         ++count;
     }
 
-    // Item enchantments spells casted at use
+    // Item enchantments spells cast at use
     for (uint8 e_slot = 0; e_slot < MAX_ENCHANTMENT_SLOT; ++e_slot)
     {
         if (e_slot > PRISMATIC_ENCHANTMENT_SLOT && e_slot < PROP_ENCHANTMENT_SLOT_0)    // not holding enchantment id
@@ -9836,6 +9860,16 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(3932) << uint32(0);              // 13 WORLDSTATE_TIME_GUARDIAN_SHOW
             }
             break;
+        // The Oculus
+        case 4228:
+            if (instance && mapid == 578)
+                instance->FillInitialWorldStates(data);
+            else
+            {
+                data << uint32(3524) << uint32(0);              // 9  WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW
+                data << uint32(3486) << uint32(0);              // 10 WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT
+            }
+            break;
         // Ulduar
         case 4273:
             if (instance && mapid == 603)
@@ -9884,6 +9918,7 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 bf->FillInitialWorldStates(data);
                 break;
             }
+        // Halls of Refection
         case 4820:
             if (instance && mapid == 668)
                 instance->FillInitialWorldStates(data);
@@ -9893,7 +9928,6 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(4882) << uint32(0);              // 10 WORLD_STATE_HOR_WAVE_COUNT
             }
             break;
-
             // No break here, intended.
         default:
             data << uint32(0x914) << uint32(0x0);           // 7
@@ -9931,7 +9965,7 @@ void Player::SendBattlefieldWorldStates()
     /// Send misc stuff that needs to be sent on every login, like the battle timers.
     if (sWorld->getBoolConfig(CONFIG_WINTERGRASP_ENABLE))
     {
-        if (BattlefieldWG* wg = (BattlefieldWG*)sBattlefieldMgr->GetBattlefieldByBattleId(BATTLEFIELD_BATTLEID_WG))
+        if (Battlefield* wg = sBattlefieldMgr->GetBattlefieldByBattleId(BATTLEFIELD_BATTLEID_WG))
         {
             if (wg->IsWarTime())
                 SendUpdateWorldState(ClockWorldState[1], uint32(time(NULL)));
@@ -11446,7 +11480,7 @@ InventoryResult Player::CanEquipItem(uint8 slot, uint16 &dest, Item* pItem, bool
                 if (IsInCombat()&& (pProto->Class == ITEM_CLASS_WEAPON || pProto->InventoryType == INVTYPE_RELIC) && m_weaponChangeTimer != 0)
                     return EQUIP_ERR_CLIENT_LOCKED_OUT;         // maybe exist better err
 
-                if (IsNonMeleeSpellCasted(false))
+                if (IsNonMeleeSpellCast(false))
                     return EQUIP_ERR_CLIENT_LOCKED_OUT;
             }
 
@@ -14807,11 +14841,7 @@ void Player::SendPreparedQuest(uint64 guid)
                 }
 
                 if (quest->IsAutoAccept() && CanAddQuest(quest, true) && CanTakeQuest(quest, true))
-                {
-                    AddQuest(quest, object);
-                    if (CanCompleteQuest(questId))
-                        CompleteQuest(questId);
-                }
+                    AddQuestAndCheckCompletion(quest, object);
 
                 if ((quest->IsAutoComplete() && quest->IsRepeatable() && !quest->IsDailyOrWeekly()) || quest->HasFlag(QUEST_FLAGS_AUTOCOMPLETE))
                     PlayerTalkClass->SendQuestGiverRequestItems(quest, guid, CanCompleteRepeatableQuest(quest), true);
@@ -15099,17 +15129,64 @@ bool Player::CanRewardQuest(Quest const* quest, bool msg)
     return true;
 }
 
+void Player::AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver)
+{
+    AddQuest(quest, questGiver);
+
+    if (CanCompleteQuest(quest->GetQuestId()))
+        CompleteQuest(quest->GetQuestId());
+
+    if (!questGiver)
+        return;
+
+    switch (questGiver->GetTypeId())
+    {
+        case TYPEID_UNIT:
+            sScriptMgr->OnQuestAccept(this, (questGiver->ToCreature()), quest);
+            questGiver->ToCreature()->AI()->sQuestAccept(this, quest);
+            break;
+        case TYPEID_ITEM:
+        case TYPEID_CONTAINER:
+        {
+            Item* item = (Item*)questGiver;
+            sScriptMgr->OnQuestAccept(this, item, quest);
+
+            // destroy not required for quest finish quest starting item
+            bool destroyItem = true;
+            for (int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
+            {
+                if (quest->RequiredItemId[i] == item->GetEntry() && item->GetTemplate()->MaxCount > 0)
+                {
+                    destroyItem = false;
+                    break;
+                }
+            }
+
+            if (destroyItem)
+                DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
+
+            break;
+        }
+        case TYPEID_GAMEOBJECT:
+            sScriptMgr->OnQuestAccept(this, questGiver->ToGameObject(), quest);
+            questGiver->ToGameObject()->AI()->QuestAccept(this, quest);
+            break;
+        default:
+            break;
+    }
+}
+
 bool Player::CanRewardQuest(Quest const* quest, uint32 reward, bool msg)
 {
     // prevent receive reward with quest items in bank or for not completed quest
     if (!CanRewardQuest(quest, msg))
         return false;
 
+    ItemPosCountVec dest;
     if (quest->GetRewChoiceItemsCount() > 0)
     {
         if (quest->RewardChoiceItemId[reward])
         {
-            ItemPosCountVec dest;
             InventoryResult res = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, quest->RewardChoiceItemId[reward], quest->RewardChoiceItemCount[reward]);
             if (res != EQUIP_ERR_OK)
             {
@@ -15125,7 +15202,6 @@ bool Player::CanRewardQuest(Quest const* quest, uint32 reward, bool msg)
         {
             if (quest->RewardItemId[i])
             {
-                ItemPosCountVec dest;
                 InventoryResult res = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, quest->RewardItemId[i], quest->RewardItemIdCount[i]);
                 if (res != EQUIP_ERR_OK)
                 {
@@ -15405,9 +15481,27 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
 
     // cast spells after mark quest complete (some spells have quest completed state requirements in spell_area data)
     if (quest->GetRewSpellCast() > 0)
-        CastSpell(this, quest->GetRewSpellCast(), true);
+    {
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(quest->GetRewSpellCast());
+        if (questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(SPELL_EFFECT_CREATE_ITEM))
+        {
+            if (Creature* creature = GetMap()->GetCreature(questGiver->GetGUID()))
+                creature->CastSpell(this, quest->GetRewSpellCast(), true);
+        }
+        else
+            CastSpell(this, quest->GetRewSpellCast(), true);
+    }
     else if (quest->GetRewSpell() > 0)
-        CastSpell(this, quest->GetRewSpell(), true);
+    {
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(quest->GetRewSpell());
+        if (questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(SPELL_EFFECT_CREATE_ITEM))
+        {
+            if (Creature* creature = GetMap()->GetCreature(questGiver->GetGUID()))
+                creature->CastSpell(this, quest->GetRewSpell(), true);
+        }
+        else
+            CastSpell(this, quest->GetRewSpell(), true);
+    }
 
     if (quest->GetZoneOrSort() > 0)
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE, quest->GetZoneOrSort());
@@ -17162,8 +17256,8 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     InitPrimaryProfessions();                               // to max set before any spell loaded
 
     // init saved position, and fix it later if problematic
-    uint32 transGUID = uint32(fields[31].GetUInt32());
-
+    uint32 transLowGUID = uint32(fields[31].GetUInt32());
+    
     Relocate(fields[12].GetFloat(), fields[13].GetFloat(), fields[14].GetFloat(), fields[16].GetFloat());
 
     uint32 mapId = fields[15].GetUInt16();
@@ -17266,40 +17360,48 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
         }
     }
     // currently we do not support transport in bg
-    else if (transGUID)
+    else if (transLowGUID)
     {
-        m_movementInfo.transport.guid = MAKE_NEW_GUID(transGUID, 0, HIGHGUID_MO_TRANSPORT);
-        m_movementInfo.transport.pos.Relocate(fields[27].GetFloat(), fields[28].GetFloat(), fields[29].GetFloat(), fields[30].GetFloat());
+        uint64 transGUID = MAKE_NEW_GUID(transLowGUID, 0, HIGHGUID_MO_TRANSPORT);
 
-        if (!Trinity::IsValidMapCoord(
-            GetPositionX()+m_movementInfo.transport.pos.GetPositionX(), GetPositionY()+m_movementInfo.transport.pos.GetPositionY(),
-            GetPositionZ()+m_movementInfo.transport.pos.GetPositionZ(), GetOrientation()+m_movementInfo.transport.pos.GetOrientation()) ||
-            // transport size limited
-            m_movementInfo.transport.pos.m_positionX > 250 || m_movementInfo.transport.pos.m_positionY > 250 || m_movementInfo.transport.pos.m_positionZ > 250)
+        if (GameObject* go = HashMapHolder<GameObject>::Find(transGUID))
+            m_transport = go->ToTransport();
+
+        if (m_transport)
         {
-            TC_LOG_ERROR("entities.player", "Player (guidlow %d) have invalid transport coordinates (X: %f Y: %f Z: %f O: %f). Teleport to bind location.",
-                guid, GetPositionX()+m_movementInfo.transport.pos.GetPositionX(), GetPositionY()+m_movementInfo.transport.pos.GetPositionY(),
-                GetPositionZ()+m_movementInfo.transport.pos.GetPositionZ(), GetOrientation()+m_movementInfo.transport.pos.GetOrientation());
+            m_movementInfo.transport.guid = transGUID;
+            float x = fields[27].GetFloat(), y = fields[28].GetFloat(), z = fields[29].GetFloat(), o = fields[30].GetFloat();
+            m_movementInfo.transport.pos.Relocate(x, y, z, o);
+            m_transport->CalculatePassengerPosition(x, y, z, &o);
 
-            RelocateToHomebind();
-        }
-        else
-        {
-            if (GameObject* go = HashMapHolder<GameObject>::Find(m_movementInfo.transport.guid))
-                m_transport = go->ToTransport();
+            if (!Trinity::IsValidMapCoord(x, y, z, o) ||
+                // transport size limited
+                std::fabs(m_movementInfo.transport.pos.GetPositionX()) > 250.0f ||
+                std::fabs(m_movementInfo.transport.pos.GetPositionY()) > 250.0f ||
+                std::fabs(m_movementInfo.transport.pos.GetPositionZ()) > 250.0f)
+            {
+                TC_LOG_ERROR("entities.player", "Player (guidlow %d) have invalid transport coordinates (X: %f Y: %f Z: %f O: %f). Teleport to bind location.",
+                    guid, x, y, z, o);
 
-            if (m_transport)
-            {
-                m_transport->AddPassenger(this);
-                mapId = m_transport->GetMapId();
-            }
-            else
-            {
-                TC_LOG_ERROR("entities.player", "Player (guidlow %d) have problems with transport guid (%u). Teleport to bind location.",
-                    guid, transGUID);
+                m_transport = NULL;
+                m_movementInfo.transport.Reset();
 
                 RelocateToHomebind();
             }
+            else
+            {
+                Relocate(x, y, z, o);
+                mapId = m_transport->GetMapId();
+
+                m_transport->AddPassenger(this);
+            }
+        }
+        else
+        {
+            TC_LOG_ERROR("entities.player", "Player (guidlow %d) have problems with transport guid (%u). Teleport to bind location.",
+                guid, transLowGUID);
+
+            RelocateToHomebind();
         }
     }
     // currently we do not support taxi in instance
@@ -17370,49 +17472,56 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     // NOW player must have valid map
     // load the player's map here if it's not already loaded
     Map* map = sMapMgr->CreateMap(mapId, this);
+    AreaTriggerStruct const* areaTrigger = NULL;
+    bool check = false;
 
     if (!map)
     {
-        instanceId = 0;
-        AreaTriggerStruct const* at = sObjectMgr->GetGoBackTrigger(mapId);
-        if (at)
+        areaTrigger = sObjectMgr->GetGoBackTrigger(mapId);
+        check = true;
+    }
+    else if (map->IsDungeon()) // if map is dungeon...
+    {
+        if (!((InstanceMap*)map)->CanEnter(this)) // ... and can't enter map, then look for entry point.
         {
-            TC_LOG_ERROR("entities.player", "Player (guidlow %d) is teleported to gobacktrigger (Map: %u X: %f Y: %f Z: %f O: %f).", guid, mapId, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
-            Relocate(at->target_X, at->target_Y, at->target_Z, GetOrientation());
-            mapId = at->target_mapId;
+            areaTrigger = sObjectMgr->GetGoBackTrigger(mapId);
+            check = true;
         }
-        else
+        else if (instanceId && !sInstanceSaveMgr->GetInstanceSave(instanceId)) // ... and instance is reseted then look for entrance.
         {
-            TC_LOG_ERROR("entities.player", "Player (guidlow %d) is teleported to home (Map: %u X: %f Y: %f Z: %f O: %f).", guid, mapId, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
-            RelocateToHomebind();
-        }
-
-        map = sMapMgr->CreateMap(mapId, this);
-        if (!map)
-        {
-            PlayerInfo const* info = sObjectMgr->GetPlayerInfo(getRace(), getClass());
-            mapId = info->mapId;
-            Relocate(info->positionX, info->positionY, info->positionZ, 0.0f);
-            TC_LOG_ERROR("entities.player", "Player (guidlow %d) have invalid coordinates (X: %f Y: %f Z: %f O: %f). Teleport to default race/class locations.", guid, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
-            map = sMapMgr->CreateMap(mapId, this);
-            if (!map)
-            {
-                TC_LOG_ERROR("entities.player", "Player (guidlow %d) has invalid default map coordinates (X: %f Y: %f Z: %f O: %f). or instance couldn't be created", guid, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
-                return false;
-            }
+            areaTrigger = sObjectMgr->GetMapEntranceTrigger(mapId);
+            check = true;
         }
     }
 
-    // if the player is in an instance and it has been reset in the meantime teleport him to the entrance
-    if (instanceId && !sInstanceSaveMgr->GetInstanceSave(instanceId) && !map->IsBattlegroundOrArena())
+    if (check) // in case of special event when creating map...
     {
-        AreaTriggerStruct const* at = sObjectMgr->GetMapEntranceTrigger(mapId);
-        if (at)
-            Relocate(at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
+        if (areaTrigger) // ... if we have an areatrigger, then relocate to new map/coordinates.
+        {
+            Relocate(areaTrigger->target_X, areaTrigger->target_Y, areaTrigger->target_Z, GetOrientation());
+            if (mapId != areaTrigger->target_mapId)
+            {
+                mapId = areaTrigger->target_mapId;
+                map = sMapMgr->CreateMap(mapId, this);
+            }
+        }
         else
         {
-            TC_LOG_ERROR("entities.player", "Player %s(GUID: %u) logged in to a reset instance (map: %u) and there is no area-trigger leading to this map. Thus he can't be ported back to the entrance. This _might_ be an exploit attempt.", GetName().c_str(), GetGUIDLow(), mapId);
-            RelocateToHomebind();
+            TC_LOG_ERROR("entities.player", "Player %s (guid: %d) Map: %u, X: %f, Y: %f, Z: %f, O: %f. Areatrigger not found.", m_name.c_str(), guid, mapId, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+            map = NULL;
+        }
+    }
+
+    if (!map)
+    {
+        PlayerInfo const* info = sObjectMgr->GetPlayerInfo(getRace(), getClass());
+        mapId = info->mapId;
+        Relocate(info->positionX, info->positionY, info->positionZ, 0.0f);
+        map = sMapMgr->CreateMap(mapId, this);
+        if (!map)
+        {
+            TC_LOG_ERROR("entities.player", "Player %s (guid: %d) Map: %u, X: %f, Y: %f, Z: %f, O: %f. Invalid default map coordinates or instance couldn't be created.", m_name.c_str(), guid, mapId, GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+            return false;
         }
     }
 
@@ -17458,6 +17567,12 @@ bool Player::LoadFromDB(uint32 guid, SQLQueryHolder *holder)
     }
 
     m_atLoginFlags = fields[34].GetUInt16();
+
+    if (HasAtLoginFlag(AT_LOGIN_RENAME))
+    {
+        TC_LOG_ERROR("entities.player", "Player (GUID: %u) tried to login while forced to rename, can't load.'", GetGUIDLow());
+        return false;
+    }
 
     // Honor system
     // Update Honor kills data
@@ -19195,6 +19310,14 @@ void Player::SaveToDB(bool create /*=false*/)
         stmt->setFloat(index++, finiteAlways(GetPositionY()));
         stmt->setFloat(index++, finiteAlways(GetPositionZ()));
         stmt->setFloat(index++, finiteAlways(GetOrientation()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetX()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetY()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetZ()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetO()));
+        uint32 transLowGUID = 0;
+        if (GetTransport())
+            transLowGUID = GetTransport()->GetGUIDLow();
+        stmt->setUInt32(index++, transLowGUID);
 
         std::ostringstream ss;
         ss << m_taxi;
@@ -19315,6 +19438,15 @@ void Player::SaveToDB(bool create /*=false*/)
             stmt->setFloat(index++, finiteAlways(GetTeleportDest().GetPositionZ()));
             stmt->setFloat(index++, finiteAlways(GetTeleportDest().GetOrientation()));
         }
+
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetX()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetY()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetZ()));
+        stmt->setFloat(index++, finiteAlways(GetTransOffsetO()));
+        uint32 transLowGUID = 0;
+        if (GetTransport())
+            transLowGUID = GetTransport()->GetGUIDLow();
+        stmt->setUInt32(index++, transLowGUID);
 
         std::ostringstream ss;
         ss << m_taxi;
@@ -20201,7 +20333,7 @@ void Player::UpdateSpeakTime()
         }
     }
     else
-        m_speakCount = 0;
+        m_speakCount = 1;
 
     m_speakTime = current + sWorld->getIntConfig(CONFIG_CHATFLOOD_MESSAGE_DELAY);
 }
@@ -20595,28 +20727,13 @@ void Player::StopCastingCharm()
     }
 }
 
-inline void Player::BuildPlayerChat(WorldPacket* data, uint8 msgtype, const std::string& text, uint32 language, const char* addonPrefix /*= NULL*/) const
-{
-    *data << uint8(msgtype);
-    *data << uint32(language);
-    *data << uint64(GetGUID());
-    *data << uint32(0);                                      // constant unknown time
-    if (addonPrefix)
-        *data << addonPrefix;
-    else
-        *data << uint64(GetGUID());
-    *data << uint32(text.length() + 1);
-    *data << text;
-    *data << uint8(GetChatTag());
-}
-
 void Player::Say(const std::string& text, const uint32 language)
 {
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_SAY, language, _text);
 
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-    BuildPlayerChat(&data, CHAT_MSG_SAY, _text, language);
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_SAY, Language(language), this, this, text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), true);
 }
 
@@ -20625,8 +20742,8 @@ void Player::Yell(const std::string& text, const uint32 language)
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_YELL, language, _text);
 
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-    BuildPlayerChat(&data, CHAT_MSG_YELL, _text, language);
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_YELL, Language(language), this, this, text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL), true);
 }
 
@@ -20635,21 +20752,21 @@ void Player::TextEmote(const std::string& text)
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_EMOTE, LANG_UNIVERSAL, _text);
 
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-    BuildPlayerChat(&data, CHAT_MSG_EMOTE, _text, LANG_UNIVERSAL);
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_EMOTE, LANG_UNIVERSAL, this, this, text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE), true, !GetSession()->HasPermission(rbac::RBAC_PERM_TWO_SIDE_INTERACTION_CHAT));
 }
 
 void Player::WhisperAddon(const std::string& text, const std::string& prefix, Player* receiver)
 {
     std::string _text(text);
-    sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, LANG_UNIVERSAL, _text, receiver);
+    sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, LANG_ADDON, _text, receiver);
 
     if (!receiver->GetSession()->IsAddonRegistered(prefix))
         return;
 
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-    BuildPlayerChat(&data, CHAT_MSG_WHISPER, _text, LANG_UNIVERSAL, prefix.c_str());
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, LANG_ADDON, this, this, text, 0, "", DEFAULT_LOCALE, prefix);
     receiver->GetSession()->SendPacket(&data);
 }
 
@@ -20665,16 +20782,15 @@ void Player::Whisper(const std::string& text, uint32 language, uint64 receiver)
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, language, _text, rPlayer);
 
-    WorldPacket data(SMSG_MESSAGECHAT, 200);
-    BuildPlayerChat(&data, CHAT_MSG_WHISPER, _text, language);
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, Language(language), this, this, text);
     rPlayer->GetSession()->SendPacket(&data);
 
     // rest stuff shouldn't happen in case of addon message
     if (isAddonMessage)
         return;
 
-    data.Initialize(SMSG_MESSAGECHAT, 200);
-    rPlayer->BuildPlayerChat(&data, CHAT_MSG_WHISPER_INFORM, _text, language);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, Language(language), rPlayer, rPlayer, text);
     GetSession()->SendPacket(&data);
 
     if (!isAcceptWhispers() && !IsGameMaster() && !rPlayer->IsGameMaster())
@@ -21037,13 +21153,15 @@ void Player::RestoreSpellMods(Spell* spell, uint32 ownerAuraId, Aura* aura)
     if (!spell || spell->m_appliedMods.empty())
         return;
 
+    std::list<Aura*> aurasQueue;
+
     for (uint8 i=0; i<MAX_SPELLMOD; ++i)
     {
         for (SpellModList::iterator itr = m_spellMods[i].begin(); itr != m_spellMods[i].end(); ++itr)
         {
             SpellModifier* mod = *itr;
 
-            // spellmods without aura set cannot be charged
+            // Spellmods without aura set cannot be charged
             if (!mod->ownerAura || !mod->ownerAura->IsUsingCharges())
                 continue;
 
@@ -21054,17 +21172,20 @@ void Player::RestoreSpellMods(Spell* spell, uint32 ownerAuraId, Aura* aura)
             if (aura && mod->ownerAura != aura)
                 continue;
 
-            // check if mod affected this spell
-            // first, check if the mod aura applied at least one spellmod to this spell
+            // Check if mod affected this spell
+            // First, check if the mod aura applied at least one spellmod to this spell
             Spell::UsedSpellMods::iterator iterMod = spell->m_appliedMods.find(mod->ownerAura);
             if (iterMod == spell->m_appliedMods.end())
                 continue;
-            // secondly, check if the current mod is one of the spellmods applied by the mod aura
+            // Second, check if the current mod is one of those applied by the mod aura
             if (!(mod->mask & spell->m_spellInfo->SpellFamilyFlags))
                 continue;
 
-            // remove from list
-            spell->m_appliedMods.erase(iterMod);
+            // remove from list - This will be done after all mods have been gone through
+            // to ensure we iterate over all mods of an aura before removing said aura
+            // from applied mods (Else, an aura with two mods on the current spell would
+            // only see the first of its modifier restored)
+            aurasQueue.push_back(mod->ownerAura);
 
             // add mod charges back to mod
             if (mod->charges == -1)
@@ -21072,14 +21193,21 @@ void Player::RestoreSpellMods(Spell* spell, uint32 ownerAuraId, Aura* aura)
             else
                 mod->charges++;
 
-            // Do not set more spellmods than avalible
+            // Do not set more spellmods than available
             if (mod->ownerAura->GetCharges() < mod->charges)
                 mod->charges = mod->ownerAura->GetCharges();
 
             // Skip this check for now - aura charges may change due to various reason
-            /// @todo trac these changes correctly
+            /// @todo track these changes correctly
             //ASSERT (mod->ownerAura->GetCharges() <= mod->charges);
         }
+    }
+
+    for (std::list<Aura*>::iterator itr = aurasQueue.begin(); itr != aurasQueue.end(); ++itr)
+    {
+        Spell::UsedSpellMods::iterator iterMod = spell->m_appliedMods.find(*itr);
+        if (iterMod != spell->m_appliedMods.end())
+            spell->m_appliedMods.erase(iterMod);
     }
 }
 
@@ -21315,7 +21443,7 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
         }
 
         // not let cheating with start flight in time of logout process || if casting not finished || while in combat || if not use Spell's with EffectSendTaxi
-        if (IsNonMeleeSpellCasted(false))
+        if (IsNonMeleeSpellCast(false))
         {
             GetSession()->SendActivateTaxiReply(ERR_TAXIPLAYERBUSY);
             return false;
@@ -22161,14 +22289,14 @@ void Player::UpdatePvPState(bool onlyFFA)
     if (!pvpInfo.IsInNoPvPArea && !IsGameMaster()
         && (pvpInfo.IsInFFAPvPArea || sWorld->IsFFAPvPRealm()))
     {
-        if (!HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+        if (!IsFFAPvP())
         {
             SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
             for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
                 (*itr)->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         }
     }
-    else if (HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+    else if (IsFFAPvP())
     {
         RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
@@ -24087,7 +24215,7 @@ void Player::RemoveItemDependentAurasAndCasts(Item* pItem)
         RemoveOwnedAura(itr);
     }
 
-    // currently casted spells can be dependent from item
+    // currently cast spells can be dependent from item
     for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
         if (Spell* spell = GetCurrentSpell(CurrentSpellTypes(i)))
             if (spell->getState() != SPELL_STATE_DELAYED && !HasItemFitToSpellRequirements(spell->m_spellInfo, pItem))
@@ -26452,7 +26580,7 @@ void Player::ActivateSpec(uint8 spec)
     if (spec > GetSpecsCount())
         return;
 
-    if (IsNonMeleeSpellCasted(false))
+    if (IsNonMeleeSpellCast(false))
         InterruptNonMeleeSpells(false);
 
     SQLTransaction trans = CharacterDatabase.BeginTransaction();

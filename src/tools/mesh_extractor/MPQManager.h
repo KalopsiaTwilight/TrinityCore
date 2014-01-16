@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #define MPQ_MANAGER_H
 
 #include "MPQ.h"
+#include "Stream.h"
 #include <ace/Synch.h>
 #include <set>
 #include <map>
@@ -31,22 +32,26 @@ public:
     ~MPQManager() {}
 
     void Initialize();
-    FILE* GetFile(const std::string& path);
-    FILE* GetFileFrom(const std::string& path, MPQArchive* file);
-    DBC* GetDBC(const std::string& name);
+    Stream* GetFile(const std::string& path);
+    Stream* GetFileFrom(const std::string& path, MPQArchive* file);
+    Stream* GetFileFromLocale(const std::string& path, uint32 locale);
+
+    DBC const* GetDBC(const std::string& name);
     std::vector<std::string> GetAllFiles(std::string extension);
 
     std::deque<MPQArchive*> Archives;
     int32 BaseLocale;
     std::set<uint32> AvailableLocales;
-    std::map<uint32, MPQArchive*> LocaleFiles;
+    std::map<uint32, std::deque<MPQArchive*> > LocaleFiles;
 
     static char const* Files[];
+    static char const* LocalePatchFiles[];
     static char const* Languages[];
 protected:
     void InitializeDBC();
 private:
     ACE_Thread_Mutex mutex;
+    std::map<std::string, DBC*> LoadedDBCs;
 };
 
 extern MPQManager* MPQHandler;

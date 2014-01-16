@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -86,7 +86,6 @@ bool ConfusedMovementGenerator<T>::DoUpdate(T* unit, uint32 diff)
             unit->MovePositionToFirstCollision(pos, dest, 0.0f);
 
             PathGenerator path(unit);
-            path.SetPathLengthLimit(30.0f);
             bool result = path.CalculatePath(pos.m_positionX, pos.m_positionY, pos.m_positionZ);
             if (!result || (path.GetPathType() & PATHFIND_NOPATH))
             {

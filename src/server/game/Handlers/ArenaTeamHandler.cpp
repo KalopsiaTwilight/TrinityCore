@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -85,9 +85,9 @@ void WorldSession::HandleArenaTeamCreateOpcode(WorldPacket & recvData)
     recvData >> slot;
     recvData >> iconcolor;
     recvData >> bordercolor;
-    recvData >> icon;
-    recvData >> background;
     recvData >> border;
+    recvData >> background;
+    recvData >> icon;
     name = recvData.ReadString(recvData.ReadBits(8));
 
     uint8 type = ArenaTeam::GetTypeBySlot(slot);

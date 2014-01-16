@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -117,6 +117,10 @@ class FlightPathMovementGenerator : public MovementGeneratorMedium< Player, Flig
         {
             i_path = &pathnodes;
             i_currentNode = startNode;
+            _endGridX = 0.0f;
+            _endGridY = 0.0f;
+            _endMapId = 0;
+            _preloadTargetNode = 0;
         }
         void DoInitialize(Player*);
         void DoReset(Player*);

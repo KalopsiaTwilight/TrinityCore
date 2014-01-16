@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -2163,7 +2163,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                     if (!summon || !summon->HasUnitTypeMask(UNIT_MASK_MINION))
                         return;
 
-                    summon->SelectLevel(summon->GetCreatureTemplate());       // some summoned creaters have different from 1 DB data for level/hp
+                    summon->SelectLevel();       // some summoned creaters have different from 1 DB data for level/hp
                     summon->SetUInt32Value(UNIT_NPC_FLAGS, summon->GetCreatureTemplate()->npcflag);
 
                     summon->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
@@ -2375,8 +2375,6 @@ void Spell::EffectDualWield(SpellEffIndex /*effIndex*/)
         return;
 
     unitTarget->SetCanDualWield(true);
-    if (unitTarget->GetTypeId() == TYPEID_UNIT)
-        unitTarget->ToCreature()->UpdateDamagePhysical(OFF_ATTACK);
 }
 
 void Spell::EffectPull(SpellEffIndex effIndex)
@@ -3532,7 +3530,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                     if (m_caster->getGender() > 0)
                         gender = "her";
                     sprintf(buf, "%s rubs %s [Decahedral Dwarven Dice] between %s hands and rolls. One %u and one %u.", m_caster->GetName().c_str(), gender, gender, urand(1, 10), urand(1, 10));
-                    m_caster->MonsterTextEmote(buf, 0);
+                    m_caster->MonsterTextEmote(buf, NULL);
                     break;
                 }
                 // Roll 'dem Bones - Worn Troll Dice
@@ -3543,7 +3541,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                     if (m_caster->getGender() > 0)
                         gender = "her";
                     sprintf(buf, "%s causually tosses %s [Worn Troll Dice]. One %u and one %u.", m_caster->GetName().c_str(), gender, urand(1, 6), urand(1, 6));
-                    m_caster->MonsterTextEmote(buf, 0);
+                    m_caster->MonsterTextEmote(buf, NULL);
                     break;
                 }
                 // Death Knight Initiate Visual
@@ -4614,8 +4612,8 @@ void Spell::EffectKnockBack(SpellEffIndex effIndex)
     if (unitTarget->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
         return;
 
-    // Instantly interrupt non melee spells being casted
-    if (unitTarget->IsNonMeleeSpellCasted(true))
+    // Instantly interrupt non melee spells being cast
+    if (unitTarget->IsNonMeleeSpellCast(true))
         unitTarget->InterruptNonMeleeSpells(true);
 
     float ratio = 0.1f;
@@ -4716,8 +4714,6 @@ void Spell::EffectPullTowards(SpellEffIndex effIndex)
     if (!unitTarget)
         return;
 
-    float speedZ = (float)(m_spellInfo->Effects[effIndex].CalcValue() / 10);
-    float speedXY = (float)(m_spellInfo->Effects[effIndex].MiscValue/10);
     Position pos;
     if (m_spellInfo->Effects[effIndex].Effect == SPELL_EFFECT_PULL_TOWARDS_DEST)
     {
@@ -4730,6 +4726,9 @@ void Spell::EffectPullTowards(SpellEffIndex effIndex)
     {
         pos.Relocate(m_caster);
     }
+
+    float speedXY = float(m_spellInfo->Effects[effIndex].MiscValue) * 0.1f;
+    float speedZ = unitTarget->GetDistance(pos) / speedXY * 0.5f * Movement::gravity;
 
     unitTarget->GetMotionMaster()->MoveJump(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), speedXY, speedZ);
 }
@@ -4768,28 +4767,43 @@ void Spell::EffectSummonDeadPet(SpellEffIndex /*effIndex*/)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
         return;
 
+    if (damage < 0)
+        return;
+
     Player* player = m_caster->ToPlayer();
     if (!player)
         return;
 
-    Pet* pet = player->GetPet();
-    if (pet && pet->IsAlive())
-        return;
 
-    if (damage < 0)
-        return;
-
-    float x, y, z;
-    player->GetPosition(x, y, z);
-    if (!pet)
+    // Maybe player dismissed dead pet or pet despawned?
+    bool hadPet = true;
+    if (!player->GetPet())
     {
-        player->SummonPet(0, x, y, z, player->GetOrientation(), SUMMON_PET, 0);
-        pet = player->GetPet();
+        // Position passed to SummonPet is irrelevant with current implementation,
+        // pet will be relocated without using these coords in Pet::LoadPetFromDB
+        player->SummonPet(0, 0.0f, 0.0f, 0.0f, 0.0f, SUMMON_PET, 0);
+        hadPet = false;
     }
+
+    // TODO: Better to fail Hunter's "Revive Pet" at cast instead of here when casting ends
+    Pet* pet = player->GetPet(); // Attempt to get current pet
     if (!pet)
         return;
 
-    player->GetMap()->CreatureRelocation(pet, x, y, z, player->GetOrientation());
+    // TODO: Better to fail Hunter's "Revive Pet" at cast instead of here when casting ends
+    if (pet->IsAlive())
+        return;
+
+    // If player did have a pet before reviving, teleport it
+    if (hadPet)
+    {
+        // Reposition the pet's corpse before reviving so as not to grab aggro
+        // We can use a different, more accurate version of GetClosePoint() since we have a pet
+        float x, y, z; // Will be used later to reposition the pet if we have one
+        player->GetClosePoint(x, y, z, pet->GetObjectSize(), PET_FOLLOW_DIST, pet->GetFollowAngle());
+        pet->NearTeleportTo(x, y, z, player->GetOrientation());
+        pet->Relocate(x, y, z, player->GetOrientation()); // This is needed so SaveStayPosition() will get the proper coords.
+    }
 
     pet->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
     pet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
@@ -4797,8 +4811,20 @@ void Spell::EffectSummonDeadPet(SpellEffIndex /*effIndex*/)
     pet->ClearUnitState(uint32(UNIT_STATE_ALL_STATE));
     pet->SetHealth(pet->CountPctFromMaxHealth(damage));
 
-    //pet->AIM_Initialize();
-    //player->PetSpellInitialize();
+    // Reset things for when the AI to takes over
+    CharmInfo *ci = pet->GetCharmInfo();
+    if (ci)
+    {
+        // In case the pet was at stay, we don't want it running back
+        ci->SaveStayPosition();
+        ci->SetIsAtStay(ci->HasCommandState(COMMAND_STAY));
+
+        ci->SetIsFollowing(false);
+        ci->SetIsCommandAttack(false);
+        ci->SetIsCommandFollow(false);
+        ci->SetIsReturning(false);
+    }
+
     pet->SavePetToDB(PET_SAVE_AS_CURRENT);
 }
 
@@ -5281,12 +5307,8 @@ void Spell::EffectQuestStart(SpellEffIndex effIndex)
 
     Player* player = unitTarget->ToPlayer();
     if (Quest const* qInfo = sObjectMgr->GetQuestTemplate(m_spellInfo->Effects[effIndex].MiscValue))
-    {
         if (player->CanTakeQuest(qInfo, false) && player->CanAddQuest(qInfo, false))
-        {
-            player->AddQuest(qInfo, NULL);
-        }
-    }
+            player->AddQuestAndCheckCompletion(qInfo, NULL);
 }
 
 void Spell::EffectActivateRune(SpellEffIndex effIndex)
@@ -5513,11 +5535,11 @@ void Spell::SummonGuardian(uint32 i, uint32 entry, SummonPropertiesEntry const* 
         {
             if (uint32 weapon = m_caster->GetUInt32Value(PLAYER_VISIBLE_ITEM_16_ENTRYID))
             {
-                summon->SetDisplayId(11686);
+                summon->SetDisplayId(11686); // modelid2
                 summon->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID, weapon);
             }
             else
-                summon->SetDisplayId(1126);
+                summon->SetDisplayId(1126); // modelid1
         }
 
         summon->AI()->EnterEvadeMode();

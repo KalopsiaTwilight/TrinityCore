@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -103,6 +103,7 @@ WorldSession::WorldSession(uint32 id, WorldSocket* sock, AccountTypes sec, uint8
     m_muteTime(mute_time),
     m_timeOutTime(0),
     AntiDOS(this),
+    m_GUIDLow(0),
     _player(NULL),
     m_Socket(sock),
     _security(sec),
@@ -126,6 +127,8 @@ WorldSession::WorldSession(uint32 id, WorldSocket* sock, AccountTypes sec, uint8
     timeLastWhoCommand(0),
     _RBACData(NULL)
 {
+    memset(m_Tutorials, 0, sizeof(m_Tutorials));
+
     if (sock)
     {
         m_Address = sock->GetRemoteAddress();

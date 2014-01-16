@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -75,7 +75,7 @@ struct LogMessage
     ///@ Returns size of the log message content in bytes
     uint32 Size() const
     {
-        return prefix.size() + text.size();
+        return static_cast<uint32>(prefix.size() + text.size());
     }
 };
 

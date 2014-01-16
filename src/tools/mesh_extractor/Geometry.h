@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,7 +31,7 @@ public:
     void CalculateMinMaxHeight(float& min, float& max);
     void AddData(std::vector<Vector3>& verts, std::vector<Triangle<uint32> >& tris);
     void AddAdt(ADT* adt);
-    void GetRawData(float*& verts, int*& tris, uint8*& areas);
+    void GetRawData(float*& verts, int*& tris, uint8*& areas) const;
 
     std::vector<Vector3> Vertices;
     std::vector<Triangle<uint32> > Triangles;

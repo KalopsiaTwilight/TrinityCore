@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,7 @@
 #include "ChunkedData.h"
 #include "Utils.h"
 #include "WorldModelHandler.h"
+#include "Cache.h"
 
 WDT::WDT(std::string file) : IsGlobalModel(false), IsValid(false), Model(NULL)
 {
@@ -37,8 +38,8 @@ void WDT::ReadGlobalModel()
 
     IsGlobalModel = true;
     ModelDefinition = WorldModelDefinition::Read(defChunk->GetStream());
-    ModelFile = Utils::ReadString(fileChunk->GetStream());
-    Model = new WorldModelRoot(ModelFile);
+    ModelFile = fileChunk->GetStream()->ReadString();
+    Model = Cache->WorldModelCache.Get(ModelFile);
 }
 
 void WDT::ReadTileTable()
@@ -47,20 +48,14 @@ void WDT::ReadTileTable()
     if (!chunk)
         return;
     IsValid = true;
-    FILE* stream = chunk->GetStream();
+    Stream* stream = chunk->GetStream();
     for (int y = 0; y < 64; ++y)
     {
         for (int x = 0; x < 64; ++x)
         {
             const uint32 hasTileFlag = 0x1;
-            uint32 flags;
-            uint32 discard;
-            int count = 0;
-            count += fread(&flags, sizeof(uint32), 1, stream);
-            count += fread(&discard, sizeof(uint32), 1, stream);
-
-            if (count != 2)
-                printf("WDT::ReadTileTable: Failed to read some data expected 2, read %d\n", count);
+            uint32 flags = stream->Read<uint32>();
+            stream->Skip<uint32>();
 
             if (flags & hasTileFlag)
                 TileTable.push_back(TilePos(x, y));
@@ -69,9 +64,9 @@ void WDT::ReadTileTable()
     }
 }
 
-bool WDT::HasTile( int x, int y )
+bool WDT::HasTile( int x, int y ) const
 {
-    for (std::vector<TilePos>::iterator itr = TileTable.begin(); itr != TileTable.end(); ++itr)
+    for (std::vector<TilePos>::const_iterator itr = TileTable.begin(); itr != TileTable.end(); ++itr)
         if (itr->X == x && itr->Y == y)
             return true;
     return false;

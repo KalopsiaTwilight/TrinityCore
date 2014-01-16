@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,7 +63,7 @@ class instance_pit_of_saron : public InstanceMapScript
             {
                 if (!_teamInInstance)
                 {
-                    Map::PlayerList const &players = instance->GetPlayers();
+                    Map::PlayerList const& players = instance->GetPlayers();
                     if (!players.isEmpty())
                         if (Player* player = players.begin()->GetSource())
                             _teamInInstance = player->GetTeam();

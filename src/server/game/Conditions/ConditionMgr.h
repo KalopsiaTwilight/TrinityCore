@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -192,6 +192,7 @@ struct Condition
         SourceType         = CONDITION_SOURCE_TYPE_NONE;
         SourceGroup        = 0;
         SourceEntry        = 0;
+        SourceId           = 0;
         ElseGroup          = 0;
         ConditionType      = CONDITION_NONE;
         ConditionTarget    = 0;

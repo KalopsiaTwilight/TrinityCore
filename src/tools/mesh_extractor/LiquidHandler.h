@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,12 +27,14 @@ class LiquidHandler
 {
 public:
     LiquidHandler(ADT* adt);
+    ~LiquidHandler();
 
     ADT* Source;
     std::vector<Vector3> Vertices;
     std::vector<Triangle<uint32> > Triangles;
-    std::vector<MCNKLiquidData> MCNKData;
+    std::vector<MCNKLiquidData*> MCNKData;
 private:
     void HandleNewLiquid();
+    void HandleOldLiquid();
 };
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -364,7 +364,7 @@ void PoolGroup<Creature>::Spawn1Object(PoolObject* obj)
         // We use spawn coords to spawn
         if (!map->Instanceable() && map->IsGridLoaded(data->posX, data->posY))
         {
-            Creature* creature = new Creature;
+            Creature* creature = new Creature();
             //TC_LOG_DEBUG("pool", "Spawning creature %u", guid);
             if (!creature->LoadCreatureFromDB(obj->guid, map))
             {

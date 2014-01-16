@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -804,7 +804,7 @@ void AuraEffect::ApplySpellMod(Unit* target, bool apply)
             {
                 Aura* aura = iter->second->GetBase();
                 // only passive and permament auras-active auras should have amount set on spellcast and not be affected
-                // if aura is casted by others, it will not be affected
+                // if aura is cast by others, it will not be affected
                 if ((aura->IsPassive() || aura->IsPermanent()) && aura->GetCasterGUID() == guid && aura->GetSpellInfo()->IsAffectedBySpellMod(m_spellmod))
                 {
                     if (GetMiscValue() == SPELLMOD_ALL_EFFECTS)
@@ -2254,26 +2254,26 @@ void AuraEffect::HandleAuraModDisarm(AuraApplication const* aurApp, uint8 mode, 
     WeaponAttackType attType;
     switch (type)
     {
-    case SPELL_AURA_MOD_DISARM:
-        field=UNIT_FIELD_FLAGS;
-        flag=UNIT_FLAG_DISARMED;
-        slot=EQUIPMENT_SLOT_MAINHAND;
-        attType=BASE_ATTACK;
-        break;
-    case SPELL_AURA_MOD_DISARM_OFFHAND:
-        field=UNIT_FIELD_FLAGS_2;
-        flag=UNIT_FLAG2_DISARM_OFFHAND;
-        slot=EQUIPMENT_SLOT_OFFHAND;
-        attType=OFF_ATTACK;
-        break;
-    case SPELL_AURA_MOD_DISARM_RANGED:
-        field=UNIT_FIELD_FLAGS_2;
-        flag=UNIT_FLAG2_DISARM_RANGED;
-        slot=EQUIPMENT_SLOT_RANGED;
-        attType=RANGED_ATTACK;
-        break;
-    default:
-        return;
+        case SPELL_AURA_MOD_DISARM:
+            field = UNIT_FIELD_FLAGS;
+            flag = UNIT_FLAG_DISARMED;
+            slot = EQUIPMENT_SLOT_MAINHAND;
+            attType = BASE_ATTACK;
+            break;
+        case SPELL_AURA_MOD_DISARM_OFFHAND:
+            field = UNIT_FIELD_FLAGS_2;
+            flag = UNIT_FLAG2_DISARM_OFFHAND;
+            slot = EQUIPMENT_SLOT_OFFHAND;
+            attType = OFF_ATTACK;
+            break;
+        case SPELL_AURA_MOD_DISARM_RANGED:
+            field = UNIT_FIELD_FLAGS_2;
+            flag = UNIT_FLAG2_DISARM_RANGED;
+            slot = EQUIPMENT_SLOT_RANGED;
+            attType = RANGED_ATTACK;
+            break;
+        default:
+            return;
     }
 
     // if disarm aura is to be removed, remove the flag first to reapply damage/aura mods
@@ -4159,7 +4159,7 @@ void AuraEffect::HandleModAttackSpeed(AuraApplication const* aurApp, uint8 mode,
 
     Unit* target = aurApp->GetTarget();
 
-    target->ApplyAttackTimePercentMod(BASE_ATTACK, (float)GetAmount(), apply);
+    target->ApplyAttackTimePercentMod(BASE_ATTACK, float(GetAmount()), apply);
     target->UpdateDamagePhysical(BASE_ATTACK);
 }
 
@@ -4171,8 +4171,8 @@ void AuraEffect::HandleModMeleeSpeedPct(AuraApplication const* aurApp, uint8 mod
     //! ToDo: Haste auras with the same handler _CAN'T_ stack together
     Unit* target = aurApp->GetTarget();
 
-    target->ApplyAttackTimePercentMod(BASE_ATTACK,   (float)GetAmount(), apply);
-    target->ApplyAttackTimePercentMod(OFF_ATTACK,    (float)GetAmount(), apply);
+    target->ApplyAttackTimePercentMod(BASE_ATTACK, float(GetAmount()), apply);
+    target->ApplyAttackTimePercentMod(OFF_ATTACK,  float(GetAmount()), apply);
 }
 
 void AuraEffect::HandleAuraModRangedHaste(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -4390,9 +4390,9 @@ void AuraEffect::HandleModDamagePercentDone(AuraApplication const* aurApp, uint8
 
     if ((GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL) && (GetSpellInfo()->EquippedItemClass == -1 || target->GetTypeId() != TYPEID_PLAYER))
     {
-        target->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND,         TOTAL_PCT, float (GetAmount()), apply);
-        target->HandleStatModifier(UNIT_MOD_DAMAGE_OFFHAND,          TOTAL_PCT, float (GetAmount()), apply);
-        target->HandleStatModifier(UNIT_MOD_DAMAGE_RANGED,           TOTAL_PCT, float (GetAmount()), apply);
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_PCT, float(GetAmount()), apply);
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_OFFHAND,  TOTAL_PCT, float(GetAmount()), apply);
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_RANGED,   TOTAL_PCT, float(GetAmount()), apply);
 
         if (target->GetTypeId() == TYPEID_PLAYER)
             target->ToPlayer()->ApplyPercentModFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT, float (GetAmount()), apply);
@@ -4704,7 +4704,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                         case 42783: // Wrath of the Astromancer
                             target->CastSpell(target, GetAmount(), true, NULL, this);
                             break;
-                        case 46308: // Burning Winds casted only at creatures at spawn
+                        case 46308: // Burning Winds cast only at creatures at spawn
                             target->CastSpell(target, 47287, true, NULL, this);
                             break;
                         case 52172:  // Coyote Spirit Despawn Aura
@@ -5656,9 +5656,6 @@ void AuraEffect::HandlePeriodicTriggerSpellAuraTick(Unit* target, Unit* caster) 
             case 46284:
                 target->CastCustomSpell(triggerSpellId, SPELLVALUE_MAX_TARGETS, m_tickNumber / 10 + 1, NULL, true, NULL, this);
                 return;
-            // Poison (Grobbulus)
-            case 28158:
-            case 54362:
             // Slime Pool (Dreadscale & Acidmaw)
             case 66882:
                 target->CastCustomSpell(triggerSpellId, SPELLVALUE_RADIUS_MOD, (int32)((((float)m_tickNumber / 60) * 0.9f + 0.1f) * 10000 * 2 / 3), NULL, true, NULL, this);
@@ -5838,7 +5835,7 @@ void AuraEffect::HandlePeriodicDamageAurasTick(Unit* target, Unit* caster) const
         damage = caster->SpellCriticalDamageBonus(m_spellInfo, damage, target);
 
     int32 dmg = damage;
-    caster->ApplyResilience(target, &dmg, crit);
+    caster->ApplyResilience(target, &dmg);
     damage = dmg;
 
     caster->CalcAbsorbResist(target, GetSpellInfo()->GetSchoolMask(), DOT, damage, &absorb, &resist, GetSpellInfo());
@@ -5905,7 +5902,7 @@ void AuraEffect::HandlePeriodicHealthLeechAuraTick(Unit* target, Unit* caster) c
     }
 
     int32 dmg = damage;
-    caster->ApplyResilience(target, &dmg, crit);
+    caster->ApplyResilience(target, &dmg);
     damage = dmg;
 
     caster->CalcAbsorbResist(target, GetSpellInfo()->GetSchoolMask(), DOT, damage, &absorb, &resist, m_spellInfo);

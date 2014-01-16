@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -364,7 +364,7 @@ class WorldSession
         uint32 GetLatency() const { return m_latency; }
         void SetLatency(uint32 latency) { m_latency = latency; }
         void ResetClientTimeDelay() { m_clientTimeDelay = 0; }
-        uint32 getDialogStatus(Player* player, Object* questgiver, uint32 defstatus);
+        uint32 getDialogStatus(Player* player, Object* questgiver);
 
         ACE_Atomic_Op<ACE_Thread_Mutex, time_t> m_timeOutTime;
         void UpdateTimeOutTime(uint32 diff)
@@ -786,6 +786,16 @@ class WorldSession
         void HandleRequestPvpReward(WorldPacket& recvData);
         void HandleRequestRatedBgStats(WorldPacket& recvData);
 
+        // Battlefield
+        void SendBfInvitePlayerToWar(uint64 guid, uint32 zoneId, uint32 time);
+        void SendBfInvitePlayerToQueue(uint64 guid);
+        void SendBfQueueInviteResponse(uint64 guid, uint32 zoneId, bool canQueue = true, bool full = false);
+        void SendBfEntered(uint64 guid);
+        void SendBfLeaveMessage(uint64 guid, BFLeaveReason reason = BF_LEAVE_REASON_EXITED);
+        void HandleBfQueueInviteResponse(WorldPacket& recvData);
+        void HandleBfEntryInviteResponse(WorldPacket& recvData);
+        void HandleBfExitRequest(WorldPacket& recvData);
+
         void HandleWardenDataOpcode(WorldPacket& recvData);
         void HandleWorldTeleportOpcode(WorldPacket& recvData);
         void HandleMinimapPingOpcode(WorldPacket& recvData);
@@ -801,16 +811,6 @@ class WorldSession
         void HandleResetInstancesOpcode(WorldPacket& recvData);
         void HandleHearthAndResurrect(WorldPacket& recvData);
         void HandleInstanceLockResponse(WorldPacket& recvPacket);
-
-        // Battlefield
-        void SendBfInvitePlayerToWar(uint64 guid, uint32 zoneId, uint32 time);
-        void SendBfInvitePlayerToQueue(uint64 guid);
-        void SendBfQueueInviteResponse(uint64 guid, uint32 zoneId, bool canQueue = true, bool full = false);
-        void SendBfEntered(uint64 guid);
-        void SendBfLeaveMessage(uint64 guid, BFLeaveReason reason = BF_LEAVE_REASON_EXITED);
-        void HandleBfQueueInviteResponse(WorldPacket& recvData);
-        void HandleBfEntryInviteResponse(WorldPacket& recvData);
-        void HandleBfExitRequest(WorldPacket& recvData);
 
         // Looking for Dungeon/Raid
         void HandleLfgSetCommentOpcode(WorldPacket& recvData);

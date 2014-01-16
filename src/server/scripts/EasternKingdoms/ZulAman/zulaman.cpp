@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -109,7 +109,7 @@ class npc_voljin_zulaman : public CreatureScript
                     me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     me->SetUInt32Value(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
                     _events.ScheduleEvent(EVENT_INTRO_MOVEPOINT_1, 1000);
-                    Talk(SAY_INTRO_1, player->GetGUID());
+                    Talk(SAY_INTRO_1, player);
                     me->SetWalk(true);
                 }
             }
@@ -126,7 +126,6 @@ class npc_voljin_zulaman : public CreatureScript
             void UpdateAI(uint32 diff) OVERRIDE
             {
                 _events.Update(diff);
-
                 while (uint32 eventId = _events.ExecuteEvent())
                 {
                     switch (eventId)
@@ -214,7 +213,7 @@ class npc_voljin_zulaman : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const OVERRIDE
         {
-            return GetZulAmanAI<npc_voljin_zulamanAI>(creature);
+            return GetInstanceAI<npc_voljin_zulamanAI>(creature);
         }
 };
 

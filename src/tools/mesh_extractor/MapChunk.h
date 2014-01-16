@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,7 +29,7 @@ public:
     MapChunk(ADT* _adt, Chunk* chunk);
 
     void GenerateTriangles();
-    void GenerateVertices(FILE* stream);
+    void GenerateVertices(Stream* stream);
     static bool HasHole(uint32 map, int x, int y);
     ADT* Adt;
     Chunk* Source;

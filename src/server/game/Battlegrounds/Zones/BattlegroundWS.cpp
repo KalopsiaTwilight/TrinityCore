@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -54,6 +54,21 @@ BattlegroundWS::BattlegroundWS()
     _flagSpellForceTimer = 0;
     _bothFlagsKept = false;
     _flagDebuffState = 0;
+    m_FlagKeepers[TEAM_ALLIANCE] = 0;
+    m_FlagKeepers[TEAM_HORDE] = 0;
+    m_DroppedFlagGUID[TEAM_ALLIANCE] = 0;
+    m_DroppedFlagGUID[TEAM_HORDE] = 0;
+    _flagState[TEAM_ALLIANCE] = BG_WS_FLAG_STATE_ON_BASE;
+    _flagState[TEAM_HORDE] = BG_WS_FLAG_STATE_ON_BASE;
+    _flagsTimer[TEAM_ALLIANCE] = 0;
+    _flagsTimer[TEAM_HORDE] = 0;
+    _flagsDropTimer[TEAM_ALLIANCE] = 0;
+    _flagsDropTimer[TEAM_HORDE] = 0;
+    _lastFlagCaptureTeam = 0;
+    m_ReputationCapture = 0;
+    m_HonorWinKills = 0;
+    m_HonorEndKills = 0;
+    _minutesElapsed = 0;
 }
 
 BattlegroundWS::~BattlegroundWS() { }

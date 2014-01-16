@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -225,7 +225,7 @@ public:
                 break;
             case GOSSIP_ACTION_INFO_DEF+2:
                 player->CLOSE_GOSSIP_MENU();
-                creature->AI()->Talk(SAY_TEXTID_VEKJIK1, player->GetGUID());
+                creature->AI()->Talk(SAY_TEXTID_VEKJIK1, player);
                 player->AreaExploredOrEventHappens(QUEST_MAKING_PEACE);
                 creature->CastSpell(player, SPELL_FREANZYHEARTS_FURY, false);
                 break;
@@ -772,7 +772,7 @@ public:
             {
                 if (Creature* presence = caster->FindNearestCreature(NPC_PRESENCE, 50.0f))
                 {
-                    presence->AI()->Talk(WHISPER_ACTIVATE, caster->GetGUID());
+                    presence->AI()->Talk(WHISPER_ACTIVATE, caster);
                     presence->CastSpell(presence, SPELL_FREYA_DUMMY, true); // will target plants
                     // Freya Dummy could be scripted with the following code
 
@@ -1082,6 +1082,57 @@ public:
     }
 };
 
+/*######
+## Quest Dreadsaber Mastery: Stalking the Prey (12550)
+######*/
+
+enum ShangoTracks
+{
+    SPELL_CORRECT_TRACKS   = 52160,
+    SPELL_INCORRECT_TRACKS = 52163,
+    SAY_CORRECT_TRACKS     = 28634,
+    SAY_INCORRECT_TRACKS   = 28635
+};
+
+class spell_shango_tracks : public SpellScriptLoader
+{
+public:
+   spell_shango_tracks() : SpellScriptLoader("spell_shango_tracks") { }
+
+    class spell_shango_tracks_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_shango_tracks_SpellScript);
+
+        void HandleScript(SpellEffIndex /*effIndex*/)
+        {
+            if (Player* player = GetHitUnit()->ToPlayer())
+            {
+                switch (GetSpellInfo()->Id)
+                {
+                    case SPELL_CORRECT_TRACKS:
+                        player->MonsterSay(sObjectMgr->GetTrinityStringForDBCLocale(SAY_CORRECT_TRACKS), LANG_UNIVERSAL, player);
+                        break;
+                    case SPELL_INCORRECT_TRACKS:
+                        player->MonsterSay(sObjectMgr->GetTrinityStringForDBCLocale(SAY_INCORRECT_TRACKS), LANG_UNIVERSAL, player);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        void Register() OVERRIDE
+        {
+            OnEffectHitTarget += SpellEffectFn(spell_shango_tracks_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        }
+    };
+
+    SpellScript* GetSpellScript() const OVERRIDE
+    {
+        return new spell_shango_tracks_SpellScript();
+    }
+};
+
 void AddSC_sholazar_basin()
 {
     new npc_injured_rainspeaker_oracle();
@@ -1095,4 +1146,5 @@ void AddSC_sholazar_basin()
     new spell_q12589_shoot_rjr();
     new npc_haiphoon();
     new npc_vics_flying_machine();
+    new spell_shango_tracks();
 }

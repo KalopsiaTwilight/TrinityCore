@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -613,22 +613,18 @@ bool SpellEffectInfo::HasMaxRadius() const
 
 float SpellEffectInfo::CalcRadius(Unit* caster, Spell* spell) const
 {
-    if (!HasRadius())
-    {
-        if (HasMaxRadius())
-        {
-            //! Still not sure which to pick. Anyway at the current time (Patch 4.3.4) most of the spell effects
-            //! have no radius mod per level, and RadiusMin is equal to RadiusMax.
-            return MaxRadiusEntry->RadiusMin;
-        }
-        return 0.0f;
-    }
+    const SpellRadiusEntry* entry = RadiusEntry;
+    if (!HasRadius() && HasMaxRadius())
+        entry = MaxRadiusEntry;
 
-    float radius = RadiusEntry->RadiusMin;
+    if (!entry)
+        return 0.0f;
+
+    float radius = entry->RadiusMin;
     if (caster)
     {
-        radius += RadiusEntry->RadiusPerLevel * caster->getLevel();
-        radius = std::min(radius, RadiusEntry->RadiusMax);
+        radius += entry->RadiusPerLevel * caster->getLevel();
+        radius = std::min(radius, entry->RadiusMax);
         if (Player* modOwner = caster->GetSpellModOwner())
             modOwner->ApplySpellMod(_spellInfo->Id, SPELLMOD_RADIUS, radius, spell);
     }
@@ -1478,10 +1474,10 @@ SpellCastResult SpellInfo::CheckShapeshift(uint32 form) const
 
     uint32 stanceMask = (form ? 1 << (form - 1) : 0);
 
-    if (stanceMask & StancesNot)                 // can explicitly not be casted in this stance
+    if (stanceMask & StancesNot)                 // can explicitly not be cast in this stance
         return SPELL_FAILED_NOT_SHAPESHIFT;
 
-    if (stanceMask & Stances)                    // can explicitly be casted in this stance
+    if (stanceMask & Stances)                    // can explicitly be cast in this stance
         return SPELL_CAST_OK;
 
     bool actAsShifted = false;
@@ -2711,12 +2707,12 @@ bool SpellInfo::_IsPositiveEffect(uint8 effIndex, bool deep) const
                 case SPELL_AURA_PREVENT_RESURRECTION:
                     return false;
                 case SPELL_AURA_PERIODIC_DAMAGE:            // used in positive spells also.
-                    // part of negative spell if casted at self (prevent cancel)
+                    // part of negative spell if cast at self (prevent cancel)
                     if (Effects[effIndex].TargetA.GetTarget() == TARGET_UNIT_CASTER)
                         return false;
                     break;
                 case SPELL_AURA_MOD_DECREASE_SPEED:         // used in positive spells also
-                    // part of positive spell if casted at self
+                    // part of positive spell if cast at self
                     if (Effects[effIndex].TargetA.GetTarget() != TARGET_UNIT_CASTER)
                         return false;
                     // but not this if this first effect (didn't find better check)

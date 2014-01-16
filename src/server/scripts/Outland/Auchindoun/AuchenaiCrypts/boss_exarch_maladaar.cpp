@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -68,6 +68,7 @@ public:
 
         void Reset() OVERRIDE
         {
+            myClass = CLASS_NONE;
             Class_Timer = 1000;
         }
 
@@ -249,7 +250,7 @@ public:
 
             if (!Avatar_summoned && HealthBelowPct(25))
             {
-                if (me->IsNonMeleeSpellCasted(false))
+                if (me->IsNonMeleeSpellCast(false))
                     me->InterruptNonMeleeSpells(true);
 
                 Talk(SAY_SUMMON);
@@ -265,7 +266,7 @@ public:
                 {
                     if (target->GetTypeId() == TYPEID_PLAYER)
                     {
-                        if (me->IsNonMeleeSpellCasted(false))
+                        if (me->IsNonMeleeSpellCast(false))
                             me->InterruptNonMeleeSpells(true);
 
                         Talk(SAY_ROAR);

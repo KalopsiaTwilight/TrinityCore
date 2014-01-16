@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,7 +34,7 @@ CalendarEvent::~CalendarEvent()
     sCalendarMgr->FreeEventId(_eventId);
 }
 
-CalendarMgr::CalendarMgr() { }
+CalendarMgr::CalendarMgr() : _maxEventId(0), _maxInviteId(0) { }
 
 CalendarMgr::~CalendarMgr()
 {

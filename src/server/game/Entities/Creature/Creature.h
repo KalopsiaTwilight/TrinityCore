@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -182,12 +182,15 @@ typedef UNORDERED_MAP<uint32, CreatureTemplate> CreatureTemplateContainer;
 #pragma pack(push, 1)
 #endif
 
-// Defines base stats for creatures (used to calculate HP/mana/armor).
+// Defines base stats for creatures (used to calculate HP/mana/armor/attackpower/rangedattackpower/all damage).
 struct CreatureBaseStats
 {
-    uint32 BaseHealth[MAX_CREATURE_BASE_HP];
+    uint32 BaseHealth[MAX_EXPANSIONS];
     uint32 BaseMana;
     uint32 BaseArmor;
+    uint32 AttackPower;
+    uint32 RangedAttackPower;
+    float BaseDamage[MAX_EXPANSIONS];
 
     // Helpers
 
@@ -208,6 +211,11 @@ struct CreatureBaseStats
     uint32 GenerateArmor(CreatureTemplate const* info) const
     {
         return uint32(ceil(BaseArmor * info->ModArmor));
+    }
+
+    float GenerateBaseDamage(CreatureTemplate const* info) const
+    {
+        return BaseDamage[info->expansion];
     }
 
     static CreatureBaseStats const* GetBaseStats(uint8 level, uint8 unitClass);
@@ -244,7 +252,10 @@ typedef UNORDERED_MAP<uint32, EquipmentInfoContainerInternal> EquipmentInfoConta
 // from `creature` table
 struct CreatureData
 {
-    CreatureData() : dbData(true) { }
+    CreatureData() : id(0), mapid(0), phaseMask(0), displayid(0), equipmentId(0),
+                     posX(0.0f), posY(0.0f), posZ(0.0f), orientation(0.0f), spawntimesecs(0),
+                     spawndist(0.0f), currentwaypoint(0), curhealth(0), curmana(0), movementType(0),
+                     spawnMask(0), npcflag(0), unit_flags(0), dynamicflags(0), dbData(true) { }
     uint32 id;                                              // entry in creature_template
     uint16 mapid;
     uint32 phaseMask;
@@ -433,7 +444,7 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
 
         bool Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, uint32 vehId, uint32 team, float x, float y, float z, float ang, const CreatureData* data = NULL);
         bool LoadCreaturesAddon(bool reload = false);
-        void SelectLevel(const CreatureTemplate* cinfo);
+        void SelectLevel();
         void LoadEquipment(int8 id = 1, bool force = false);
 
         uint32 GetDBTableGUIDLow() const { return m_DBTableGuid; }
@@ -500,8 +511,9 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
         void UpdateMaxHealth();
         void UpdateMaxPower(Powers power);
         void UpdateAttackPowerAndDamage(bool ranged = false);
-        void UpdateDamagePhysical(WeaponAttackType attType);
+        void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage) OVERRIDE;
 
+        void SetCanDualWield(bool value) OVERRIDE;
         int8 GetOriginalEquipmentId() const { return m_originalEquipmentId; }
         uint8 GetCurrentEquipmentId() { return m_equipmentId; }
         void SetCurrentEquipmentId(uint8 id) { m_equipmentId = id; }
@@ -521,12 +533,6 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
         std::string GetAIName() const;
         std::string GetScriptName() const;
         uint32 GetScriptId() const;
-
-        void Say(int32 textId, uint32 language, uint64 TargetGuid) { MonsterSay(textId, language, TargetGuid); }
-        void Yell(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYell(textId, language, TargetGuid); }
-        void TextEmote(int32 textId, uint64 TargetGuid, bool IsBossEmote = false) { MonsterTextEmote(textId, TargetGuid, IsBossEmote); }
-        void Whisper(int32 textId, uint64 receiver, bool IsBossWhisper = false) { MonsterWhisper(textId, receiver, IsBossWhisper); }
-        void YellToZone(int32 textId, uint32 language, uint64 TargetGuid) { MonsterYellToZone(textId, language, TargetGuid); }
 
         // override WorldObject function for proper name localization
         std::string const& GetNameForLocaleIdx(LocaleConstant locale_idx) const;
@@ -632,15 +638,15 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
         void GetTransportHomePosition(float &x, float &y, float &z, float &ori) { m_transportHomePosition.GetPosition(x, y, z, ori); }
         Position GetTransportHomePosition() { return m_transportHomePosition; }
 
-        uint32 GetWaypointPath(){return m_path_id;}
+        uint32 GetWaypointPath() const { return m_path_id; }
         void LoadPath(uint32 pathid) { m_path_id = pathid; }
 
         uint32 GetCurrentWaypointID() const { return m_waypointID; }
         void UpdateWaypointID(uint32 wpID) { m_waypointID = wpID; }
 
         void SearchFormation();
-        CreatureGroup* GetFormation() {return m_formation;}
-        void SetFormation(CreatureGroup* formation) {m_formation = formation;}
+        CreatureGroup* GetFormation() { return m_formation; }
+        void SetFormation(CreatureGroup* formation) { m_formation = formation; }
 
         Unit* SelectVictim();
 
@@ -712,10 +718,10 @@ class Creature : public Unit, public GridObject<Creature>, public MapObject
         CreatureData const* m_creatureData;
 
         uint16 m_LootMode;                                  // Bitmask (default: LOOT_MODE_DEFAULT) that determines what loot will be lootable
-        uint32 guid_transport;
 
         bool IsInvisibleDueToDespawn() const;
         bool CanAlwaysSee(WorldObject const* obj) const;
+
     private:
         void ForcedDespawn(uint32 timeMSToDespawn = 0);
 

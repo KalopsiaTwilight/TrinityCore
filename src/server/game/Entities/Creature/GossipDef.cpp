@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 GossipMenu::GossipMenu()
 {
     _menuId = 0;
+    _locale = DEFAULT_LOCALE;
 }
 
 GossipMenu::~GossipMenu()
@@ -296,7 +297,7 @@ void QuestMenu::ClearMenu()
     _questMenuItems.clear();
 }
 
-void PlayerMenu::SendQuestGiverQuestList(QEmote eEmote, const std::string& Title, uint64 npcGUID)
+void PlayerMenu::SendQuestGiverQuestList(QEmote const& eEmote, const std::string& Title, uint64 npcGUID)
 {
     WorldPacket data(SMSG_QUESTGIVER_QUEST_LIST, 100);    // guess size
     data << uint64(npcGUID);
@@ -479,8 +480,8 @@ void PlayerMenu::SendQuestQueryResponse(Quest const* quest) const
         data << uint32(quest->GetRewOrReqMoney());          // reward money (below max lvl)
 
     data << uint32(quest->GetRewMoneyMaxLevel());           // used in XP calculation at client
-    data << uint32(quest->GetRewSpell());                   // reward spell, this spell will display (icon) (casted if RewSpellCast == 0)
-    data << int32(quest->GetRewSpellCast());                // casted spell
+    data << uint32(quest->GetRewSpell());                   // reward spell, this spell will display (icon) (cast if RewSpellCast == 0)
+    data << int32(quest->GetRewSpellCast());                // cast spell
 
     // rewarded honor points
     data << uint32(quest->GetRewHonorAddition());
