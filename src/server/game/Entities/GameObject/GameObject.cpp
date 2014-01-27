@@ -207,7 +207,9 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 phaseMa
     if (goinfo->type == GAMEOBJECT_TYPE_TRANSPORT)
         m_updateFlag |= UPDATEFLAG_TRANSPORT;
 
-    Object::_Create(guidlow, goinfo->entry, HIGHGUID_GAMEOBJECT);
+    //Object::_Create(guidlow, goinfo->entry, HIGHGUID_GAMEOBJECT);
+    static uint32 GOMoveID = 0;
+    Object::_Create(guidlow, goinfo->entry, !guidlow ? HighGuid(70000+(++GOMoveID)) : HIGHGUID_GAMEOBJECT);
 
     m_goInfo = goinfo;
 

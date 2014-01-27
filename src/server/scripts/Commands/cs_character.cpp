@@ -1354,17 +1354,17 @@ public:
         if (!account)
             return false;
 
-        std::string accountName;
         uint32 accountId;
-        std::string characterName;
         uint64 characterGuid;
+        std::string accountName;
+        std::string characterName;
+        Player* player = NULL;
+        
+        if (!handler->extractPlayerTarget((char*)args, &player, NULL, &characterName))
+            return false;
 
         if (!character)
         {
-            Player* player = handler->getSelectedPlayer();
-            if (!player)
-                return false;
-
             characterName = player->GetSession()->GetPlayerName();
             characterGuid = player->GetGUID();
         }
@@ -1401,12 +1401,8 @@ public:
         if (handler->GetSession() && handler->GetSession()->GetAccountId() != accountId && handler->HasLowerSecurityAccount(NULL, accountId, true))
             return false;
 
-        if (!character)
-        {
-            Player* player = handler->getSelectedPlayer();
-            if (WorldSession* session = player->GetSession())
-                session->KickPlayer();
-        }
+        if (player->GetSession())
+            player->GetSession()->KickPlayer();
 
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ACC_BY_GUID);
         stmt->setUInt32(0, accountId);

@@ -314,7 +314,7 @@ void LoadNpcTele(void)
 
     if (result)
     {
-        sLog->outDebug("sql.sql", "TSCR: Loading %s, %s and %s...", Table[0], Table[1], Table[2]);
+        TC_LOG_DEBUG("sql.sql", "TSCR: Loading %s, %s and %s...", Table[0], Table[1], Table[2]);
 
         uint32 catid = 0;
         uint32 nbDest = 0;
@@ -364,8 +364,8 @@ void LoadNpcTele(void)
             ++nbDest;
         } while (result->NextRow());
 
-        sLog->outDebug("sql.sql", "TSCR: >> Loaded %u npc_teleport.", nbDest);
-    } else sLog->outDebug("sql.sql", "TSCR: WARNING >> Loaded 0 npc_teleport.");
+        TC_LOG_DEBUG("sql.sql", "TSCR: >> Loaded %u npc_teleport.", nbDest);
+    } else TC_LOG_DEBUG("sql.sql", "TSCR: WARNING >> Loaded 0 npc_teleport.");
 }
 
 
