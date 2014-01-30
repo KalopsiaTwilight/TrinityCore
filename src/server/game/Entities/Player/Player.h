@@ -2880,6 +2880,9 @@ class Player : public Unit, public GridObject<Player>
         uint32 _maxPersonalArenaRate;
 
         PhaseMgr phaseMgr;
+        
+    public:
+        QuestStatusSaveMap m_RewardedQuestsSave2;
 };
 
 void AddItemsSetItem(Player*player, Item* item);
