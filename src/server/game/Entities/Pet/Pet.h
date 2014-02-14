@@ -35,6 +35,13 @@ struct PetSpell
 typedef UNORDERED_MAP<uint32, PetSpell> PetSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
+struct PetAddon
+{
+    float scale;
+};
+
+typedef UNORDERED_MAP<uint32, PetAddon> PetAddonContainer;
+
 class Player;
 
 class Pet : public Guardian
@@ -67,6 +74,9 @@ class Pet : public Guardian
 
         void setDeathState(DeathState s);                   // overwrite virtual Creature::setDeathState and Unit::setDeathState
         void Update(uint32 diff);                           // overwrite virtual Creature::Update and Unit::Update
+
+        PetAddon const* GetPetAddon();
+        PetAddon const* GetPetAddonDB(uint32 GUIDlow);
 
         uint8 GetPetAutoSpellSize() const { return m_autospells.size(); }
         uint32 GetPetAutoSpellOnPos(uint8 pos) const
@@ -164,5 +174,7 @@ class Pet : public Guardian
         {
             ASSERT(false);
         }
+
+        PetAddonContainer _petAddonStore;
 };
 #endif

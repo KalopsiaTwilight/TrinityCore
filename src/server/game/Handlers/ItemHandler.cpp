@@ -1453,6 +1453,9 @@ void WorldSession::HandleTransmogrifyItems(WorldPacket& recvData)
         //    TC_LOG_DEBUG("network", "WORLD: HandleTransmogrifyItems - Player (GUID: %u, name: %s) can't equip the transmogrifier item (slot: %u, entry: %u).", player->GetGUIDLow(), player->GetName().c_str(), slots[i], itemTransmogrifier->GetEntry());
         //    return;
         //}
+        // CUSTOM, for RP-addable items
+        if (newEntries[i] > 200000 && newEntries[i] < 300000)
+            newEntries[i] = newEntries[i] - 200000;
 
         if (!newEntries[i]) // reset look
         {

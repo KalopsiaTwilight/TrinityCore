@@ -42,7 +42,7 @@ public:
     {
     }
 
-    static UNORDERED_MAP<uint32, GameObject*> GObjects; // GObjects[GObjectID] = pointer // GObjectID comes from highguid. lowguid is 0 for temps.
+    static std::set<uint32> GObjects; // GObjects[] = GObjectID // GObjectID comes from highguid. lowguid is 0 for temps.
     static UNORDERED_MAP<uint64, uint32> SpawnQue;
 
     ChatCommand* GetCommands() const
@@ -97,7 +97,7 @@ public:
                     uint32 p = target->GetPhaseMask();
                     switch(ID)
                     {
-                    case DELET: DeleteObject(target, isHex ? GObjectID : 0); SendSelectionInfo(player, GObjectID, isHex, false); break;
+                    case DELET: DeleteObject(target/*, isHex ? GObjectID : 0*/); SendSelectionInfo(player, GObjectID, isHex, false); break;
                     case X: SpawnObject(player,player->GetPositionX(),y,z,o,p,true,GObjectID, isHex);      break;
                     case Y: SpawnObject(player,x,player->GetPositionY(),z,o,p,true,GObjectID, isHex);      break;
                     case Z: SpawnObject(player,x,y,player->GetPositionZ(),o,p,true,GObjectID, isHex);      break;
@@ -123,17 +123,13 @@ public:
                 case SELECTNEAR:
                     {
                         GameObject* object = handler->GetNearbyGameObject();
-                        uint32 closestID = GetClosestGObjectID(player, object);
-                        if (!closestID && !object)
+                        object = GetClosestGObjectID(player, object);
+                        if (!object)
                             ChatHandler(player->GetSession()).PSendSysMessage("No objects found");
                         else
                         {
-                            bool isHex = (closestID != 0);
-                            if(closestID)
-                                object = GObjects[closestID]; // MUST be valid
-                            else
-                                closestID = object->GetGUIDLow();
-                            SendSelectionInfo(player, closestID, isHex, true);
+                            bool isHex = (object->GetGUIDHigh() != HIGHGUID_GAMEOBJECT);
+                            SendSelectionInfo(player, isHex ? object->GetGUIDHigh() : object->GetDBTableGUIDLow() ? object->GetDBTableGUIDLow() : object->GetGUIDLow(), isHex, true);
                             session->SendAreaTriggerMessage("Selected %s", object->GetName().c_str());
                         }
                     } break;
@@ -203,15 +199,16 @@ public:
                             }
                             while (result->NextRow());
                         }
-                        for(UNORDERED_MAP<uint32, GameObject*>::const_iterator it = GObjects.begin(); it != GObjects.end();)
+                        for(std::set<uint32>::const_iterator it = GObjects.begin(); it != GObjects.end();)
                         {
-                            if(!it->second)
+                            GameObject* temp = player->GetGameObject(*it);
+                            if(!temp)
                             {
-                                GObjects.erase(it++);
+                                GObjects.erase(*it++);
                                 continue;
                             }
-                            if(it->second->IsWithinDistInMap(player, ARG))
-                                SendSelectionInfo(player, it->first, true, true);
+                            if(temp->IsWithinDistInMap(player, ARG))
+                                SendSelectionInfo(player, (*it), true, true);
                             ++it;
                         }
                     } break;
@@ -223,30 +220,31 @@ public:
         return true;
     }
 
-    static uint32 GetClosestGObjectID(Player* player, GameObject* obj = NULL)
+    static GameObject* GetClosestGObjectID(Player* player, GameObject* obj)
     {
         if(!player)
-            return 0;
+            return NULL;
         uint32 closestID = 0;
-        for(UNORDERED_MAP<uint32, GameObject*>::const_iterator it = GObjects.begin(); it != GObjects.end();)
+        for(std::set<uint32>::const_iterator it = GObjects.begin(); it != GObjects.end();)
         {
-            if(!it->second)
-            {
-                GObjects.erase(it++);
-                continue;
-            }
-            if(!it->second->IsInMap(player))
+            if(obj && obj->GetGUIDHigh() == (*it))
             {
                 ++it;
                 continue;
             }
-            if(obj && obj != it->second && it->second->GetDistance(player) > obj->GetDistance(player))
+            GameObject* temp = player->GetGameObject(*it);
+            if (!temp)
+            {
+                GObjects.erase(*it++);
+                continue;
+            }
+            if(obj && temp->GetDistance(player) > obj->GetDistance(player))
             {
                 ++it;
                 continue;
             }
-            closestID = it->first;
-            obj = it->second;
+            closestID = (*it);
+            obj = temp;
             ++it;
         }
         if (obj && !closestID && obj->GetGUIDLow() && !obj->GetDBTableGUIDLow()) // obj is .gob add temp, respawn and return
@@ -254,11 +252,10 @@ public:
             float x,y,z,o;
             obj->GetPosition(x,y,z,o);
             GameObject* obj2 = SpawnObject(player,x,y,z,o,obj->GetPhaseMask(),false,obj->GetEntry(),false);
-            if(obj2)
-                closestID = obj2->GetGUIDHigh();
             DeleteObject(obj);
+            obj = obj2;
         }
-        return closestID;
+        return obj;
     }
 
     static GameObject* GetObjectByGObjectID(Player* player, uint32 GObjectID, bool isHex)
@@ -266,18 +263,13 @@ public:
         GameObject* object = NULL;
         if (isHex)
         {
-            UNORDERED_MAP<uint32, GameObject*>::const_iterator it = GObjects.find(GObjectID);
-            if(it == GObjects.end())
-                return NULL;
-            else if(!it->second)
-            {
-                GObjects.erase(it);
-                return NULL;
-            }
-            object = it->second;
+            object = player->GetGameObject(GObjectID);
+            if (!object)
+                GObjects.erase(GObjectID);
         }
         else
         {
+            printf("TEST %u %u\n", GObjectID, (uint32)isHex);
             if (GameObjectData const* gameObjectData = sObjectMgr->GetGOData(GObjectID))
                 object = ChatHandler(player->GetSession()).GetObjectGlobalyWithGuidOrNearWithDbGuid(GObjectID, gameObjectData->id);
         }
@@ -307,7 +299,7 @@ public:
     {
         if (!player || !GObjectID)
             return;
-
+        
         std::ostringstream ss;
         if (!add)
             if(!isHex)
@@ -349,16 +341,19 @@ public:
         obj->AddGameObject(go);
         map->AddToMap(go);
 
-        GObjects[go->GetGUIDHigh()] = go;
+        go->SetSpellId(go->GetGUIDHigh()); // small hack :3
+        GObjects.insert(go->GetGUIDHigh());
         return go;
     }
 
-    static void DeleteObject(GameObject* object, uint32 GObjectID = 0)
+    static void DeleteObject(GameObject* object/*, uint32 GObjectID = 0*/)
     {
-        if(GObjectID)
-            GObjects.erase(GObjectID);
+        //if(GObjectID)
+        //    GObjects.erase(GObjectID);
         if (object)
         {
+            GObjects.erase(object->GetGUIDHigh()); // remove from temp store
+
             uint64 ownerGuid = object->GetOwnerGUID();
             if (ownerGuid)
             {
@@ -388,7 +383,7 @@ public:
             if (!object)
                 return NULL;
             GameObject* spawned = SummonGameObject(player, object->GetEntry(), x, y, z, o, p, 0, 0, rot2, rot3, 0);
-            DeleteObject(object, isHex ? eorg : 0);
+            DeleteObject(object/*, isHex ? eorg : 0*/);
             if(!spawned)
                 return NULL;
             // object->SetPhaseMask(p, true);
@@ -434,7 +429,7 @@ public:
         }
         sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGOData(guidLow));
 
-        DeleteObject(object, isHex ? GObjectID : 0); // delete old
+        DeleteObject(object/*, isHex ? GObjectID : 0*/); // delete old
         std::ostringstream ss;
         if(!isHex)
             ss << "GOMOVE|SWAP|" << std::dec << GObjectID << std::dec << "||" << guidLow;
@@ -443,7 +438,7 @@ public:
         SendAddonMessage(player, ss.str().c_str());
     }
 };
-UNORDERED_MAP<uint32, GameObject*> GOMove_commandscript::GObjects; 
+std::set<uint32> GOMove_commandscript::GObjects; 
 UNORDERED_MAP<uint64, uint32> GOMove_commandscript::SpawnQue;
 
 // possible spells:

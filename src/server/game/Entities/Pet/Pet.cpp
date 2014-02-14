@@ -366,6 +366,11 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
 
     m_loading = false;
 
+    PetAddon& petAddon = _petAddonStore[petId];
+    petAddon.scale = fields[16].GetFloat();
+    if (petAddon.scale && petAddon.scale > 0.1)
+        SetObjectScale(petAddon.scale);
+
     return true;
 }
 
@@ -400,6 +405,11 @@ void Pet::SavePetToDB(PetSaveMode mode)
 
     uint32 curhealth = GetHealth();
     uint32 curmana = GetPower(POWER_MANA);
+    
+    float curscale = 0;
+    PetAddon const* painfo = GetPetAddon();
+    if (painfo && painfo->scale >= 0.1)
+        curscale = painfo->scale;
 
     SQLTransaction trans = CharacterDatabase.BeginTransaction();
     // save auras before possibly removing them
@@ -448,7 +458,7 @@ void Pet::SavePetToDB(PetSaveMode mode)
 
         // save pet
         std::ostringstream ss;
-        ss  << "INSERT INTO character_pet (id, entry,  owner, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, abdata, savetime, CreatedBySpell, PetType) "
+        ss  << "INSERT INTO character_pet (id, entry,  owner, modelid, level, exp, Reactstate, slot, name, renamed, curhealth, curmana, abdata, savetime, CreatedBySpell, PetType, scale) "
             << "VALUES ("
             << m_charmInfo->GetPetNumber() << ','
             << GetEntry() << ','
@@ -472,7 +482,8 @@ void Pet::SavePetToDB(PetSaveMode mode)
         ss  << "', "
             << time(NULL) << ','
             << GetUInt32Value(UNIT_CREATED_BY_SPELL) << ','
-            << uint32(getPetType()) << ')';
+            << uint32(getPetType()) << ','
+            << float(curscale) << ')';
 
         trans->Append(ss.str().c_str());
         CharacterDatabase.CommitTransaction(trans);
@@ -2061,4 +2072,24 @@ void Pet::SetDisplayId(uint32 modelId)
         if (Player* player = owner->ToPlayer())
             if (player->GetGroup())
                 player->SetGroupUpdateFlag(GROUP_UPDATE_FLAG_PET_MODEL_ID);
+}
+
+PetAddon const* Pet::GetPetAddonDB(uint32 GUIDlow)
+{
+    PetAddonContainer::const_iterator itr = _petAddonStore.find(GUIDlow);
+    if (itr != _petAddonStore.end())
+        return &(itr->second);
+
+    return NULL;
+}
+
+PetAddon const* Pet::GetPetAddon()
+{
+    if (m_charmInfo->GetPetNumber())
+    {
+        if (PetAddon const* petAddon = Pet::GetPetAddonDB(m_charmInfo->GetPetNumber()))
+            return petAddon;
+    }
+
+    return NULL;
 }
