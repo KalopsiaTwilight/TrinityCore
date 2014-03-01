@@ -30,8 +30,6 @@
 
 enum ShamanSpells
 {
-    SPELL_HUNTER_INSANITY                       = 95809,
-    SPELL_MAGE_TEMPORAL_DISPLACEMENT            = 80354,
     SPELL_SHAMAN_ANCESTRAL_AWAKENING            = 52759,
     SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC       = 52752,
     SPELL_SHAMAN_BIND_SIGHT                     = 6277,
@@ -69,6 +67,12 @@ enum ShamanSpellIcons
 {
     SHAMAN_ICON_ID_SOOTHING_RAIN                = 2011,
     SHAMAN_ICON_ID_SHAMAN_LAVA_FLOW             = 3087
+};
+
+enum MiscSpells
+{
+    SPELL_HUNTER_INSANITY                       = 95809,
+    SPELL_MAGE_TEMPORAL_DISPLACEMENT            = 80354
 };
 
 // -51556 - Ancestral Awakening
@@ -126,6 +130,18 @@ class spell_sha_ancestral_awakening_proc : public SpellScriptLoader
                 return true;
             }
 
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                if (targets.size() < 2)
+                    return;
+
+                targets.sort(Trinity::HealthPctOrderPred());
+
+                WorldObject* target = targets.front();
+                targets.clear();
+                targets.push_back(target);
+            }
+            
             void HandleDummy(SpellEffIndex /*effIndex*/)
             {
                 GetCaster()->CastCustomSpell(SPELL_SHAMAN_ANCESTRAL_AWAKENING_PROC, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetHitUnit(), true);
@@ -133,6 +149,7 @@ class spell_sha_ancestral_awakening_proc : public SpellScriptLoader
 
             void Register() OVERRIDE
             {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_sha_ancestral_awakening_proc_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_CASTER_AREA_RAID);
                 OnEffectHitTarget += SpellEffectFn(spell_sha_ancestral_awakening_proc_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
             }
         };
@@ -156,7 +173,9 @@ class spell_sha_bloodlust : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_SHAMAN_SATED))
+                if (!sSpellMgr->GetSpellInfo(SPELL_SHAMAN_SATED)
+                    || !sSpellMgr->GetSpellInfo(SPELL_HUNTER_INSANITY)
+                    || !sSpellMgr->GetSpellInfo(SPELL_MAGE_TEMPORAL_DISPLACEMENT))
                     return false;
                 return true;
             }
@@ -679,7 +698,9 @@ class spell_sha_heroism : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) OVERRIDE
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_SHAMAN_EXHAUSTION))
+                if (!sSpellMgr->GetSpellInfo(SPELL_SHAMAN_EXHAUSTION)
+                    || !sSpellMgr->GetSpellInfo(SPELL_HUNTER_INSANITY)
+                    || !sSpellMgr->GetSpellInfo(SPELL_MAGE_TEMPORAL_DISPLACEMENT))
                     return false;
                 return true;
             }
