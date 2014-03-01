@@ -699,7 +699,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_MODIFY_BYTES2                          = 1014,
     RBAC_PERM_COMMAND_NPC_SET_DYNFLAGS                       = 1015,
     RBAC_PERM_COMMAND_NPC_SET_UNITFLAGS                      = 1016,
-    //RBAC_PERM_COMMAND_NPC_EMOTE                              = 1017, REUSE
+    //Role: Overseer                                         = 1017,
     RBAC_PERM_COMMAND_NPC_RETURN                             = 1018,
     RBAC_PERM_COMMAND_NPC_SCALE                              = 1019,
     RBAC_PERM_COMMAND_NPC_FACTION                            = 1020,
@@ -719,6 +719,7 @@ enum RBACPermissions
     RBAC_PERM_COMMANDS_RELOAD_NPC_TELE                       = 1034,
     RBAC_PERM_COMMAND_CHARACTER_ACCOUNT                      = 1035,
     RBAC_PERM_COMMAND_TCRECON                                = 1036,
+    RBAC_PERM_COMMAND_PET_SCALE                              = 1037,
 
     RBAC_PERM_MAX
 };

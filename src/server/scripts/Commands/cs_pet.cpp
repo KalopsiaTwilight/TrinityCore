@@ -34,6 +34,7 @@ public:
             { "create",  rbac::RBAC_PERM_COMMAND_PET_CREATE,  false, &HandlePetCreateCommand,  "", NULL },
             { "learn",   rbac::RBAC_PERM_COMMAND_PET_LEARN,   false, &HandlePetLearnCommand,   "", NULL },
             { "unlearn", rbac::RBAC_PERM_COMMAND_PET_UNLEARN, false, &HandlePetUnlearnCommand, "", NULL },
+            { "scale",   rbac::RBAC_PERM_COMMAND_PET_SCALE,   false, &HandlePetScaleCommand,   "", NULL },
             { NULL,      0,                             false, NULL,                     "", NULL }
         };
 
@@ -179,6 +180,69 @@ public:
             pet->removeSpell(spellId, false);
         else
             handler->PSendSysMessage("Pet doesn't have that spell");
+
+        return true;
+    }
+
+    static bool HandlePetScaleCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        Pet* pet;
+
+        const float PET_SCALE_MAX = 1.0f;
+        const float PET_SCALE_MIN = 0.5f;
+
+        if (AccountMgr::IsModeratorAccount(handler->GetSession()->GetSecurity()) && handler->getSelectedPlayer())
+            pet = handler->getSelectedPlayer()->GetPet();
+        else
+            pet = handler->GetSession()->GetPlayer()->GetPet();
+
+        if (AccountMgr::IsModeratorAccount(handler->GetSession()->GetSecurity()) && !pet)
+        {
+            handler->PSendSysMessage("You/your target has no pet");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+        else if (!pet)
+        {
+            handler->PSendSysMessage("You have no pet");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (pet->isTemporarySummoned())
+        {
+            handler->PSendSysMessage("You cannot change the scale of temporary pets!");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string param = (char*)args;
+
+        if (param == "reset")
+        {
+            //PetAddon const* painfo = pet->GetPetAddon();
+            uint32 petId = pet->GetCharmInfo()->GetPetNumber();
+            pet->UnSummon();
+            CharacterDatabase.PExecute("UPDATE character_pet SET scale='0' WHERE id='%u'", petId);
+            return true;
+        }
+        else
+        {
+            float Scale = (float)atof((char*)args);
+            if (Scale > PET_SCALE_MAX || Scale < PET_SCALE_MIN)
+            {
+                handler->SendSysMessage(LANG_BAD_VALUE);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+            uint32 petId = pet->GetCharmInfo()->GetPetNumber();
+            pet->UnSummon();
+            CharacterDatabase.PExecute("UPDATE character_pet SET scale='%f' WHERE id='%u'", Scale, petId);
+            return true;
+        }
 
         return true;
     }

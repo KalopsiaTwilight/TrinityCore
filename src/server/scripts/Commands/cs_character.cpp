@@ -1358,15 +1358,22 @@ public:
         uint64 characterGuid;
         std::string accountName;
         std::string characterName;
-        Player* player = NULL;
-        
-        if (!handler->extractPlayerTarget((char*)args, &player, NULL, &characterName))
-            return false;
+        Player* target = NULL;
 
         if (!character)
         {
-            characterName = player->GetSession()->GetPlayerName();
-            characterGuid = player->GetGUID();
+            target = handler->getSelectedPlayer();
+            if (target)
+            {
+                characterName = target->GetSession()->GetPlayerName();
+                characterGuid = target->GetGUID();
+            }
+            else
+            {
+                handler->PSendSysMessage("You need to either provide a character name or have a character targeted!");
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
         }
         else
         {
@@ -1401,7 +1408,8 @@ public:
         if (handler->GetSession() && handler->GetSession()->GetAccountId() != accountId && handler->HasLowerSecurityAccount(NULL, accountId, true))
             return false;
 
-        if (player->GetSession())
+        Player* player = sObjectAccessor->FindPlayerByName(characterName);
+        if (player)
             player->GetSession()->KickPlayer();
 
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ACC_BY_GUID);

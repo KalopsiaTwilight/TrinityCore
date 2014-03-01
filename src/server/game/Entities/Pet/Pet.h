@@ -77,6 +77,7 @@ class Pet : public Guardian
 
         PetAddon const* GetPetAddon();
         PetAddon const* GetPetAddonDB(uint32 GUIDlow);
+        PetAddon const* SetPetAddon(uint32 GUIDlow, float Scale);
 
         uint8 GetPetAutoSpellSize() const { return m_autospells.size(); }
         uint32 GetPetAutoSpellOnPos(uint8 pos) const
