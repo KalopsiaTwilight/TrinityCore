@@ -108,6 +108,7 @@ public:
             { "gmbindsight",      rbac::RBAC_PERM_COMMAND_GMBINDSIGHT,      false, &HandleGMBindSightCommand,      "", NULL },
             { "mount",            rbac::RBAC_PERM_COMMAND_MOUNT,            false, &HandleMountCommand,            "", NULL },
             { "tcrecon",          rbac::RBAC_PERM_COMMAND_TCRECON,          false, &HandleIRCRelogCommand,         "", NULL },
+            { "refresh",          rbac::RBAC_PERM_COMMAND_REFRESH,          false, &HandleRefreshCommand,          "", NULL },
             { NULL,               0,                                  false, NULL,                           "", NULL }
         };
         return commandTable;
@@ -2951,6 +2952,22 @@ public:
         handler->SendSysMessage("TriniChat is dropping from IRC Server");
         sIRC.ResetIRC();
         handler->SendSysMessage("TriniChat is reconnecting to IRC Server");
+        return true;
+    }
+
+    static bool HandleRefreshCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* _player = handler->GetSession()->GetPlayer();
+
+        const uint32 XRAY_AURA = 54844;
+        
+        _player->AddAura(XRAY_AURA, _player);
+        _player->UpdateObjectVisibility();
+
+        if (_player->HasAura(XRAY_AURA, 0))
+            _player->RemoveAurasDueToSpell(XRAY_AURA);
+        
+        _player->UpdateObjectVisibility();
         return true;
     }
 };

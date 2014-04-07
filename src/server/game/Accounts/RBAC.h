@@ -705,7 +705,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_NPC_SCALE                              = 1019,
     RBAC_PERM_COMMAND_NPC_FACTION                            = 1020,
     RBAC_PERM_COMMAND_NPC_ATTACK                             = 1021,
-    //RBAC_PERM_COMMAND_NPC_FACTION                            = 1022, REUSE
+    //RBAC_PERM_COMMAND_NPC_FACTION                          = 1022, REUSE
     RBAC_PERM_COMMAND_ADDRPITEM                              = 1023,
     RBAC_PERM_COMMAND_TAXI                                   = 1024,
     RBAC_PERM_COMMAND_SCALE                                  = 1025,
@@ -721,6 +721,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_CHARACTER_ACCOUNT                      = 1035,
     RBAC_PERM_COMMAND_TCRECON                                = 1036,
     RBAC_PERM_COMMAND_PET_SCALE                              = 1037,
+    RBAC_PERM_COMMAND_REFRESH                                = 1038,
 
     RBAC_PERM_MAX
 };
