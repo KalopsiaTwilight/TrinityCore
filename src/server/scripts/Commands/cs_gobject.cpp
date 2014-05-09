@@ -182,7 +182,11 @@ public:
 
         // fill the gameobject data and save to the db
         object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), player->GetPhaseMgr().GetPhaseMaskForSpawn());
+        // delete the old object and do a clean load from DB with a fresh new GameObject instance.
+        // this is required to avoid weird behavior and memory leaks
+        delete object;
 
+        object = new GameObject();
         // this will generate a new guid if the object is in an instance
         if (!object->LoadGameObjectFromDB(guidLow, map))
         {
@@ -224,6 +228,13 @@ public:
         float rot3 = std::cos(ang/2);
 
         uint32 objectId = atoi(id);
+
+        if (!sObjectMgr->GetGameObjectTemplate(objectId))
+        {
+            handler->PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, objectId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
 
         player->SummonGameObject(objectId, x, y, z, ang, 0, 0, rot2, rot3, spawntm);
 

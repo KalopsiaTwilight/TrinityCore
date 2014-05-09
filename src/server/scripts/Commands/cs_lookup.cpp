@@ -37,7 +37,7 @@ class lookup_commandscript : public CommandScript
 public:
     lookup_commandscript() : CommandScript("lookup_commandscript") { }
 
-    ChatCommand* GetCommands() const OVERRIDE
+    ChatCommand* GetCommands() const override
     {
         static ChatCommand lookupPlayerCommandTable[] =
         {
@@ -1081,7 +1081,7 @@ public:
             if (titleInfo)
             {
                 std::string name = target->getGender() == GENDER_MALE ? titleInfo->nameMale : titleInfo->nameFemale;
-                
+
                 if (name.empty())
                     continue;
 

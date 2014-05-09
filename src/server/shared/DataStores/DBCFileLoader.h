@@ -91,5 +91,8 @@ class DBCFileLoader
         uint32 *fieldsOffset;
         unsigned char *data;
         unsigned char *stringTable;
+
+        DBCFileLoader(DBCFileLoader const& right) = delete;
+        DBCFileLoader& operator=(DBCFileLoader const& right) = delete;
 };
 #endif
