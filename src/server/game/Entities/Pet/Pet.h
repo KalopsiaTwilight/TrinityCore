@@ -40,7 +40,7 @@ struct PetAddon
     float scale;
 };
 
-typedef UNORDERED_MAP<uint32, PetAddon> PetAddonContainer;
+typedef std::unordered_map<uint32, PetAddon> PetAddonContainer;
 
 class Player;
 

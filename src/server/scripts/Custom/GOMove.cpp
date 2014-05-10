@@ -43,7 +43,7 @@ public:
     }
 
     static std::set<uint32> GObjects; // GObjects[] = GObjectID // GObjectID comes from highguid. lowguid is 0 for temps.
-    static UNORDERED_MAP<uint64, uint32> SpawnQue;
+    static std::unordered_map<uint64, uint32> SpawnQue;
 
     ChatCommand* GetCommands() const
     {
@@ -439,7 +439,7 @@ public:
     }
 };
 std::set<uint32> GOMove_commandscript::GObjects; 
-UNORDERED_MAP<uint64, uint32> GOMove_commandscript::SpawnQue;
+std::unordered_map<uint64, uint32> GOMove_commandscript::SpawnQue;
 
 // possible spells:
 // 27651, 897
