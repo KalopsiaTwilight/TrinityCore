@@ -739,7 +739,8 @@ public:
         std::string curRespawnDelayStr = secsToTimeString(uint64(curRespawnDelay), true);
         std::string defRespawnDelayStr = secsToTimeString(target->GetRespawnDelay(), true);
 
-        handler->PSendSysMessage(LANG_NPCINFO_CHAR,  target->GetDBTableGUIDLow(), target->GetGUIDLow(), faction, npcflags, Entry, displayid, nativeid);
+        handler->PSendSysMessage(LANG_NPCINFO_NAME, target->GetName().c_str());
+        handler->PSendSysMessage(LANG_NPCINFO_CHAR, target->GetDBTableGUIDLow(), target->GetGUIDLow(), faction, npcflags, Entry, displayid, nativeid);
         handler->PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
         handler->PSendSysMessage(LANG_NPCINFO_EQUIPMENT, target->GetCurrentEquipmentId(), target->GetOriginalEquipmentId());
         handler->PSendSysMessage(LANG_NPCINFO_HEALTH, target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());
@@ -766,7 +767,12 @@ public:
         for (uint8 i = 0; i < MAX_MECHANIC; ++i)
             if ((mechanicImmuneMask << 1) & mechanicImmunes[i].Value)
                 handler->PSendSysMessage("%s (0x%X)", mechanicImmunes[i].Name, mechanicImmunes[i].Value);
-
+        /*
+        handler->PSendSysMessage(LANG_NPCINFO_FLAGSEXTRA, target->GetUInt32Value(CreatureFlagsExtra));
+        for (uint8 i = 0; i < MAX_UNIT_FLAGS; ++i)
+            if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].Value)
+                handler->PSendSysMessage("%s (0x%X)", unitFlags[i].Name, unitFlags[i].Value);
+        */
         return true;
     }
 
@@ -1879,6 +1885,28 @@ public:
 
         return true;
     }
+/*
+    static bool HandleNpcSetFlagsExtraCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 npcFlagsExtra = (uint32)atoi((char*)args);
+
+        Creature* creature = handler->getSelectedCreature();
+
+        if (!creature || creature->IsPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        creature->SetUInt32Value(UNIT_FIELD_FLAGS, npcFlagsExtra);
+        creature->SaveToDB();
+        return true;
+    }
+*/
 };
 
 void AddSC_npc_commandscript()

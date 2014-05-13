@@ -1921,7 +1921,7 @@ void IRCCmd::Sysmsg_Server(_CDATA *CD)
     {
         std::string str = _PARAMS[1];
         std::string ancmsg = MakeMsg("\00304,08\037/!\\\037\017\00304 System Message \00304,08\037/!\\\037\017 %s",_PARAMS[1].c_str());
-        sWorld->SendWorldText(11940,str.c_str());
+		sWorld->SendWorldText(LANG_IRC_SYSTEMMSG, str.c_str());
         sIRC.Send_IRC_Channel(ircchan, ancmsg, true);
     }
     else if (_PARAMS[0] == "e")
@@ -1935,7 +1935,7 @@ void IRCCmd::Sysmsg_Server(_CDATA *CD)
         data2 << (uint32)1400;
         sWorld->SendGlobalMessage(&data2);
         sWorld->SendGlobalMessage(&data);
-        sWorld->SendWorldText(11941,str.c_str());
+		sWorld->SendWorldText(LANG_IRC_SERVEREVENT, str.c_str());
         sIRC.Send_IRC_Channel(ircchan, notmsg, true);
     }
     else if (_PARAMS[0] == "n")
@@ -1960,7 +1960,7 @@ void IRCCmd::Sysmsg_Server(_CDATA *CD)
         WorldDatabase.PExecute("INSERT INTO irc_autoannounce (message, addedby) VALUES ('%s', '%s')", _PARAMS[1].c_str(), CD->USER.c_str());
         std::string str = _PARAMS[1];
         std::string ancmsg = MakeMsg("\00304,08\037/!\\\037\017\00304 Automatic System Message \00304,08\037/!\\\037\017 %s",_PARAMS[1].c_str());
-        sWorld->SendWorldText(11942,str.c_str());
+		sWorld->SendWorldText(LANG_IRC_AUTOANNOUNCE, str.c_str());
         sIRC.Send_IRC_Channel(ircchan, ancmsg, true);
     }
     else if (_PARAMS[0] == "del")

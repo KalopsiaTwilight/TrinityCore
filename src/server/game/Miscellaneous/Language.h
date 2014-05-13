@@ -1273,6 +1273,10 @@ enum TrinityStrings
     LANG_GAMEOBJECT_INVALID_DATA_CUSTOM = 11937,
     LANG_CHAR_ACCOUNT_CHAR_NOT_FOUND    = 11938,
     LANG_CHAR_ACCOUNT_CHANGED           = 11939,
+    LANG_IRC_SYSTEMMSG                  = 11940,
+    LANG_IRC_SERVEREVENT                = 11941,
+    LANG_IRC_AUTOANNOUNCE               = 11942,
+    LANG_NPCINFO_NAME                   = 11943,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)
