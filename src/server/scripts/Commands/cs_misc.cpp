@@ -1714,7 +1714,7 @@ public:
         handler->PSendSysMessage(LANG_PINFO_ACC_OS, OS.c_str(), latency);
 
         // Output VIII. LANG_PINFO_ACC_REGMAILS
-        handler->PSendSysMessage(LANG_PINFO_ACC_REGMAILS, regMail.c_str(), eMail.c_str());
+        //handler->PSendSysMessage(LANG_PINFO_ACC_REGMAILS, regMail.c_str(), eMail.c_str());
 
         // Output IX. LANG_PINFO_ACC_IP
         handler->PSendSysMessage(LANG_PINFO_ACC_IP, lastIp.c_str(), locked ? "Yes" : "No");
