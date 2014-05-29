@@ -13,7 +13,7 @@ float x, y, z, o;
 static std::map<uint64, GOMove_Data> GOMove;
 */
 
-UNORDERED_MAP<uint64, uint32> SpawnQue;
+std::unordered_map<uint64, uint32> SpawnQue;
 
 class GOMove_commandscript : public CommandScript
 {

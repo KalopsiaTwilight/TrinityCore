@@ -28,6 +28,7 @@
 #include "AuctionHouseMgr.h"
 #include "CalendarMgr.h"
 #include "AuctionHouseBot.h"
+#include "WorldSession.h"
 
 MailSender::MailSender(Object* sender, MailStationery stationery) : m_stationery(stationery)
 {
@@ -290,6 +291,7 @@ void MailDraft::SendMailTo(SQLTransaction& trans, MailReceiver const& receiver, 
     }
 }
 
+// Custom
 void WorldSession::SendExternalMails()
 {
     TC_LOG_INFO("misc", "EXTERNAL MAIL> Sending mails in queue...");

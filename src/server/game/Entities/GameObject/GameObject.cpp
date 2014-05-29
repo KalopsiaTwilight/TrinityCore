@@ -1377,8 +1377,6 @@ void GameObject::Use(Unit* user)
                 }
                 //End gameobject_teleports
                 */
-                if (Battleground* bg = player->GetBattleground())
-                    bg->EventPlayerUsedGO(player, this);
 
                 player->KillCreditGO(info->entry, GetGUID());
             }

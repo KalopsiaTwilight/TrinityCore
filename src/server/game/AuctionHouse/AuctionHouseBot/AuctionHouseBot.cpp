@@ -21,6 +21,7 @@
 #include "AuctionHouseMgr.h"
 #include "AuctionHouseBot.h"
 #include "Player.h"
+#include "WorldSession.h"
 #include <vector>
 
 using namespace std;
@@ -672,7 +673,7 @@ void AuctionHouseBot::addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *con
                 {
                     // mail to last bidder and return money
                     SQLTransaction trans = CharacterDatabase.BeginTransaction();
-                    sAuctionMgr->SendAuctionOutbiddedMail(auction , bidprice, session->GetPlayer(), trans);
+                    sAuctionMgr->SendAuctionOutbiddedMail(auction, bidprice, session->GetPlayer(), trans);
                     CharacterDatabase.CommitTransaction(trans);
                     //pl->ModifyMoney(-int32(price));
                 }
