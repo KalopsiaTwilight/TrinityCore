@@ -28,6 +28,7 @@
 #include "AddonMgr.h"
 #include "DatabaseEnv.h"
 #include "World.h"
+#include "Opcodes.h"
 #include "WorldPacket.h"
 #include "Cryptography/BigNumber.h"
 #include "AccountMgr.h"
@@ -138,6 +139,10 @@ public:
 
 protected:
     WorldSession* const m_pSession;
+
+private:
+    PacketFilter(PacketFilter const& right) = delete;
+    PacketFilter& operator=(PacketFilter const& right) = delete;
 };
 //process only thread-safe packets in Map::Update()
 class MapSessionFilter : public PacketFilter
@@ -190,6 +195,12 @@ class CharacterCreateInfo
 
         /// Server side data
         uint8 CharCount;
+};
+
+struct PacketCounter
+{
+    time_t lastReceiveTime;
+    uint32 amountCounter;
 };
 
 /// Player session in the World
@@ -275,6 +286,8 @@ class WorldSession
         void SendTrainerList(uint64 guid, std::string const& strTitle);
         void SendListInventory(uint64 guid);
         void SendShowBank(uint64 guid);
+        bool CanOpenMailBox(uint64 guid);
+        void SendShowMailBox(uint64 guid);
         void SendTabardVendorActivate(uint64 guid);
         void SendSpiritResurrect();
         void SendBindPoint(Creature* npc);
@@ -358,7 +371,6 @@ class WorldSession
         uint32 GetLatency() const { return m_latency; }
         void SetLatency(uint32 latency) { m_latency = latency; }
         void ResetClientTimeDelay() { m_clientTimeDelay = 0; }
-        uint32 getDialogStatus(Player* player, Object* questgiver);
 
         ACE_Atomic_Op<ACE_Thread_Mutex, time_t> m_timeOutTime;
         void UpdateTimeOutTime(uint32 diff)
@@ -925,7 +937,7 @@ class WorldSession
             friend class World;
             public:
                 DosProtection(WorldSession* s) : Session(s), _policy((Policy)sWorld->getIntConfig(CONFIG_PACKET_SPOOF_POLICY)) { }
-                bool EvaluateOpcode(WorldPacket& p) const;
+                bool EvaluateOpcode(WorldPacket& p, time_t time) const;
                 void AllowOpcode(uint16 opcode, bool allow) { _isOpcodeAllowed[opcode] = allow; }
             protected:
                 enum Policy
@@ -944,12 +956,20 @@ class WorldSession
                     return itr->second;
                 }
 
+                uint32 GetMaxPacketCounterAllowed(uint16 opcode) const;
+
                 WorldSession* Session;
 
             private:
-                typedef UNORDERED_MAP<uint16, bool> OpcodeStatusMap;
+                typedef std::unordered_map<uint16, bool> OpcodeStatusMap;
                 OpcodeStatusMap _isOpcodeAllowed; // could be bool array, but wouldn't be practical for game versions with non-linear opcodes
                 Policy _policy;
+                typedef std::unordered_map<uint16, PacketCounter> PacketThrottlingMap;
+                // mark this member as "mutable" so it can be modified even in const functions
+                mutable PacketThrottlingMap _PacketThrottlingMap;
+
+                DosProtection(DosProtection const& right) = delete;
+                DosProtection& operator=(DosProtection const& right) = delete;
         } AntiDOS;
 
     private:
@@ -1001,8 +1021,10 @@ class WorldSession
         uint32 recruiterId;
         bool isRecruiter;
         ACE_Based::LockedQueue<WorldPacket*, ACE_Thread_Mutex> _recvQueue;
-        time_t timeLastWhoCommand;
         rbac::RBACData* _RBACData;
+
+        WorldSession(WorldSession const& right) = delete;
+        WorldSession& operator=(WorldSession const& right) = delete;
 };
 #endif
 /// @}

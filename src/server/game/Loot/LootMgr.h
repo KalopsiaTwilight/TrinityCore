@@ -68,9 +68,10 @@ enum PermissionTypes
     ALL_PERMISSION              = 0,
     GROUP_PERMISSION            = 1,
     MASTER_PERMISSION           = 2,
-    ROUND_ROBIN_PERMISSION      = 3,
-    OWNER_PERMISSION            = 4,
-    NONE_PERMISSION             = 5
+    RESTRICTED_PERMISSION       = 3,
+    ROUND_ROBIN_PERMISSION      = 4,
+    OWNER_PERMISSION            = 5,
+    NONE_PERMISSION             = 6
 };
 
 enum LootType
@@ -177,7 +178,7 @@ typedef std::vector<QuestItem> QuestItemList;
 typedef std::vector<LootItem> LootItemList;
 typedef std::map<uint32, QuestItemList*> QuestItemMap;
 typedef std::list<LootStoreItem*> LootStoreItemList;
-typedef UNORDERED_MAP<uint32, LootTemplate*> LootTemplateMap;
+typedef std::unordered_map<uint32, LootTemplate*> LootTemplateMap;
 
 typedef std::set<uint32> LootIdSet;
 

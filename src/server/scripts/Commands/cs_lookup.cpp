@@ -37,7 +37,7 @@ class lookup_commandscript : public CommandScript
 public:
     lookup_commandscript() : CommandScript("lookup_commandscript") { }
 
-    ChatCommand* GetCommands() const OVERRIDE
+    ChatCommand* GetCommands() const override
     {
         static ChatCommand lookupPlayerCommandTable[] =
         {
@@ -1184,8 +1184,9 @@ public:
             CharTitlesEntry const* titleInfo = sCharTitlesStore.LookupEntry(id);
             if (titleInfo)
             {
+                /// @todo: implement female support
                 int locale = handler->GetSessionDbcLocale();
-                std::string name = titleInfo->name[locale];
+                std::string name = titleInfo->nameMale[locale];
                 if (name.empty())
                     continue;
 
@@ -1197,7 +1198,7 @@ public:
                         if (locale == handler->GetSessionDbcLocale())
                             continue;
 
-                        name = titleInfo->name[locale];
+                        name = titleInfo->nameMale[locale];
                         if (name.empty())
                             continue;
 

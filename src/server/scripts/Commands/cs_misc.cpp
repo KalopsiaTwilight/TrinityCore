@@ -42,7 +42,7 @@ class misc_commandscript : public CommandScript
 public:
     misc_commandscript() : CommandScript("misc_commandscript") { }
 
-    ChatCommand* GetCommands() const OVERRIDE
+    ChatCommand* GetCommands() const override
     {
         static ChatCommand commandTable[] =
         {
@@ -95,6 +95,7 @@ public:
             { "unpossess",        rbac::RBAC_PERM_COMMAND_UNPOSSESS,        false, &HandleUnPossessCommand,        "", NULL },
             { "unstuck",          rbac::RBAC_PERM_COMMAND_UNSTUCK,           true, &HandleUnstuckCommand,          "", NULL },
             { "wchange",          rbac::RBAC_PERM_COMMAND_WCHANGE,          false, &HandleChangeWeather,           "", NULL },
+            { "mailbox",          rbac::RBAC_PERM_COMMAND_MAILBOX,          false, &HandleMailBoxCommand,          "", NULL },
             // Custom stuff
             { "addrpitem",        rbac::RBAC_PERM_COMMAND_ADDRPITEM,        false, &HandleAddRPItemCommand,        "", NULL },
             { "taxi",             rbac::RBAC_PERM_COMMAND_TAXI,             false, &HandleSelfTaxiCheatCommand,    "", NULL },
@@ -825,8 +826,16 @@ public:
         if (handler->HasLowerSecurity(target, 0))
             return false;
 
+        std::string kickReasonStr = "No reason";
+        if (*args != '\0')
+        {
+            char const* kickReason = strtok(NULL, "\r");
+            if (kickReason != NULL)
+                kickReasonStr = kickReason;
+        }
+
         if (sWorld->getBoolConfig(CONFIG_SHOW_KICK_IN_WORLD))
-            sWorld->SendWorldText(LANG_COMMAND_KICKMESSAGE, playerName.c_str());
+            sWorld->SendWorldText(LANG_COMMAND_KICKMESSAGE_WORLD, (handler->GetSession() ? handler->GetSession()->GetPlayerName().c_str() : "Server"), playerName.c_str(), kickReasonStr.c_str());
         else
             handler->PSendSysMessage(LANG_COMMAND_KICKMESSAGE, playerName.c_str());
 
@@ -1026,7 +1035,6 @@ public:
 
         int32 area = GetAreaFlagByAreaID(atoi((char*)args));
         int32 offset = area / 32;
-        uint32 val = uint32((1 << (area % 32)));
 
         if (area<0 || offset >= PLAYER_EXPLORED_ZONES_SIZE)
         {
@@ -1035,6 +1043,7 @@ public:
             return false;
         }
 
+        uint32 val = uint32((1 << (area % 32)));
         uint32 currFields = playerTarget->GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + offset);
         playerTarget->SetUInt32Value(PLAYER_EXPLORED_ZONES_1 + offset, uint32((currFields | val)));
 
@@ -1057,7 +1066,6 @@ public:
 
         int32 area = GetAreaFlagByAreaID(atoi((char*)args));
         int32 offset = area / 32;
-        uint32 val = uint32((1 << (area % 32)));
 
         if (area < 0 || offset >= PLAYER_EXPLORED_ZONES_SIZE)
         {
@@ -1066,6 +1074,7 @@ public:
             return false;
         }
 
+        uint32 val = uint32((1 << (area % 32)));
         uint32 currFields = playerTarget->GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + offset);
         playerTarget->SetUInt32Value(PLAYER_EXPLORED_ZONES_1 + offset, uint32((currFields ^ val)));
 
@@ -1367,23 +1376,20 @@ public:
             return false;
         }
 
-        std::string tNameLink = handler->GetNameLink(target);
+        bool targetHasSkill = target->GetSkillValue(skill);
 
-        if (!target->GetSkillValue(skill))
-        {
-            handler->PSendSysMessage(LANG_SET_SKILL_ERROR, tNameLink.c_str(), skill, skillLine->name[handler->GetSessionDbcLocale()]);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        uint16 max = maxPureSkill ? atol (maxPureSkill) : target->GetPureMaxSkillValue(skill);
+        // If our target does not yet have the skill they are trying to add to them, the chosen level also becomes
+        // the max level of the new profession.
+        uint16 max = maxPureSkill ? atol (maxPureSkill) : targetHasSkill ? target->GetPureMaxSkillValue(skill) : uint16(level);
 
         if (level <= 0 || level > max || max <= 0)
             return false;
 
-        target->SetSkill(skill, target->GetSkillStep(skill), level, max);
-        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->name[handler->GetSessionDbcLocale()], tNameLink.c_str(), level, max);
-
+        // If the player has the skill, we get the current skill step. If they don't have the skill, we
+        // add the skill to the player's book with step 1 (which is the first rank, in most cases something
+        // like 'Apprentice <skill>'.
+        target->SetSkill(skill, targetHasSkill ? target->GetSkillStep(skill) : 1, level, max);
+        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->name[handler->GetSessionDbcLocale()], handler->GetNameLink(target).c_str(), level, max);
         return true;
     }
 
@@ -1869,7 +1875,17 @@ public:
             int64 muteTime = time(NULL) + notSpeakTime * MINUTE;
             target->GetSession()->m_muteTime = muteTime;
             stmt->setInt64(0, muteTime);
-            ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOUR_CHAT_DISABLED, notSpeakTime, muteBy.c_str(), muteReasonStr.c_str());
+            std::string nameLink = handler->playerLink(targetName);
+
+            if (sWorld->getBoolConfig(CONFIG_SHOW_MUTE_IN_WORLD))
+            {
+                sWorld->SendWorldText(LANG_COMMAND_MUTEMESSAGE_WORLD, (handler->GetSession() ? handler->GetSession()->GetPlayerName().c_str() : "Server"), nameLink.c_str(), notSpeakTime, muteReasonStr.c_str());
+                ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOUR_CHAT_DISABLED, notSpeakTime, muteBy.c_str(), muteReasonStr.c_str());
+            }
+            else
+            {
+                ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOUR_CHAT_DISABLED, notSpeakTime, muteBy.c_str(), muteReasonStr.c_str());
+            }
         }
         else
         {
@@ -1884,8 +1900,10 @@ public:
         LoginDatabase.Execute(stmt);
         std::string nameLink = handler->playerLink(targetName);
 
-        handler->PSendSysMessage(target ? LANG_YOU_DISABLE_CHAT : LANG_COMMAND_DISABLE_CHAT_DELAYED, nameLink.c_str(), notSpeakTime, muteReasonStr.c_str());
-
+            if (sWorld->getBoolConfig(CONFIG_SHOW_MUTE_IN_WORLD) && !target)
+                sWorld->SendWorldText(LANG_COMMAND_MUTEMESSAGE_WORLD, handler->GetSession()->GetPlayerName().c_str(), nameLink.c_str(), notSpeakTime, muteReasonStr.c_str());
+            else
+                handler->PSendSysMessage(target ? LANG_YOU_DISABLE_CHAT : LANG_COMMAND_DISABLE_CHAT_DELAYED, nameLink.c_str(), notSpeakTime, muteReasonStr.c_str());
         return true;
     }
 
@@ -2503,6 +2521,14 @@ public:
             return false;
 
         player->StopCastingBindSight();
+        return true;
+    }
+
+    static bool HandleMailBoxCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Player* player = handler->GetSession()->GetPlayer();
+
+        handler->GetSession()->SendShowMailBox(player->GetGUID());
         return true;
     }
     

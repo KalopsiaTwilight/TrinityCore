@@ -40,32 +40,36 @@ public:
 
     struct boss_gluttonAI : public BossAI
     {
-        boss_gluttonAI(Creature* creature) : BossAI(creature, DATA_GLUTTON) { }
+        boss_gluttonAI(Creature* creature) : BossAI(creature, DATA_GLUTTON)
+        {
+            hp50 = false;
+            hp15 = false;
+        }
 
-        void Reset() OVERRIDE
+        void Reset() override
         {
             _Reset();
             hp50 = false;
             hp15 = false;
         }
 
-        void EnterCombat(Unit* /*who*/) OVERRIDE
+        void EnterCombat(Unit* /*who*/) override
         {
             _EnterCombat();
             Talk(SAY_AGGRO);
         }
 
-        void KilledUnit(Unit* /*victim*/) OVERRIDE
+        void KilledUnit(Unit* /*victim*/) override
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) OVERRIDE
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
         }
 
-        void UpdateAI(uint32 /*diff*/) OVERRIDE
+        void UpdateAI(uint32 /*diff*/) override
         {
             if (!UpdateVictim())
                 return;
@@ -91,7 +95,7 @@ public:
         bool hp15;
     };
 
-    CreatureAI* GetAI(Creature* creature) const OVERRIDE
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_gluttonAI(creature);
     }

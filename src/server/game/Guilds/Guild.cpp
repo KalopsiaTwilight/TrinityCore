@@ -701,7 +701,7 @@ bool Guild::Member::CheckStats() const
     return true;
 }
 
-void Guild::Member::WritePacket(WorldPacket& data) const
+void Guild::Member::WritePacket(WorldPacket& data, bool sendOfficerNote) const
 {
     data << uint64(m_guid)
          << uint8(m_flags)
@@ -715,8 +715,12 @@ void Guild::Member::WritePacket(WorldPacket& data) const
     if (!m_flags)
         data << float(float(::time(NULL) - m_logoutTime) / DAY);
 
-    data << m_publicNote
-         << m_officerNote;
+    data << m_publicNote;
+
+    if (sendOfficerNote)
+        data << m_officerNote;
+    else
+        data << "";
 }
 
 // Decreases amount of money/slots left for today.
@@ -750,7 +754,7 @@ int32 Guild::Member::GetBankWithdrawValue(uint8 tabId) const
 {
     // Guild master has unlimited amount.
     if (IsRank(GR_GUILDMASTER))
-        return tabId == GUILD_BANK_MAX_TABS ? GUILD_WITHDRAW_MONEY_UNLIMITED : GUILD_WITHDRAW_SLOT_UNLIMITED;
+        return static_cast<int32>(tabId == GUILD_BANK_MAX_TABS ? GUILD_WITHDRAW_MONEY_UNLIMITED : GUILD_WITHDRAW_SLOT_UNLIMITED);
 
     return m_bankWithdraw[tabId];
 }
@@ -1299,7 +1303,7 @@ bool Guild::SetName(std::string const& name)
     return true;
 }
 
-void Guild::HandleRoster(WorldSession* session /*= NULL*/)
+void Guild::HandleRoster(WorldSession* session)
 {
     // Guess size
     WorldPacket data(SMSG_GUILD_ROSTER, (4 + m_motd.length() + 1 + m_info.length() + 1 + 4 + _GetRanksSize() * (4 + 4 + GUILD_BANK_MAX_TABS * (4 + 4)) + m_members.size() * 50));
@@ -1312,18 +1316,10 @@ void Guild::HandleRoster(WorldSession* session /*= NULL*/)
         ritr->WritePacket(data);
 
     for (Members::const_iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
-        itr->second->WritePacket(data);
+        itr->second->WritePacket(data, _HasRankRight(session->GetPlayer(), GR_RIGHT_VIEWOFFNOTE));
 
-    if (session)
-    {
-        TC_LOG_DEBUG("guild", "SMSG_GUILD_ROSTER [%s]", session->GetPlayerInfo().c_str());
-        session->SendPacket(&data);
-    }
-    else
-    {
-        TC_LOG_DEBUG("guild", "SMSG_GUILD_ROSTER [Broadcast]");
-        BroadcastPacket(&data);
-    }
+    TC_LOG_DEBUG("guild", "SMSG_GUILD_ROSTER [%s]", session->GetPlayerInfo().c_str());
+    session->SendPacket(&data);
 }
 
 void Guild::HandleQuery(WorldSession* session)
@@ -1764,7 +1760,7 @@ void Guild::HandleMemberDepositMoney(WorldSession* session, uint32 amount)
 bool Guild::HandleMemberWithdrawMoney(WorldSession* session, uint32 amount, bool repair)
 {
     //clamp amount to MAX_MONEY_AMOUNT, Players can't hold more than that anyway
-    amount = std::min(amount, uint32(MAX_MONEY_AMOUNT));
+    amount = std::min(amount, MAX_MONEY_AMOUNT);
 
     if (m_bankMoney < amount)                               // Not enough money in bank
         return false;
@@ -2585,7 +2581,7 @@ inline int32 Guild::_GetMemberRemainingSlots(Member const* member, uint8 tabId) 
     {
         uint8 rankId = member->GetRankId();
         if (rankId == GR_GUILDMASTER)
-            return GUILD_WITHDRAW_SLOT_UNLIMITED;
+            return static_cast<int32>(GUILD_WITHDRAW_SLOT_UNLIMITED);
         if ((_GetRankBankTabRights(rankId, tabId) & GUILD_BANK_RIGHT_VIEW_TAB) != 0)
         {
             int32 remaining = _GetRankBankTabSlotsPerDay(rankId, tabId) - member->GetBankWithdrawValue(tabId);
@@ -2602,7 +2598,7 @@ inline int32 Guild::_GetMemberRemainingMoney(Member const* member) const
     {
         uint8 rankId = member->GetRankId();
         if (rankId == GR_GUILDMASTER)
-            return GUILD_WITHDRAW_MONEY_UNLIMITED;
+            return static_cast<int32>(GUILD_WITHDRAW_MONEY_UNLIMITED);
 
         if ((_GetRankRights(rankId) & (GR_RIGHT_WITHDRAW_REPAIR | GR_RIGHT_WITHDRAW_GOLD)) != 0)
         {

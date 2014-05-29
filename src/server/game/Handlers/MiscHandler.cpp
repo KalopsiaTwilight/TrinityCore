@@ -97,8 +97,18 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
 
     recvData >> guid >> menuId >> gossipListId;
 
+    if (!_player->PlayerTalkClass->GetGossipMenu().GetItem(gossipListId))
+    {
+        recvData.rfinish();
+        return;
+    }
+
     if (_player->PlayerTalkClass->IsGossipOptionCoded(gossipListId))
         recvData >> code;
+
+    // Prevent cheating on C++ scripted menus
+    if (_player->PlayerTalkClass->GetGossipMenu().GetSenderGUID() != guid)
+        return;
 
     Creature* unit = NULL;
     GameObject* go = NULL;
@@ -151,7 +161,8 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
         else
         {
             go->AI()->GossipSelectCode(_player, menuId, gossipListId, code.c_str());
-            sScriptMgr->OnGossipSelectCode(_player, go, _player->PlayerTalkClass->GetGossipOptionSender(gossipListId), _player->PlayerTalkClass->GetGossipOptionAction(gossipListId), code.c_str());
+            if (!sScriptMgr->OnGossipSelectCode(_player, go, _player->PlayerTalkClass->GetGossipOptionSender(gossipListId), _player->PlayerTalkClass->GetGossipOptionAction(gossipListId), code.c_str()))
+                _player->OnGossipSelect(go, gossipListId, menuId);
         }
     }
     else
@@ -174,11 +185,6 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
 void WorldSession::HandleWhoOpcode(WorldPacket& recvData)
 {
     TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_WHO Message");
-
-    time_t now = time(NULL);
-    if (now - timeLastWhoCommand < 5)
-        return;
-    else timeLastWhoCommand = now;
 
     uint32 matchcount = 0;
 
@@ -736,34 +742,34 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket& recvData)
     uint64 guid;
     recvData >> guid;
 
-    if (GetPlayer()->IsAlive())
+    if (_player->IsAlive())
         return;
 
     // do not allow corpse reclaim in arena
-    if (GetPlayer()->InArena())
+    if (_player->InArena())
         return;
 
     // body not released yet
-    if (!GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    if (!_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         return;
 
-    Corpse* corpse = GetPlayer()->GetCorpse();
+    Corpse* corpse = _player->GetCorpse();
 
     if (!corpse)
         return;
 
     // prevent resurrect before 30-sec delay after body release not finished
-    if (time_t(corpse->GetGhostTime() + GetPlayer()->GetCorpseReclaimDelay(corpse->GetType() == CORPSE_RESURRECTABLE_PVP)) > time_t(time(NULL)))
+    if (time_t(corpse->GetGhostTime() + _player->GetCorpseReclaimDelay(corpse->GetType() == CORPSE_RESURRECTABLE_PVP)) > time_t(time(NULL)))
         return;
 
-    if (!corpse->IsWithinDistInMap(GetPlayer(), CORPSE_RECLAIM_RADIUS, true))
+    if (!corpse->IsWithinDistInMap(_player, CORPSE_RECLAIM_RADIUS, true))
         return;
 
     // resurrect
-    GetPlayer()->ResurrectPlayer(GetPlayer()->InBattleground() ? 1.0f : 0.5f);
+    _player->ResurrectPlayer(_player->InBattleground() ? 1.0f : 0.5f);
 
     // spawn bones
-    GetPlayer()->SpawnCorpseBones();
+    _player->SpawnCorpseBones();
 }
 
 void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recvData)
@@ -784,10 +790,10 @@ void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recvData)
         return;
     }
 
-    if (!GetPlayer()->isRessurectRequestedBy(guid))
+    if (!GetPlayer()->isResurrectRequestedBy(guid))
         return;
 
-    GetPlayer()->ResurectUsingRequestData();
+    GetPlayer()->ResurrectUsingRequestData();
 }
 
 void WorldSession::SendAreaTriggerMessage(const char* Text, ...)
@@ -1137,7 +1143,6 @@ void WorldSession::HandleMoveRootAck(WorldPacket& recvData)
 void WorldSession::HandleSetActionBarToggles(WorldPacket& recvData)
 {
     uint8 actionBar;
-
     recvData >> actionBar;
 
     if (!GetPlayer())                                        // ignore until not logged (check needed because STATUS_AUTHED)
@@ -1176,6 +1181,12 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recvData)
         return;
     }
 
+    if (!GetPlayer()->IsWithinDistInMap(player, INSPECT_DISTANCE, false))
+        return;
+
+    if (GetPlayer()->IsValidAttackTarget(player))
+        return;
+
     uint32 talent_points = 0x47;
     uint32 guid_size = player->GetPackGUID().wpos();
     WorldPacket data(SMSG_INSPECT_TALENT, guid_size+4+talent_points);
@@ -1206,6 +1217,12 @@ void WorldSession::HandleInspectHonorStatsOpcode(WorldPacket& recvData)
         TC_LOG_DEBUG("network", "MSG_INSPECT_HONOR_STATS: No player found from GUID: " UI64FMTD, guid);
         return;
     }
+
+    if (!GetPlayer()->IsWithinDistInMap(player, INSPECT_DISTANCE, false))
+        return;
+
+    if (GetPlayer()->IsValidAttackTarget(player))
+        return;
 
     WorldPacket data(MSG_INSPECT_HONOR_STATS, 8+1+4*4);
     data << uint64(player->GetGUID());
@@ -1631,6 +1648,12 @@ void WorldSession::HandleQueryInspectAchievements(WorldPacket& recvData)
     TC_LOG_DEBUG("network", "CMSG_QUERY_INSPECT_ACHIEVEMENTS [" UI64FMTD "] Inspected Player [" UI64FMTD "]", _player->GetGUID(), guid);
     Player* player = ObjectAccessor::FindPlayer(guid);
     if (!player)
+        return;
+
+    if (!GetPlayer()->IsWithinDistInMap(player, INSPECT_DISTANCE, false))
+        return;
+
+    if (GetPlayer()->IsValidAttackTarget(player))
         return;
 
     player->SendRespondInspectAchievements(_player);

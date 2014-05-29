@@ -410,78 +410,6 @@ PidFile = ""
 
 PacketLogFile = ""
 
-#
-#    ChatLogs.Channel
-#        Description: Log custom channel chat.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Channel = 0
-
-#
-#    ChatLogs.Whisper
-#        Description: Log whispers between players.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Whisper = 0
-
-#
-#    ChatLogs.SysChan
-#        Description: Log system channel messages.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.SysChan = 0
-
-#
-#    ChatLogs.Party
-#        Description: Log party chat.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Party = 0
-
-#
-#    ChatLogs.Raid
-#        Description: Log raid chat.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Raid = 0
-
-#
-#    ChatLogs.Guild
-#        Description: Log guild chat.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Guild = 0
-
-#
-#    ChatLogs.Public
-#        Description: Log public chat (say/yell/emote).
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Public = 0
-
-#
-#    ChatLogs.Addon
-#        Description: Log addon messages.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.Addon = 0
-
-#
-#    ChatLogs.BattleGround
-#        Description: Log battleground chat.
-#        Default:     0 - (Disabled)
-#                     1 - (Enabled)
-
-ChatLogs.BattleGround = 0
-
 # Extended Logging system configuration moved to end of file (on purpose)
 #
 ###################################################################################################
@@ -1138,6 +1066,15 @@ AccountInstancesPerHour = 5
 #                     2 - RBAC (RBAC enable or disables email confirmation per group)
 
 Account.PasswordChangeSecurity = 0
+
+#
+#   BirthdayTime
+#        Description: Set to date of project's birth in UNIX time. By default the date when TrinityCore was started (Thu Oct 2, 2008)
+#        Default:     1222964635
+#
+#
+
+BirthdayTime = 1222964635
 
 #
 ###################################################################################################
@@ -2567,6 +2504,23 @@ Guild.AllowMultipleGuildMaster = 0
 #                     1 - (Enabled)
 
 ShowKickInWorld = 0
+
+#     ShowMuteInWorld
+#        Description: Determines whether a message is broadcasted to the entire server when a
+#                     player gets muted.
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+ShowMuteInWorld = 0
+
+#
+#     ShowBanInWorld
+#        Description: Determines whether a message is broadcasted to the entire server when a
+#                     player gets banned.
+#        Default:     0 - (Disabled)
+#                     1 - (Enabled)
+
+ShowBanInWorld = 0
 
 #
 #     RecordUpdateTimeDiffInterval
