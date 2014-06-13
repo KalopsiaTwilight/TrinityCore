@@ -1277,6 +1277,10 @@ enum TrinityStrings
     LANG_IRC_SERVEREVENT                = 11941,
     LANG_IRC_AUTOANNOUNCE               = 11942,
     LANG_NPCINFO_NAME                   = 11943,
+    LANG_LFRP_CURRENTENTRY              = 11944,
+    LANG_LFRP_NOCURRENTENTRY            = 11945,
+    LANG_LFRP_CLEAR                     = 11946,
+    LANG_LFRP_CLEAR_OTHER               = 11947,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

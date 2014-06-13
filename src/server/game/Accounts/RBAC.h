@@ -722,6 +722,8 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_TCRECON                                = 1036,
     RBAC_PERM_COMMAND_PET_SCALE                              = 1037,
     RBAC_PERM_COMMAND_REFRESH                                = 1038,
+    RBAC_PERM_COMMAND_LFRP                                   = 1039,
+    RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER                       = 1040,
 
     RBAC_PERM_MAX
 };

@@ -2686,7 +2686,7 @@ public:
                     handler->PSendSysMessage(LANG_CUSTOM_SCALE_CHANGE, customScale, Scale, scaleChangesRemaining);
                     chr->SetFloatValue(OBJECT_FIELD_SCALE_X, Scale);
 
-                    QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET scale='%f', scale_times_changed=(`scale_times_changed`+1) WHERE guid='%u'", Scale, chr->GetGUIDLow());
+                    CharacterDatabase.PExecute("UPDATE characters_addon SET scale='%f', scale_times_changed=(`scale_times_changed`+1) WHERE guid='%u'", Scale, chr->GetGUIDLow());
                     return true;
                 }
 	        }
