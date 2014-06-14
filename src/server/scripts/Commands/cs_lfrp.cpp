@@ -16,9 +16,9 @@
  */
 
 /* ScriptData
-Name: wp_commandscript
+Name: lfrp_commandscript
 %Complete: 100
-Comment: All wp related commands
+Comment: All lfrp related commands
 Category: commandscripts
 EndScriptData */
 
@@ -27,7 +27,6 @@ EndScriptData */
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "ScriptMgr.h"
-#include "WaypointManager.h"
 
 class lfrp_commandscript : public CommandScript
 {

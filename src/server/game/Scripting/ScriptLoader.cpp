@@ -83,7 +83,9 @@ void AddSC_tele_commandscript();
 void AddSC_ticket_commandscript();
 void AddSC_titles_commandscript();
 void AddSC_wp_commandscript();
+// CUSTOM
 void AddSC_GOMove_commandscript();
+void AddSC_lfrp_commandscript();
 
 #ifdef SCRIPTS
 //world
@@ -795,7 +797,9 @@ void AddCommandScripts()
     AddSC_ticket_commandscript();
     AddSC_titles_commandscript();
     AddSC_wp_commandscript();
+	// CUSTOM
     AddSC_GOMove_commandscript();
+    AddSC_lfrp_commandscript();
 }
 
 void AddWorldScripts()
