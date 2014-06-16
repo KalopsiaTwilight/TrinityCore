@@ -69,12 +69,27 @@ public:
 
 			return true;
 		}
+		/*
+		char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
+        if (!tailStr)
+            return false;
 
-		std::string param = (char*)args;
-		CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
-		CharacterDatabase.PExecute("INSERT INTO characters_lfrp (guid,content) VALUES ('%u','%s')", handler->GetSession()->GetPlayer()->GetGUIDLow(), param);
+        char* guildStr = handler->extractQuotedArg(tailStr);
+        if (!guildStr)
+            return false;
 
-		return true;
+		char* content = (char*)args;
+		*/
+		if (*args != '\0')
+        {
+            char const* content = strtok(NULL, "\r");
+			std::string contentStr = content;
+
+			CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+			CharacterDatabase.PExecute("INSERT INTO characters_lfrp (guid,content) VALUES ('%u','%s')", handler->GetSession()->GetPlayer()->GetGUIDLow(), contentStr);
+			handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr.c_str());
+			return true;
+        }
 	}
 
 	static bool HandleLfrpClearCommand(ChatHandler* handler, const char* args)
