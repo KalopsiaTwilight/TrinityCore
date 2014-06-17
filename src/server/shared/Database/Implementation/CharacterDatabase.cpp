@@ -650,4 +650,6 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_GET_EXTERNAL_MAIL, "SELECT id, receiver, subject, body, money, item, item_count FROM mail_external ORDER BY id ASC", CONNECTION_SYNCH);
     PrepareStatement(CHAR_DEL_EXTERNAL_MAIL, "DELETE FROM mail_external WHERE id = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_UPD_CHAR_ACC_BY_GUID, "UPDATE characters SET account = ? WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_DEL_CHARACTER_LFRP, "DELETE FROM characters_lfrp WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_INS_CHARACTER_LFRP, "INSERT INTO characters_lfrp (guid,content) VALUES (?, ?)", CONNECTION_ASYNC);
 }

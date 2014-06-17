@@ -69,27 +69,22 @@ public:
 
 			return true;
 		}
-		/*
-		char* tailStr = *args != '"' ? strtok(NULL, "") : (char*)args;
-        if (!tailStr)
-            return false;
 
-        char* guildStr = handler->extractQuotedArg(tailStr);
-        if (!guildStr)
-            return false;
+		char* contentStr = (char*)args;
+		uint64 targetGuid = handler->GetSession()->GetPlayer()->GetGUIDLow();
+		SQLTransaction trans = CharacterDatabase.BeginTransaction();
 
-		char* content = (char*)args;
-		*/
-		if (*args != '\0')
-        {
-            char const* content = strtok(NULL, "\r");
-			std::string contentStr = content;
+		PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+        stmt->setUInt32(0, targetGuid);
+        trans->Append(stmt);
 
-			CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
-			CharacterDatabase.PExecute("INSERT INTO characters_lfrp (guid,content) VALUES ('%u','%s')", handler->GetSession()->GetPlayer()->GetGUIDLow(), contentStr);
-			handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr.c_str());
-			return true;
-        }
+		stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHARACTER_LFRP);
+		stmt->setUInt32(0, targetGuid);
+		stmt->setString(1, contentStr);
+        trans->Append(stmt);
+
+		handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr);
+		return true;
 	}
 
 	static bool HandleLfrpClearCommand(ChatHandler* handler, const char* args)
