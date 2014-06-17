@@ -91,7 +91,11 @@ public:
 	{
 		if (!*args)
 			{
-				CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+				SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
+				trans->Append(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR);
 
 				return true;
@@ -112,14 +116,22 @@ public:
 					return false;
 				}
 
-				CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", characterGuid);
+				SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+				stmt->setUInt32(0, characterGuid);
+				trans->Append(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR_OTHER, character.c_str());
 
 				return true;
 			}
 			else
 			{
-				CharacterDatabase.PExecute("DELETE FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+				SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
+				trans->Append(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR);
 			}
 			return true;
