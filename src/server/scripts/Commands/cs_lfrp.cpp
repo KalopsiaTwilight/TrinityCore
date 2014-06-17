@@ -72,16 +72,15 @@ public:
 
 		char* contentStr = (char*)args;
 		uint64 targetGuid = handler->GetSession()->GetPlayer()->GetGUIDLow();
-		SQLTransaction trans = CharacterDatabase.BeginTransaction();
 
 		PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
         stmt->setUInt32(0, targetGuid);
-        trans->Append(stmt);
+        CharacterDatabase.Execute(stmt);
 
 		stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHARACTER_LFRP);
 		stmt->setUInt32(0, targetGuid);
 		stmt->setString(1, contentStr);
-        trans->Append(stmt);
+        CharacterDatabase.Execute(stmt);
 
 		handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr);
 		return true;
@@ -95,7 +94,7 @@ public:
 
 				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
 				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
-				trans->Append(stmt);
+				CharacterDatabase.Execute(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR);
 
 				return true;
@@ -120,7 +119,7 @@ public:
 
 				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
 				stmt->setUInt32(0, characterGuid);
-				trans->Append(stmt);
+				CharacterDatabase.Execute(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR_OTHER, character.c_str());
 
 				return true;
@@ -131,7 +130,7 @@ public:
 
 				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
 				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
-				trans->Append(stmt);
+				CharacterDatabase.Execute(stmt);
 				handler->PSendSysMessage(LANG_LFRP_CLEAR);
 			}
 			return true;
