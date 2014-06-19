@@ -50,104 +50,141 @@ public:
         return commandTable;
     }
 
-	static bool HandleLfrpCommand(ChatHandler* handler, const char* args)
-	{
-		if (!*args)
-		{
-			QueryResult result = CharacterDatabase.PQuery("SELECT content, timestamp FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
-			if (result)
-			{
-				Field* fields = result->Fetch();
+    static bool HandleLfrpCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+        {
+            QueryResult result = CharacterDatabase.PQuery("SELECT content, timestamp FROM characters_lfrp WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+            if (result)
+            {
+                Field* fields = result->Fetch();
 
-				std::string content = fields[0].GetString();
-				std::string timestamp = fields[1].GetString();
+                std::string content = fields[0].GetString();
+                std::string timestamp = fields[1].GetString();
 
-				handler->PSendSysMessage(LANG_LFRP_CURRENTENTRY, content.c_str(), timestamp.c_str());
-			}
-			else
-				handler->PSendSysMessage(LANG_LFRP_NOCURRENTENTRY);
+                handler->PSendSysMessage(LANG_LFRP_CURRENTENTRY, content.c_str(), timestamp.c_str());
+            }
+            else
+                handler->PSendSysMessage(LANG_LFRP_NOCURRENTENTRY);
 
-			return true;
-		}
+            return true;
+        }
 
-		char* contentStr = (char*)args;
-		uint64 targetGuid = handler->GetSession()->GetPlayer()->GetGUIDLow();
+        char* contentStr = (char*)args;
+        uint64 targetGuid = handler->GetSession()->GetPlayer()->GetGUIDLow();
 
-		PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+        PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
         stmt->setUInt32(0, targetGuid);
         CharacterDatabase.Execute(stmt);
 
-		stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHARACTER_LFRP);
-		stmt->setUInt32(0, targetGuid);
-		stmt->setString(1, contentStr);
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHARACTER_LFRP);
+        stmt->setUInt32(0, targetGuid);
+        stmt->setString(1, contentStr);
         CharacterDatabase.Execute(stmt);
 
-		handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr);
-		return true;
-	}
-
-	static bool HandleLfrpClearCommand(ChatHandler* handler, const char* args)
-	{
-		if (!*args)
-			{
-				SQLTransaction trans = CharacterDatabase.BeginTransaction();
-
-				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
-				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
-				CharacterDatabase.Execute(stmt);
-				handler->PSendSysMessage(LANG_LFRP_CLEAR);
-
-				return true;
-			}
-		else
-		{
-			if (handler->GetSession()->HasPermission(rbac::RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER))
-			{
-				std::string character = strtok((char*)args, " ");
-				uint64 characterGuid;
-
-				characterGuid = sObjectMgr->GetPlayerGUIDByName(character);
-
-				if (!characterGuid)
-				{
-					handler->PSendSysMessage(LANG_CHAR_ACCOUNT_CHAR_NOT_FOUND, character.c_str());
-					handler->SetSentErrorMessage(true);
-					return false;
-				}
-
-				SQLTransaction trans = CharacterDatabase.BeginTransaction();
-
-				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
-				stmt->setUInt32(0, characterGuid);
-				CharacterDatabase.Execute(stmt);
-				handler->PSendSysMessage(LANG_LFRP_CLEAR_OTHER, character.c_str());
-
-				return true;
-			}
-			else
-			{
-				SQLTransaction trans = CharacterDatabase.BeginTransaction();
-
-				PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
-				stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
-				CharacterDatabase.Execute(stmt);
-				handler->PSendSysMessage(LANG_LFRP_CLEAR);
-			}
-			return true;
-		}
+        handler->PSendSysMessage(LANG_LFRP_NEWENTRY, contentStr);
+        return true;
     }
 
-	static bool HandleLfrpListCommand(ChatHandler* handler, const char* args)
-	{
-		if (!*args)
-		{
-			return true;
-		}
+    static bool HandleLfrpClearCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            {
+                SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+                stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
+                CharacterDatabase.Execute(stmt);
+                handler->PSendSysMessage(LANG_LFRP_CLEAR);
+
+                return true;
+            }
 		else
 		{
-			return true;
-		}
-	}
+            if (handler->GetSession()->HasPermission(rbac::RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER))
+            {
+                std::string character = strtok((char*)args, " ");
+                uint64 characterGuid;
+
+                characterGuid = sObjectMgr->GetPlayerGUIDByName(character);
+
+                if (!characterGuid)
+                {
+                    handler->PSendSysMessage(LANG_CHAR_ACCOUNT_CHAR_NOT_FOUND, character.c_str());
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+
+                SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+                stmt->setUInt32(0, characterGuid);
+                CharacterDatabase.Execute(stmt);
+                handler->PSendSysMessage(LANG_LFRP_CLEAR_OTHER, character.c_str());
+
+                return true;
+            }
+            else
+            {
+                SQLTransaction trans = CharacterDatabase.BeginTransaction();
+
+                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_LFRP);
+                stmt->setUInt32(0, handler->GetSession()->GetPlayer()->GetGUIDLow());
+                CharacterDatabase.Execute(stmt);
+                handler->PSendSysMessage(LANG_LFRP_CLEAR);
+            }
+            return true;
+        }
+    }
+
+    static bool HandleLfrpListCommand(ChatHandler* handler, const char* args)
+    {
+        uint32 listCount = 0;
+        uint8 online = 1;
+        handler->SendSysMessage(LANG_LFRP_LIST_ENTRY_START);
+
+        std::string param = (char*)args;
+
+        if (param == "offline" || param == "0" || param == "all" || param == "off")
+            online = 0;
+
+        PreparedQueryResult result;
+        PreparedStatement* stmt;
+        if (online == 1)
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ONLINE);
+        else
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ALL);
+
+        result = CharacterDatabase.Query(stmt);
+
+        if (result)
+        {
+            do
+            {
+                Field* fields           = result->Fetch();
+                std::string name        = fields[0].GetString();
+                std::string content     = fields[1].GetString();
+                std::string timestamp   = fields[2].GetString();
+
+                handler->PSendSysMessage(LANG_LFRP_LIST_ENTRY, timestamp.c_str(), name.c_str(), content.c_str());
+            }
+            while (result->NextRow());
+
+            listCount = uint32(result->GetRowCount());
+        }
+
+        if (listCount == 0)
+        {
+            handler->SendSysMessage(LANG_NO_PLAYERS_FOUND);
+            return true;
+        }
+
+        if (online == 1)
+            handler->PSendSysMessage(LANG_LFRP_LIST_COUNT_ONLINE, listCount);
+        else
+            handler->PSendSysMessage(LANG_LFRP_LIST_COUNT_TOTAL, listCount);
+        return true;
+    }
 
 };
 

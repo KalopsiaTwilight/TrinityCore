@@ -652,4 +652,6 @@ void CharacterDatabaseConnection::DoPrepareStatements()
     PrepareStatement(CHAR_UPD_CHAR_ACC_BY_GUID, "UPDATE characters SET account = ? WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_DEL_CHARACTER_LFRP, "DELETE FROM characters_lfrp WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(CHAR_INS_CHARACTER_LFRP, "INSERT INTO characters_lfrp (guid,content) VALUES (?, ?)", CONNECTION_ASYNC);
+    PrepareStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ONLINE, "SELECT characters.name, characters_lfrp.content, DATE_FORMAT(characters_lfrp.timestamp, '%Y-%m-%d %T') FROM characters_lfrp INNER JOIN characters WHERE characters_lfrp.guid=characters.guid AND characters.online =1 ORDER BY characters_lfrp.timestamp ASC", CONNECTION_SYNCH);
+    PrepareStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ALL, "SELECT characters.name, characters_lfrp.content, DATE_FORMAT(characters_lfrp.timestamp, '%Y-%m-%d %T') FROM characters_lfrp INNER JOIN characters WHERE characters_lfrp.guid=characters.guid ORDER BY characters_lfrp.timestamp ASC", CONNECTION_SYNCH);
 }
