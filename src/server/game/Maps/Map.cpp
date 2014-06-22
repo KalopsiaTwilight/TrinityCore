@@ -2507,15 +2507,9 @@ void Map::SendInitSelf(Player* player)
 
     // build other passengers at transport also (they always visible and marked as visible and will not send at visibility update at add to map
     if (Transport* transport = player->GetTransport())
-    {
-        for (std::set<WorldObject*>::const_iterator itr = transport->GetPassengers().begin(); itr != transport->GetPassengers().end(); ++itr)
-        {
+        for (Transport::PassengerSet::const_iterator itr = transport->GetPassengers().begin(); itr != transport->GetPassengers().end(); ++itr)
             if (player != (*itr) && player->HaveAtClient(*itr))
-            {
                 (*itr)->BuildCreateUpdateBlockForPlayer(&data, player);
-            }
-        }
-    }
 
     WorldPacket packet;
     data.BuildPacket(&packet);
@@ -2527,7 +2521,7 @@ void Map::SendInitTransports(Player* player)
     // Hack to send out transports
     UpdateData transData(player->GetMapId());
     for (TransportsContainer::const_iterator i = _transports.begin(); i != _transports.end(); ++i)
-        if (*i != player->GetTransport())
+        if (*i != player->GetTransport() && player->IsInPhase(*i))
             (*i)->BuildCreateUpdateBlockForPlayer(&transData, player);
 
     WorldPacket packet;
@@ -2542,6 +2536,26 @@ void Map::SendRemoveTransports(Player* player)
     for (TransportsContainer::const_iterator i = _transports.begin(); i != _transports.end(); ++i)
         if (*i != player->GetTransport())
             (*i)->BuildOutOfRangeUpdateBlock(&transData);
+
+    WorldPacket packet;
+    transData.BuildPacket(&packet);
+    player->GetSession()->SendPacket(&packet);
+}
+
+void Map::SendUpdateTransportVisibility(Player* player, std::set<uint32> const& previousPhases)
+{
+    // Hack to send out transports
+    UpdateData transData(player->GetMapId());
+    for (TransportsContainer::const_iterator i = _transports.begin(); i != _transports.end(); ++i)
+    {
+        if (*i == player->GetTransport())
+            continue;
+
+        if (player->IsInPhase(*i) && !Trinity::Containers::Intersects(previousPhases.begin(), previousPhases.end(), (*i)->GetPhases().begin(), (*i)->GetPhases().end()))
+            (*i)->BuildCreateUpdateBlockForPlayer(&transData, player);
+        else if (!player->IsInPhase(*i))
+            (*i)->BuildOutOfRangeUpdateBlock(&transData);
+    }
 
     WorldPacket packet;
     transData.BuildPacket(&packet);
@@ -2860,10 +2874,9 @@ bool InstanceMap::CanEnter(Player* player)
         return false;
     }
 
-    // cannot enter while an encounter is in progress on raids
-    /*Group* group = player->GetGroup();
-    if (!player->IsGameMaster() && group && group->InCombatToInstance(GetInstanceId()) && player->GetMapId() != GetId())*/
-    if (IsRaid() && GetInstanceScript() && GetInstanceScript()->IsEncounterInProgress())
+    // cannot enter while an encounter is in progress
+    // allow if just loading
+    if (!player->IsLoading() && IsRaid() && GetInstanceScript() && GetInstanceScript()->IsEncounterInProgress())
     {
         player->SendTransferAborted(GetId(), TRANSFER_ABORT_ZONE_IN_COMBAT);
         return false;

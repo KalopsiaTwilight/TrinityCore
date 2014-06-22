@@ -25,7 +25,6 @@
 
 #include "Item.h"
 #include "PetDefines.h"
-#include "PhaseMgr.h"
 #include "QuestDef.h"
 #include "SpellMgr.h"
 #include "Unit.h"
@@ -56,7 +55,6 @@ class PlayerMenu;
 class PlayerSocial;
 class SpellCastTargets;
 class UpdateMask;
-class PhaseMgr;
 
 typedef std::deque<Mail*> PlayerMails;
 
@@ -802,9 +800,10 @@ class InstanceSave;
 
 enum RestType
 {
-    REST_TYPE_NO        = 0,
-    REST_TYPE_IN_TAVERN = 1,
-    REST_TYPE_IN_CITY   = 2
+    REST_TYPE_NO                = 0,
+    REST_TYPE_IN_TAVERN         = 1,
+    REST_TYPE_IN_CITY           = 2,
+    REST_TYPE_IN_FACTION_AREA   = 3     // used with AREA_FLAG_REST_ZONE_*
 };
 
 enum TeleportToOptions
@@ -1331,8 +1330,6 @@ class Player : public Unit, public GridObject<Player>
         Pet* GetPet() const;
         Pet* SummonPet(uint32 entry, float x, float y, float z, float ang, PetType petType, uint32 despwtime);
         void RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent = false);
-
-        PhaseMgr& GetPhaseMgr() { return phaseMgr; }
 
         /// Handles said message in regular chat based on declared language and in config pre-defined Range.
         void Say(std::string const& text, const uint32 language);
@@ -1869,16 +1866,16 @@ class Player : public Unit, public GridObject<Player>
             _resurrectionData = NULL;
         }
 
-        bool IsRessurectRequestedBy(uint64 guid) const
+        bool IsResurrectRequestedBy(uint64 guid) const
         {
-            if (!IsRessurectRequested())
+            if (!IsResurrectRequested())
                 return false;
 
             return _resurrectionData->GUID == guid;
         }
 
-        bool IsRessurectRequested() const { return _resurrectionData != NULL; }
-        void ResurectUsingRequestData();
+        bool IsResurrectRequested() const { return _resurrectionData != NULL; }
+        void ResurrectUsingRequestData();
 
         uint8 getCinematic() { return m_cinematic; }
         void setCinematic(uint8 cine) { m_cinematic = cine; }
@@ -1896,6 +1893,7 @@ class Player : public Unit, public GridObject<Player>
         void UpdatePvP(bool state, bool override=false);
         void UpdateZone(uint32 newZone, uint32 newArea);
         void UpdateArea(uint32 newArea);
+        void SetNeedsZoneUpdate(bool needsUpdate) { m_needsZoneUpdate = needsUpdate; }
 
         void UpdateZoneDependentAuras(uint32 zone_id);    // zones
         void UpdateAreaDependentAuras(uint32 area_id);    // subzones
@@ -2360,6 +2358,8 @@ class Player : public Unit, public GridObject<Player>
         void UpdateVisibilityOf(WorldObject* target);
         void UpdateTriggerVisibility();
 
+        void UpdatePhasing();
+
         template<class T>
         void UpdateVisibilityOf(T* target, UpdateData& data, std::set<Unit*>& visibleNow);
 
@@ -2522,6 +2522,8 @@ class Player : public Unit, public GridObject<Player>
 
         std::string GetMapAreaAndZoneString();
         std::string GetCoordsMapAreaAndZoneString();
+
+        bool IsLoading() const;
 
         // Void Storage
         bool IsVoidStorageUnlocked() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_VOID_UNLOCKED); }
@@ -2814,6 +2816,8 @@ class Player : public Unit, public GridObject<Player>
 
         uint8 m_grantableLevels;
 
+        bool m_needsZoneUpdate;
+
         CUFProfile* _CUFProfiles[MAX_CUF_PROFILES];
 
     private:
@@ -2884,8 +2888,6 @@ class Player : public Unit, public GridObject<Player>
 
         uint32 _activeCheats;
         uint32 _maxPersonalArenaRate;
-
-        PhaseMgr phaseMgr;
         
     public:
         QuestStatusSaveMap m_RewardedQuestsSave2;

@@ -324,9 +324,18 @@ void ObjectMgr::LoadCreatureLocales()
 {
     uint32 oldMSTime = getMSTime();
 
-    _creatureLocaleStore.clear();                              // need for reload case
+    _creatureLocaleStore.clear(); // need for reload case
 
-    QueryResult result = WorldDatabase.Query("SELECT entry, name_loc1, subname_loc1, name_loc2, subname_loc2, name_loc3, subname_loc3, name_loc4, subname_loc4, name_loc5, subname_loc5, name_loc6, subname_loc6, name_loc7, subname_loc7, name_loc8, subname_loc8 FROM locales_creature");
+    QueryResult result = WorldDatabase.Query("SELECT entry, "
+        "name_loc1, femaleName_loc1, subname_loc1, "
+        "name_loc2, femaleName_loc2, subname_loc2, "
+        "name_loc3, femaleName_loc3, subname_loc3, "
+        "name_loc4, femaleName_loc4, subname_loc4, "
+        "name_loc5, femaleName_loc5, subname_loc5, "
+        "name_loc6, femaleName_loc6, subname_loc6, "
+        "name_loc7, femaleName_loc7, subname_loc7, "
+        "name_loc8, femaleName_loc8, subname_loc8 "
+        "FROM locales_creature");
 
     if (!result)
         return;
@@ -342,8 +351,9 @@ void ObjectMgr::LoadCreatureLocales()
         for (uint8 i = 1; i < TOTAL_LOCALES; ++i)
         {
             LocaleConstant locale = (LocaleConstant) i;
-            AddLocaleString(fields[1 + 2 * (i - 1)].GetString(), locale, data.Name);
-            AddLocaleString(fields[1 + 2 * (i - 1) + 1].GetString(), locale, data.SubName);
+            AddLocaleString(fields[1 + 3 * (i - 1)].GetString(), locale, data.Name);
+            AddLocaleString(fields[1 + 3 * (i - 1) + 1].GetString(), locale, data.FemaleName);
+            AddLocaleString(fields[1 + 3 * (i - 1) + 2].GetString(), locale, data.SubName);
         }
     } while (result->NextRow());
 
@@ -419,19 +429,19 @@ void ObjectMgr::LoadCreatureTemplates()
 
     //                                                 0              1                 2                  3                 4            5           6        7         8
     QueryResult result = WorldDatabase.Query("SELECT entry, difficulty_entry_1, difficulty_entry_2, difficulty_entry_3, KillCredit1, KillCredit2, modelid1, modelid2, modelid3, "
-    //                                           9       10      11       12           13           14        15     16      17      18       19         20         21
-                                             "modelid4, name, subname, IconName, gossip_menu_id, minlevel, maxlevel, exp, exp_unk, faction, npcflag, speed_walk, speed_run, "
-    //                                         22     23     24     25        26          27           28             29              30               31            32          33
+    //                                           9       10       11        12        13           14           15        16      17     18       19       20        21         22
+                                             "modelid4, name, femaleName, subname, IconName, gossip_menu_id, minlevel, maxlevel, exp, exp_unk, faction, npcflag, speed_walk, speed_run, "
+    //                                         23     24     25      26        27          28           29             30              31               32         33          34
                                              "scale, rank, mindmg, maxdmg, dmgschool, attackpower, dmg_multiplier, baseattacktime, rangeattacktime, unit_class, unit_flags, unit_flags2, "
-    //                                             34         35         36             37             38          39           40              41          42
+    //                                             35         36         37             38             39          40           41              42          43
                                              "dynamicflags, family, trainer_type, trainer_class, trainer_race, minrangedmg, maxrangedmg, rangedattackpower, type, "
-    //                                            43           44        45         46            47          48          49           50           51           52         53
+    //                                            44           45        46         47            48          49          50           51           52           53         54
                                              "type_flags, type_flags2, lootid, pickpocketloot, skinloot, resistance1, resistance2, resistance3, resistance4, resistance5, resistance6, "
-    //                                          54      55      56      57      58      59      60      61          62           63        64       65       66         67
+    //                                          55      56      57      58      59      60      61      62          63           64        65       66       67         68
                                              "spell1, spell2, spell3, spell4, spell5, spell6, spell7, spell8, PetSpellDataId, VehicleId, mingold, maxgold, AIName, MovementType, "
-    //                                             68          69         70         71            72            73          74           75          76          77           78          79
+    //                                             69          70         71         72            73            74          75           76          77          78           79          80
                                              "InhabitType, HoverHeight, Health_mod, Mana_mod, Mana_mod_extra, Armor_mod, RacialLeader, questItem1, questItem2, questItem3, questItem4, questItem5, "
-    //                                            80           81          82               83                84           85
+    //                                            81           82          83               84                85           86
                                              " questItem6, movementId, RegenHealth, mechanic_immune_mask, flags_extra, ScriptName "
                                              "FROM creature_template;");
 
@@ -465,72 +475,73 @@ void ObjectMgr::LoadCreatureTemplates()
         creatureTemplate.Modelid3          = fields[8].GetUInt32();
         creatureTemplate.Modelid4          = fields[9].GetUInt32();
         creatureTemplate.Name              = fields[10].GetString();
-        creatureTemplate.SubName           = fields[11].GetString();
-        creatureTemplate.IconName          = fields[12].GetString();
-        creatureTemplate.GossipMenuId      = fields[13].GetUInt32();
-        creatureTemplate.minlevel          = fields[14].GetUInt8();
-        creatureTemplate.maxlevel          = fields[15].GetUInt8();
-        creatureTemplate.expansion         = uint32(fields[16].GetInt16());
-        creatureTemplate.expansionUnknown  = uint32(fields[17].GetUInt16());
-        creatureTemplate.faction           = uint32(fields[18].GetUInt16());
-        creatureTemplate.npcflag           = fields[19].GetUInt32();
-        creatureTemplate.speed_walk        = fields[20].GetFloat();
-        creatureTemplate.speed_run         = fields[21].GetFloat();
-        creatureTemplate.scale             = fields[22].GetFloat();
-        creatureTemplate.rank              = uint32(fields[23].GetUInt8());
-        creatureTemplate.mindmg            = fields[24].GetFloat();
-        creatureTemplate.maxdmg            = fields[25].GetFloat();
-        creatureTemplate.dmgschool         = uint32(fields[26].GetInt8());
-        creatureTemplate.attackpower       = fields[27].GetUInt32();
-        creatureTemplate.dmg_multiplier    = fields[28].GetFloat();
-        creatureTemplate.baseattacktime    = fields[29].GetUInt32();
-        creatureTemplate.rangeattacktime   = fields[30].GetUInt32();
-        creatureTemplate.unit_class        = uint32(fields[31].GetUInt8());
-        creatureTemplate.unit_flags        = fields[32].GetUInt32();
-        creatureTemplate.unit_flags2       = fields[33].GetUInt32();
-        creatureTemplate.dynamicflags      = fields[34].GetUInt32();
-        creatureTemplate.family            = uint32(fields[35].GetUInt8());
-        creatureTemplate.trainer_type      = uint32(fields[36].GetUInt8());
-        creatureTemplate.trainer_class     = uint32(fields[37].GetUInt8());
-        creatureTemplate.trainer_race      = uint32(fields[38].GetUInt8());
-        creatureTemplate.minrangedmg       = fields[39].GetFloat();
-        creatureTemplate.maxrangedmg       = fields[40].GetFloat();
-        creatureTemplate.rangedattackpower = uint32(fields[41].GetUInt16());
-        creatureTemplate.type              = uint32(fields[42].GetUInt8());
-        creatureTemplate.type_flags        = fields[43].GetUInt32();
-        creatureTemplate.type_flags2       = fields[44].GetUInt32();
-        creatureTemplate.lootid            = fields[45].GetUInt32();
-        creatureTemplate.pickpocketLootId  = fields[46].GetUInt32();
-        creatureTemplate.SkinLootId        = fields[47].GetUInt32();
+        creatureTemplate.FemaleName        = fields[11].GetString();
+        creatureTemplate.SubName           = fields[12].GetString();
+        creatureTemplate.IconName          = fields[13].GetString();
+        creatureTemplate.GossipMenuId      = fields[14].GetUInt32();
+        creatureTemplate.minlevel          = fields[15].GetUInt8();
+        creatureTemplate.maxlevel          = fields[16].GetUInt8();
+        creatureTemplate.expansion         = uint32(fields[17].GetInt16());
+        creatureTemplate.expansionUnknown  = uint32(fields[18].GetUInt16());
+        creatureTemplate.faction           = uint32(fields[19].GetUInt16());
+        creatureTemplate.npcflag           = fields[20].GetUInt32();
+        creatureTemplate.speed_walk        = fields[21].GetFloat();
+        creatureTemplate.speed_run         = fields[22].GetFloat();
+        creatureTemplate.scale             = fields[23].GetFloat();
+        creatureTemplate.rank              = uint32(fields[24].GetUInt8());
+        creatureTemplate.mindmg            = fields[25].GetFloat();
+        creatureTemplate.maxdmg            = fields[26].GetFloat();
+        creatureTemplate.dmgschool         = uint32(fields[27].GetInt8());
+        creatureTemplate.attackpower       = fields[28].GetUInt32();
+        creatureTemplate.dmg_multiplier    = fields[29].GetFloat();
+        creatureTemplate.baseattacktime    = fields[30].GetUInt32();
+        creatureTemplate.rangeattacktime   = fields[31].GetUInt32();
+        creatureTemplate.unit_class        = uint32(fields[32].GetUInt8());
+        creatureTemplate.unit_flags        = fields[33].GetUInt32();
+        creatureTemplate.unit_flags2       = fields[34].GetUInt32();
+        creatureTemplate.dynamicflags      = fields[35].GetUInt32();
+        creatureTemplate.family            = uint32(fields[36].GetUInt8());
+        creatureTemplate.trainer_type      = uint32(fields[37].GetUInt8());
+        creatureTemplate.trainer_class     = uint32(fields[38].GetUInt8());
+        creatureTemplate.trainer_race      = uint32(fields[39].GetUInt8());
+        creatureTemplate.minrangedmg       = fields[40].GetFloat();
+        creatureTemplate.maxrangedmg       = fields[41].GetFloat();
+        creatureTemplate.rangedattackpower = uint32(fields[42].GetUInt16());
+        creatureTemplate.type              = uint32(fields[43].GetUInt8());
+        creatureTemplate.type_flags        = fields[44].GetUInt32();
+        creatureTemplate.type_flags2       = fields[45].GetUInt32();
+        creatureTemplate.lootid            = fields[46].GetUInt32();
+        creatureTemplate.pickpocketLootId  = fields[47].GetUInt32();
+        creatureTemplate.SkinLootId        = fields[48].GetUInt32();
 
         for (uint8 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
-            creatureTemplate.resistance[i] = fields[48 + i - 1].GetInt16();
+            creatureTemplate.resistance[i] = fields[49 + i - 1].GetInt16();
 
         for (uint8 i = 0; i < CREATURE_MAX_SPELLS; ++i)
-            creatureTemplate.spells[i] = fields[54 + i].GetUInt32();
+            creatureTemplate.spells[i] = fields[55 + i].GetUInt32();
 
-        creatureTemplate.PetSpellDataId = fields[62].GetUInt32();
-        creatureTemplate.VehicleId      = fields[63].GetUInt32();
-        creatureTemplate.mingold        = fields[64].GetUInt32();
-        creatureTemplate.maxgold        = fields[65].GetUInt32();
-        creatureTemplate.AIName         = fields[66].GetString();
-        creatureTemplate.MovementType   = uint32(fields[67].GetUInt8());
-        creatureTemplate.InhabitType    = uint32(fields[68].GetUInt8());
-        creatureTemplate.HoverHeight    = fields[69].GetFloat();
-        creatureTemplate.ModHealth      = fields[70].GetFloat();
-        creatureTemplate.ModMana        = fields[71].GetFloat();
-        creatureTemplate.ModManaExtra   = fields[72].GetFloat();
-        creatureTemplate.ModArmor       = fields[73].GetFloat();
-        creatureTemplate.RacialLeader   = fields[74].GetBool();
+        creatureTemplate.PetSpellDataId = fields[63].GetUInt32();
+        creatureTemplate.VehicleId      = fields[64].GetUInt32();
+        creatureTemplate.mingold        = fields[65].GetUInt32();
+        creatureTemplate.maxgold        = fields[66].GetUInt32();
+        creatureTemplate.AIName         = fields[67].GetString();
+        creatureTemplate.MovementType   = uint32(fields[68].GetUInt8());
+        creatureTemplate.InhabitType    = uint32(fields[69].GetUInt8());
+        creatureTemplate.HoverHeight    = fields[70].GetFloat();
+        creatureTemplate.ModHealth      = fields[71].GetFloat();
+        creatureTemplate.ModMana        = fields[72].GetFloat();
+        creatureTemplate.ModManaExtra   = fields[73].GetFloat();
+        creatureTemplate.ModArmor       = fields[74].GetFloat();
+        creatureTemplate.RacialLeader   = fields[75].GetBool();
 
         for (uint8 i = 0; i < MAX_CREATURE_QUEST_ITEMS; ++i)
-            creatureTemplate.questItems[i] = fields[75 + i].GetUInt32();
+            creatureTemplate.questItems[i] = fields[76 + i].GetUInt32();
 
-        creatureTemplate.movementId         = fields[81].GetUInt32();
-        creatureTemplate.RegenHealth        = fields[82].GetBool();
-        creatureTemplate.MechanicImmuneMask = fields[83].GetUInt32();
-        creatureTemplate.flags_extra        = fields[84].GetUInt32();
-        creatureTemplate.ScriptID           = GetScriptId(fields[85].GetCString());
+        creatureTemplate.movementId         = fields[82].GetUInt32();
+        creatureTemplate.RegenHealth        = fields[83].GetBool();
+        creatureTemplate.MechanicImmuneMask = fields[84].GetUInt32();
+        creatureTemplate.flags_extra        = fields[85].GetUInt32();
+        creatureTemplate.ScriptID           = GetScriptId(fields[86].GetCString());
 
         ++count;
     }
@@ -1652,8 +1663,8 @@ void ObjectMgr::LoadCreatures()
 
     //                                               0              1   2    3        4             5           6           7           8            9              10
     QueryResult result = WorldDatabase.Query("SELECT creature.guid, id, map, modelid, equipment_id, position_x, position_y, position_z, orientation, spawntimesecs, spawndist, "
-    //   11               12         13       14            15         16         17          18          19                20                   21
-        "currentwaypoint, curhealth, curmana, MovementType, spawnMask, phaseMask, eventEntry, pool_entry, creature.npcflag, creature.unit_flags, creature.dynamicflags "
+    //   11               12         13       14            15         16         17          18          19                20                   21                         22                    23
+        "currentwaypoint, curhealth, curmana, MovementType, spawnMask, phaseMask, eventEntry, pool_entry, creature.npcflag, creature.unit_flags, creature.dynamicflags, creature.phaseid, creature.phasegroup "
         "FROM creature "
         "LEFT OUTER JOIN game_event_creature ON creature.guid = game_event_creature.guid "
         "LEFT OUTER JOIN pool_creature ON creature.guid = pool_creature.guid");
@@ -1710,6 +1721,8 @@ void ObjectMgr::LoadCreatures()
         data.npcflag        = fields[19].GetUInt32();
         data.unit_flags     = fields[20].GetUInt32();
         data.dynamicflags   = fields[21].GetUInt32();
+        data.phaseid = fields[22].GetUInt32();
+        data.phaseGroup = fields[23].GetUInt32();
 
         MapEntry const* mapEntry = sMapStore.LookupEntry(data.mapid);
         if (!mapEntry)
@@ -1777,6 +1790,12 @@ void ObjectMgr::LoadCreatures()
         {
             TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `phaseMask`=0 (not visible for anyone), set to 1.", guid, data.id);
             data.phaseMask = 1;
+        }
+
+        if (data.phaseGroup && data.phaseid)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with both `phaseid` and `phasegroup` set, `phasegroup` set to 0", guid, data.id);
+            data.phaseGroup = 0;
         }
 
         // Add to grid if not managed by the game event or pool system
@@ -1962,8 +1981,8 @@ void ObjectMgr::LoadGameobjects()
 
     //                                                0                1   2    3           4           5           6
     QueryResult result = WorldDatabase.Query("SELECT gameobject.guid, id, map, position_x, position_y, position_z, orientation, "
-    //   7          8          9          10         11             12            13     14         15         16          17          18
-        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, eventEntry, pool_entry, gameobject_addon.scale "
+    //   7          8          9          10         11             12            13     14         15         16          17           18        19         20
+        "rotation0, rotation1, rotation2, rotation3, spawntimesecs, animprogress, state, spawnMask, phaseMask, eventEntry, pool_entry, phaseid, phasegroup, gameobject_addon.scale  "
         "FROM gameobject LEFT OUTER JOIN game_event_gameobject ON gameobject.guid = game_event_gameobject.guid "
         "LEFT OUTER JOIN pool_gameobject ON gameobject.guid = pool_gameobject.guid "
         "LEFT OUTER JOIN gameobject_addon ON gameobject.guid = gameobject_addon.guid");
@@ -2062,7 +2081,15 @@ void ObjectMgr::LoadGameobjects()
         data.phaseMask      = fields[15].GetUInt32();
         int16 gameEvent     = fields[16].GetInt8();
         uint32 PoolId       = fields[17].GetUInt32();
-        data.scale          = fields[18].GetFloat();
+        data.phaseid = fields[18].GetUInt32();
+        data.phaseGroup = fields[19].GetUInt32();
+        data.scale          = fields[20].GetFloat();
+
+        if (data.phaseGroup && data.phaseid)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `gameobject` have gameobject (GUID: %u Entry: %u) with both `phaseid` and `phasegroup` set, `phasegroup` set to 0", guid, data.id);
+            data.phaseGroup = 0;
+        }
 
         if (data.rotation2 < -1.0f || data.rotation2 > 1.0f)
         {
@@ -2880,32 +2907,32 @@ void ObjectMgr::LoadVehicleTemplateAccessories()
     {
         Field* fields = result->Fetch();
 
-        uint32 uiEntry      = fields[0].GetUInt32();
-        uint32 uiAccessory  = fields[1].GetUInt32();
-        int8   uiSeat       = int8(fields[2].GetInt8());
-        bool   bMinion      = fields[3].GetBool();
-        uint8  uiSummonType = fields[4].GetUInt8();
-        uint32 uiSummonTimer= fields[5].GetUInt32();
+        uint32 entry        = fields[0].GetUInt32();
+        uint32 accessory    = fields[1].GetUInt32();
+        int8   seatId       = fields[2].GetInt8();
+        bool   isMinion     = fields[3].GetBool();
+        uint8  summonType   = fields[4].GetUInt8();
+        uint32 summonTimer  = fields[5].GetUInt32();
 
-        if (!sObjectMgr->GetCreatureTemplate(uiEntry))
+        if (!sObjectMgr->GetCreatureTemplate(entry))
         {
-            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: creature template entry %u does not exist.", uiEntry);
+            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: creature template entry %u does not exist.", entry);
             continue;
         }
 
-        if (!sObjectMgr->GetCreatureTemplate(uiAccessory))
+        if (!sObjectMgr->GetCreatureTemplate(accessory))
         {
-            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: Accessory %u does not exist.", uiAccessory);
+            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: Accessory %u does not exist.", accessory);
             continue;
         }
 
-        if (_spellClickInfoStore.find(uiEntry) == _spellClickInfoStore.end())
+        if (_spellClickInfoStore.find(entry) == _spellClickInfoStore.end())
         {
-            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: creature template entry %u has no data in npc_spellclick_spells", uiEntry);
+            TC_LOG_ERROR("sql.sql", "Table `vehicle_template_accessory`: creature template entry %u has no data in npc_spellclick_spells", entry);
             continue;
         }
 
-        _vehicleTemplateAccessoryStore[uiEntry].push_back(VehicleAccessory(uiAccessory, uiSeat, bMinion, uiSummonType, uiSummonTimer));
+        _vehicleTemplateAccessoryStore[entry].push_back(VehicleAccessory(accessory, seatId, isMinion, summonType, summonTimer));
 
         ++count;
     }
@@ -9251,8 +9278,8 @@ void ObjectMgr::LoadPhaseDefinitions()
 
     uint32 oldMSTime = getMSTime();
 
-    //                                                 0       1       2         3            4           5
-    QueryResult result = WorldDatabase.Query("SELECT zoneId, entry, phasemask, phaseId, terrainswapmap, flags FROM `phase_definitions` ORDER BY `entry` ASC");
+    //                                                 0       1       2        3
+    QueryResult result = WorldDatabase.Query("SELECT zoneId, entry, phaseId, phaseGroup FROM `phase_definitions` ORDER BY `entry` ASC");
 
     if (!result)
     {
@@ -9270,18 +9297,14 @@ void ObjectMgr::LoadPhaseDefinitions()
 
         PhaseDefinition.zoneId                = fields[0].GetUInt32();
         PhaseDefinition.entry                 = fields[1].GetUInt32();
-        PhaseDefinition.phasemask             = fields[2].GetUInt32();
-        PhaseDefinition.phaseId               = fields[3].GetUInt32();
-        PhaseDefinition.terrainswapmap        = fields[4].GetUInt32();
-        PhaseDefinition.flags                 = fields[5].GetUInt32();
+        PhaseDefinition.phaseId               = fields[2].GetUInt32();
+        PhaseDefinition.phaseGroup = fields[3].GetUInt32();
 
-        // Checks
-        if ((PhaseDefinition.flags & PHASE_FLAG_OVERWRITE_EXISTING) && (PhaseDefinition.flags & PHASE_FLAG_NEGATE_PHASE))
+        if (PhaseDefinition.phaseGroup && PhaseDefinition.phaseId)
         {
-            TC_LOG_ERROR("sql.sql", "Flags defined in phase_definitions in zoneId %d and entry %u does contain PHASE_FLAG_OVERWRITE_EXISTING and PHASE_FLAG_NEGATE_PHASE. Setting flags to PHASE_FLAG_OVERWRITE_EXISTING", PhaseDefinition.zoneId, PhaseDefinition.entry);
-            PhaseDefinition.flags &= ~PHASE_FLAG_NEGATE_PHASE;
+            TC_LOG_ERROR("sql.sql", "Phase definition for zone %u (Entry: %u) has phaseGroup and phaseId set, phaseGroup set to 0", PhaseDefinition.zoneId, PhaseDefinition.entry);
+            PhaseDefinition.phaseGroup = 0;
         }
-
         _PhaseDefinitionStore[PhaseDefinition.zoneId].push_back(PhaseDefinition);
 
         ++count;
@@ -9291,18 +9314,18 @@ void ObjectMgr::LoadPhaseDefinitions()
     TC_LOG_INFO("server.loading", ">> Loaded %u phasing definitions in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
-void ObjectMgr::LoadSpellPhaseInfo()
+void ObjectMgr::LoadPhaseInfo()
 {
-    _SpellPhaseStore.clear();
+    _PhaseInfoStore.clear();
 
     uint32 oldMSTime = getMSTime();
 
-    //                                               0       1            2
-    QueryResult result = WorldDatabase.Query("SELECT id, phasemask, terrainswapmap FROM `spell_phase`");
+    //                                               0       1                   2       
+    QueryResult result = WorldDatabase.Query("SELECT id, worldmapareaswap, terrainswapmap FROM `phase_info`");
 
     if (!result)
     {
-        TC_LOG_INFO("server.loading", ">> Loaded 0 spell dbc infos. DB table `spell_phase` is empty.");
+        TC_LOG_INFO("server.loading", ">> Loaded 0 phase infos. DB table `phase_info` is empty.");
         return;
     }
 
@@ -9311,31 +9334,25 @@ void ObjectMgr::LoadSpellPhaseInfo()
     {
         Field* fields = result->Fetch();
 
-        SpellPhaseInfo spellPhaseInfo;
-        spellPhaseInfo.spellId                = fields[0].GetUInt32();
+        PhaseInfo phaseInfo;
+        phaseInfo.phaseId = fields[0].GetUInt32();
 
-        SpellInfo const* spell = sSpellMgr->GetSpellInfo(spellPhaseInfo.spellId);
-        if (!spell)
+        PhaseEntry const* phase = sPhaseStore.LookupEntry(phaseInfo.phaseId);
+        if (!phase)
         {
-            TC_LOG_ERROR("sql.sql", "Spell %u defined in `spell_phase` does not exists, skipped.", spellPhaseInfo.spellId);
+            TC_LOG_ERROR("sql.sql", "Phase %u defined in `phase_info` does not exists, skipped.", phaseInfo.phaseId);
             continue;
         }
 
-        if (!spell->HasAura(SPELL_AURA_PHASE))
-        {
-            TC_LOG_ERROR("sql.sql", "Spell %u defined in `spell_phase` does not have aura effect type SPELL_AURA_PHASE, useless value.", spellPhaseInfo.spellId);
-            continue;
-        }
+        phaseInfo.worldMapAreaSwap              = fields[1].GetUInt32();
+        phaseInfo.terrainSwapMap         = fields[2].GetUInt32();
 
-        spellPhaseInfo.phasemask              = fields[1].GetUInt32();
-        spellPhaseInfo.terrainswapmap         = fields[2].GetUInt32();
-
-        _SpellPhaseStore[spellPhaseInfo.spellId] = spellPhaseInfo;
+        _PhaseInfoStore[phaseInfo.phaseId] = phaseInfo;
 
         ++count;
     }
     while (result->NextRow());
-    TC_LOG_INFO("server.loading", ">> Loaded %u spell dbc infos in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %u phase infos in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 GameObjectTemplate const* ObjectMgr::GetGameObjectTemplate(uint32 entry)

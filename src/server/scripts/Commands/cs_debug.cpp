@@ -937,6 +937,9 @@ public:
             return false;
         }
 
+        for (auto phase : handler->GetSession()->GetPlayer()->GetPhases())
+            v->SetInPhase(phase, false, true);
+
         map->AddToMap(v->ToCreature());
 
         return true;
@@ -965,13 +968,14 @@ public:
 
         std::set<uint32> terrainswap;
         std::set<uint32> phaseId;
+        std::set<uint32> worldMapSwap;
 
         terrainswap.insert((uint32)atoi(t));
 
         if (p)
             phaseId.insert((uint32)atoi(p));
 
-        handler->GetSession()->SendSetPhaseShift(phaseId, terrainswap);
+        handler->GetSession()->SendSetPhaseShift(phaseId, terrainswap, worldMapSwap);
         return true;
     }
 
@@ -1396,7 +1400,7 @@ public:
         if (unit && unit->GetTypeId() == TYPEID_PLAYER)
             player = unit->ToPlayer();
 
-        player->GetPhaseMgr().SendDebugReportToPlayer(handler->GetSession()->GetPlayer());
+        
         return true;
     }
 

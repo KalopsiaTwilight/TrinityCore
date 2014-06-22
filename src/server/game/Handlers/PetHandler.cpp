@@ -79,13 +79,13 @@ void WorldSession::HandlePetAction(WorldPacket& recvData)
 
     if (!pet)
     {
-        TC_LOG_ERROR("network", "HandlePetAction: Pet (GUID: %u) doesn't exist for player %s (GUID: %u)", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName().c_str(), GUID_LOPART(GetPlayer()->GetGUID()));
+        TC_LOG_DEBUG("network", "HandlePetAction: Pet (GUID: %u) doesn't exist for player %s (GUID: %u)", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName().c_str(), GUID_LOPART(GetPlayer()->GetGUID()));
         return;
     }
 
     if (pet != GetPlayer()->GetFirstControlled())
     {
-        TC_LOG_ERROR("network", "HandlePetAction: Pet (GUID: %u) does not belong to player %s (GUID: %u)", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName().c_str(), GUID_LOPART(GetPlayer()->GetGUID()));
+        TC_LOG_DEBUG("network", "HandlePetAction: Pet (GUID: %u) does not belong to player %s (GUID: %u)", uint32(GUID_LOPART(guid1)), GetPlayer()->GetName().c_str(), GUID_LOPART(GetPlayer()->GetGUID()));
         return;
     }
 
@@ -149,7 +149,7 @@ void WorldSession::HandlePetActionHelper(Unit* pet, uint64 guid1, uint32 spellid
     CharmInfo* charmInfo = pet->GetCharmInfo();
     if (!charmInfo)
     {
-        TC_LOG_ERROR("network", "WorldSession::HandlePetAction(petGuid: " UI64FMTD ", tagGuid: " UI64FMTD ", spellId: %u, flag: %u): object (GUID: %u Entry: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!",
+        TC_LOG_DEBUG("network", "WorldSession::HandlePetAction(petGuid: " UI64FMTD ", tagGuid: " UI64FMTD ", spellId: %u, flag: %u): object (GUID: %u Entry: %u TypeId: %u) is considered pet-like but doesn't have a charminfo!",
             guid1, guid2, spellid, flag, pet->GetGUIDLow(), pet->GetEntry(), pet->GetTypeId());
         return;
     }
@@ -874,7 +874,10 @@ void WorldSession::HandleLearnPreviewTalentsPet(WorldPacket& recvData)
 
     uint32 talentId, talentRank;
 
-    for (uint32 i = 0; i < talentsCount; ++i)
+    // Client has max 19 talents, rounded up : 25
+    uint32 const MaxTalentsCount = 25;
+
+    for (uint32 i = 0; i < talentsCount && i < MaxTalentsCount; ++i)
     {
         recvData >> talentId >> talentRank;
 
@@ -882,4 +885,6 @@ void WorldSession::HandleLearnPreviewTalentsPet(WorldPacket& recvData)
     }
 
     _player->SendTalentsInfoData(true);
+
+    recvData.rfinish();
 }

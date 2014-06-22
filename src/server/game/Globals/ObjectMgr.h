@@ -42,11 +42,9 @@
 #include <limits>
 #include "ConditionMgr.h"
 #include <functional>
-#include "PhaseMgr.h"
 #include "DB2Stores.h"
 
 class Item;
-class PhaseMgr;
 struct AccessRequirement;
 struct PlayerInfo;
 struct PlayerLevelInfo;
@@ -131,6 +129,34 @@ typedef std::map<uint32, PageText> PageTextContainer;
 
 // Benchmarked: Faster than std::map (insert/find)
 typedef std::unordered_map<uint16, InstanceTemplate> InstanceTemplateContainer;
+
+// Phasing (visibility)
+enum PhasingFlags
+{
+    PHASE_FLAG_OVERWRITE_EXISTING = 0x01,       // don't stack with existing phases, overwrites existing phases
+    PHASE_FLAG_NO_MORE_PHASES = 0x02,       // stop calculating phases after this phase was applied (no more phases will be applied)
+    PHASE_FLAG_NEGATE_PHASE = 0x04        // negate instead to add the phasemask
+};
+
+struct PhaseInfo
+{
+    uint32 phaseId;
+    uint32 worldMapAreaSwap;
+    uint32 terrainSwapMap;
+};
+
+typedef std::unordered_map<uint32, PhaseInfo> PhaseInfoContainer;
+
+struct PhaseDefinition
+{
+    uint32 zoneId;
+    uint32 entry;
+    uint32 phaseId;
+    uint32 phaseGroup;
+};
+
+typedef std::list<PhaseDefinition> PhaseDefinitionContainer;
+typedef std::unordered_map<uint32 /*zoneId*/, PhaseDefinitionContainer> PhaseDefinitionStore;
 
 struct GameTele
 {
@@ -1035,10 +1061,7 @@ class ObjectMgr
         void AddSpellToTrainer(uint32 entry, uint32 spell, uint32 spellCost, uint32 reqSkill, uint32 reqSkillValue, uint32 reqLevel);
 
         void LoadPhaseDefinitions();
-        void LoadSpellPhaseInfo();
-
-        PhaseDefinitionStore const* GetPhaseDefinitionStore() { return &_PhaseDefinitionStore; }
-        SpellPhaseStore const* GetSpellPhaseStore() { return &_SpellPhaseStore; }
+        void LoadPhaseInfo();
 
         std::string GeneratePetName(uint32 entry);
         uint32 GetBaseXP(uint8 level);
@@ -1296,6 +1319,8 @@ class ObjectMgr
             return _gossipMenuItemsStore.equal_range(uiMenuId);
         }
 
+        PhaseInfo const* GetPhaseInfo(uint32 phase) { return _PhaseInfoStore.find(phase) != _PhaseInfoStore.end() ? &_PhaseInfoStore[phase] : nullptr; }
+
         // for wintergrasp only
         GraveYardContainer GraveYardStore;
 
@@ -1327,8 +1352,8 @@ class ObjectMgr
             time_t ret = 0;
             for (HotfixData::const_iterator itr = _hotfixData.begin(); itr != _hotfixData.end(); ++itr)
                 if (itr->Entry == entry && itr->Type == type)
-                    if (itr->Timestamp > ret)
-                        ret = itr->Timestamp;
+                    if (time_t(itr->Timestamp) > ret)
+                        ret = time_t(itr->Timestamp);
 
             return ret ? ret : time(NULL);
         }
@@ -1410,7 +1435,7 @@ class ObjectMgr
         CreatureOutfitContainer _creatureOutfitStore;
 
         PhaseDefinitionStore _PhaseDefinitionStore;
-        SpellPhaseStore _SpellPhaseStore;
+        PhaseInfoContainer _PhaseInfoStore;
 
     private:
         void LoadScripts(ScriptsType type);

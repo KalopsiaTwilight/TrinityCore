@@ -69,7 +69,7 @@ class instance_oculus : public InstanceMapScript
                     case NPC_VAROS:
                         VarosGUID = creature->GetGUID();
                         if (GetBossState(DATA_DRAKOS) == DONE)
-                           creature->SetPhaseMask(1, true);
+                            creature->SetPhaseMask(1, true);
                         break;
                     case NPC_UROM:
                         UromGUID = creature->GetGUID();
@@ -281,8 +281,8 @@ class instance_oculus : public InstanceMapScript
 
             void GreaterWhelps()
             {
-                for (std::list<uint64>::const_iterator itr = GreaterWhelpList.begin(); itr != GreaterWhelpList.end(); ++itr)
-                    if (Creature* gwhelp = instance->GetCreature(*itr))
+                for (uint64 guid : GreaterWhelpList)
+                    if (Creature* gwhelp = instance->GetCreature(guid))
                         gwhelp->SetPhaseMask(1, true);
             }
 
