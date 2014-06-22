@@ -29,6 +29,7 @@ EndScriptData */
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
+#include "Util.h"
 
 class character_commandscript : public CommandScript
 {
@@ -1390,7 +1391,8 @@ public:
 
         ///- Convert Account name to Upper Format
         accountName = account;
-        if (!AccountMgr::normalizeString(accountName))
+        Utf8ToUpperOnlyLatin(accountName);
+        if (!AccountMgr::GetId(accountName))
         {
             handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
             handler->SetSentErrorMessage(true);

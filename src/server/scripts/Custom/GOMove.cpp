@@ -172,7 +172,7 @@ public:
                 {
                 case SPAWN:
                     {
-                        if (SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, ARG, false, true))
+                        if (SpawnObject(player, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(),  player->GetOrientation(), player->GetPhaseMask(), false, ARG, false, true))
                             SpawnQue[player->GetGUID()] = ARG;
                     } break;
                 case SPAWNSPELL:
@@ -462,7 +462,7 @@ public:
                 return;
             const WorldLocation* summonPos = GetExplTargetDest();
             if(summonPos && GOMove_commandscript::SpawnQue.find(player->GetGUID()) != GOMove_commandscript::SpawnQue.end())
-                GOMove_commandscript::SpawnObject(player, summonPos->GetPositionX(), summonPos->GetPositionY(), summonPos->GetPositionZ(), player->GetOrientation(), player->GetPhaseMgr().GetPhaseMaskForSpawn(), false, GOMove_commandscript::SpawnQue[player->GetGUID()], false, true);
+                GOMove_commandscript::SpawnObject(player, summonPos->GetPositionX(), summonPos->GetPositionY(), summonPos->GetPositionZ(), player->GetOrientation(), player->GetPhaseMask(), false, GOMove_commandscript::SpawnQue[player->GetGUID()], false, true);
         }
 
         void Register()
