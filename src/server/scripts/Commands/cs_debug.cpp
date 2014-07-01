@@ -1393,14 +1393,14 @@ public:
         return true;
     }
 
-    static bool HandleDebugPhaseCommand(ChatHandler* handler, char const* /*args*/)
+    static bool HandleDebugPhaseCommand(ChatHandler* /*handler*/, char const* /*args*/)
     {
+        /*/
         Unit* unit = handler->getSelectedUnit();
         Player* player = handler->GetSession()->GetPlayer();
         if (unit && unit->GetTypeId() == TYPEID_PLAYER)
             player = unit->ToPlayer();
-
-        
+        */
         return true;
     }
 
