@@ -1503,7 +1503,7 @@ void WorldSession::HandleTransmogrifyItems(WorldPacket& recvData)
         }
         else
         {
-            if (itemTransmogrifier->GetEntry() != newEntries[i])
+            if (itemTransmogrifier->GetEntry() != (newEntries[i] + 200000) && itemTransmogrifier->GetEntry() != newEntries[i])
             {
                 TC_LOG_DEBUG("network", "WORLD: HandleTransmogrifyItems - Player (GUID: %u, name: %s) tried to transmogrify with an invalid entry (entry: %u) for item (lowguid: %u).", player->GetGUIDLow(), player->GetName().c_str(), newEntries[i], GUID_LOPART(itemGuids[i]));
                 return;
