@@ -724,6 +724,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_REFRESH                                = 1038,
     RBAC_PERM_COMMAND_LFRP                                   = 1039,
     RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER                       = 1040,
+    RBAC_PERM_COMMANDS_RELOAD_GO_TELEPORT                    = 1041,
 
     RBAC_PERM_MAX
 };

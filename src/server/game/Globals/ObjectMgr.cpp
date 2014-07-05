@@ -9401,3 +9401,57 @@ PlayerInfo const* ObjectMgr::GetPlayerInfo(uint32 race, uint32 class_) const
         return NULL;
     return info;
 }
+
+void ObjectMgr::LoadGameObjectTeleport()
+{
+    uint32 oldMSTime = getMSTime();
+
+    _gameObjectTeleportStore.clear();                                  // need for reload case
+
+    //                                               0    1           2                  3                  4                  5                   6          7
+    QueryResult result = WorldDatabase.Query("SELECT id,  target_map, target_position_x, target_position_y, target_position_z, target_orientation, req_level, phase FROM areatrigger_teleport");
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 gameobject teleport definitions. DB table `gameobject_teleport` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        ++count;
+
+        uint32 GOTeleport_ID = fields[0].GetUInt32();
+
+        GameObjectTeleport gobt;
+
+        gobt.target_map           = fields[1].GetUInt16();
+        gobt.target_posx          = fields[2].GetFloat();
+        gobt.target_posy          = fields[3].GetFloat();
+        gobt.target_posz          = fields[4].GetFloat();
+        gobt.target_orientation   = fields[5].GetFloat();
+        gobt.req_level            = fields[6].GetUInt32();
+        gobt.phase                = fields[7].GetUInt32();
+        
+        MapEntry const* mapEntry = sMapStore.LookupEntry(gobt.target_map);
+        if (!mapEntry)
+        {
+            TC_LOG_ERROR("sql.sql", "GameObject Teleport (ID:%u) target map (ID: %u) does not exist in `Map.dbc`.", GOTeleport_ID, gobt.target_map);
+            continue;
+        }
+
+        if (gobt.target_posx == 0 && gobt.target_posy == 0 && gobt.target_posz == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Area trigger (ID:%u) target coordinates not provided.", GOTeleport_ID);
+            continue;
+        }
+
+        _gameObjectTeleportStore[GOTeleport_ID] = gobt;
+
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u area trigger teleport definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}

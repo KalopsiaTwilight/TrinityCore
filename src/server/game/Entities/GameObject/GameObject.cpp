@@ -1777,6 +1777,24 @@ void GameObject::Use(Unit* user)
 
             Player* player = user->ToPlayer();
             
+            const GameObjectTeleport* teleInfo = sObjectMgr->GetGameObjectTeleport(info->miniGame.teleportId);
+            if (!teleInfo)
+            {
+                TC_LOG_ERROR("sql.sql", "Teleport ID for Gameobject (Entry: %u) not found!", GetEntry());
+                return;
+            }
+
+            if ((teleInfo->req_level == 0) || (teleInfo->req_level <= player->getLevel()))
+            {
+                player->TeleportTo(teleInfo->target_map, teleInfo->target_posx, teleInfo->target_posy, teleInfo->target_posz, teleInfo->target_orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
+                if (teleInfo->phase != 0)
+                    player->SetInPhase(teleInfo->phase, true, !player->IsInPhase(teleInfo->phase));
+            }
+            else
+            {
+            }
+
+            /*
             if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
                 {
                     AreaTriggerStruct const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
@@ -1794,7 +1812,7 @@ void GameObject::Use(Unit* user)
             else if (info->miniGame.requiredLevel != 0)
                 {
                 }
-            return;
+            return;*/
         }
 
         case GAMEOBJECT_TYPE_BARBER_CHAIR:                  //32

@@ -538,6 +538,9 @@ typedef std::unordered_map<uint32, PointOfInterestLocale> PointOfInterestLocaleC
 typedef std::multimap<uint32, uint32> QuestRelations;
 typedef std::pair<QuestRelations::const_iterator, QuestRelations::const_iterator> QuestRelationBounds;
 
+// CUSTOM
+typedef std::unordered_map<uint32, GameObjectTeleport> GameObjectTeleportContainer;
+
 struct PetLevelInfo
 {
     PetLevelInfo() : health(0), mana(0), armor(0) { for (uint8 i=0; i < MAX_STATS; ++i) stats[i] = 0; }
@@ -1211,6 +1214,17 @@ class ObjectMgr
         GameObjectData& NewGOData(uint32 guid) { return _gameObjectDataStore[guid]; }
         void DeleteGOData(uint32 guid);
 
+        
+        //CUSTOM
+        void LoadGameObjectTeleport();
+        GameObjectTeleportContainer const* GetGameObjectTeleport() const { return &_gameObjectTeleportStore; }
+        GameObjectTeleport const* GetGameObjectTeleport(uint32 id) const
+        {
+            GameObjectTeleportContainer::const_iterator itr = _gameObjectTeleportStore.find(id);
+            if (itr == _gameObjectTeleportStore.end()) return NULL;
+            return &itr->second;
+        }
+
         TrinityStringLocale const* GetTrinityStringLocale(int32 entry) const
         {
             TrinityStringLocaleContainer::const_iterator itr = _trinityStringLocaleStore.find(entry);
@@ -1513,6 +1527,9 @@ class ObjectMgr
 
         HotfixData _hotfixData;
         std::set<uint32> _transportMaps; // Helper container storing map ids that are for transports only, loaded from gameobject_template
+
+        //CUSTOM
+        GameObjectTeleportContainer _gameObjectTeleportStore;
 };
 
 #define sObjectMgr ACE_Singleton<ObjectMgr, ACE_Null_Mutex>::instance()

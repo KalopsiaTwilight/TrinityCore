@@ -304,10 +304,14 @@ struct GameObjectTemplate
         //27 GAMEOBJECT_TYPE_MINI_GAME
         struct
         {
+            uint32 teleportId;                                //0
+        } miniGame;
+        /*struct -- CUSTOM
+        {
             uint32 areaTrigger;                             //0
             uint32 requiredLevel;                           //1
             uint32 phase;                                   //2
-        } miniGame;
+        } miniGame;*/
         //29 GAMEOBJECT_TYPE_CAPTURE_POINT
         struct
         {
@@ -615,6 +619,21 @@ struct GameObjectData
     uint32 phaseGroup;
     float scale;
     bool dbData;
+};
+
+//CUSTOM - gameobject_teleport
+struct GameObjectTeleport
+{
+    explicit GameObjectTeleport() : id(0), target_map(0), target_posx(0.0f), target_posy(0.0f), target_posz(0.0f), target_orientation(0.0f),
+                                        req_level(0), phase(0) { }
+    uint32 id;
+    uint16 target_map;
+    float target_posx;
+    float target_posy;
+    float target_posz;
+    float target_orientation;
+    uint32 req_level;
+    uint32 phase;
 };
 
 // For containers:  [GO_NOT_READY]->GO_READY (close)->GO_ACTIVATED (open) ->GO_JUST_DEACTIVATED->GO_READY        -> ...

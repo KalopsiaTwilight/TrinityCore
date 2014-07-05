@@ -158,6 +158,7 @@ public:
             { "vehicle_template_accessory",    rbac::RBAC_PERM_COMMAND_RELOAD_VEHICLE_TEMPLATE_ACCESSORY,       true,  &HandleReloadVehicleTemplateAccessoryCommand,   "", NULL },
             // CUSTOM
             { "npc_tele",                      rbac::RBAC_PERM_COMMANDS_RELOAD_NPC_TELE,                        true,  &HandleReloadNPCTeleCommand,                    "", NULL },
+            { "gameobject_teleport",           rbac::RBAC_PERM_COMMANDS_RELOAD_GO_TELEPORT,                     true,  &HandleReloadGOTeleportCommand,                 "", NULL },
             { NULL,                            0,                                                               false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
@@ -1241,6 +1242,14 @@ public:
         TC_LOG_INFO("misc", "Reloading NPC teleport tables...");
         LoadNpcTele();
         handler->SendGlobalGMSysMessage("NPC teleport tables reloaded.");
+        return true;
+    }
+	
+	static bool HandleReloadGOTeleportCommand(ChatHandler* handler, const char* /*args*/)
+	{
+        TC_LOG_INFO("misc", "Reloading gameobject teleport tables...");
+        sObjectMgr->LoadGameObjectTeleport();
+        handler->SendGlobalGMSysMessage("GameObject teleport tables reloaded.");
         return true;
     }
 };
