@@ -1783,36 +1783,18 @@ void GameObject::Use(Unit* user)
                 TC_LOG_ERROR("sql.sql", "Teleport ID for Gameobject (Entry: %u) not found!", GetEntry());
                 return;
             }
-
+            
             if ((teleInfo->req_level == 0) || (teleInfo->req_level <= player->getLevel()))
             {
                 player->TeleportTo(teleInfo->target_map, teleInfo->target_posx, teleInfo->target_posy, teleInfo->target_posz, teleInfo->target_orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
                 if (teleInfo->phase != 0)
                     player->SetInPhase(teleInfo->phase, true, !player->IsInPhase(teleInfo->phase));
             }
-            else
+            else if (teleInfo->req_level != 0)
             {
             }
 
-            /*
-            if ((info->miniGame.requiredLevel == 0) || (info->miniGame.requiredLevel <= player->getLevel()))
-                {
-                    AreaTriggerStruct const* at = sObjectMgr->GetAreaTrigger(info->miniGame.areaTrigger);
-                    if (!at)
-                    {
-                        TC_LOG_ERROR("sql.sql", "AreaTrigger for Gameobject (Entry: %u) not found!", GetEntry());
-                        return;
-                    }
-
-                    player->TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET);
-                    if (info->miniGame.phase != 0)
-                        player->SetInPhase(info->miniGame.phase, true, !player->IsInPhase(info->miniGame.phase));
-                        //player->SetPhaseMask(info->miniGame.phase,true);
-                }
-            else if (info->miniGame.requiredLevel != 0)
-                {
-                }
-            return;*/
+            return;
         }
 
         case GAMEOBJECT_TYPE_BARBER_CHAIR:                  //32

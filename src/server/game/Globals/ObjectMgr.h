@@ -1218,12 +1218,7 @@ class ObjectMgr
         //CUSTOM
         void LoadGameObjectTeleport();
         GameObjectTeleportContainer const* GetGameObjectTeleport() const { return &_gameObjectTeleportStore; }
-        GameObjectTeleport const* GetGameObjectTeleport(uint32 id) const
-        {
-            GameObjectTeleportContainer::const_iterator itr = _gameObjectTeleportStore.find(id);
-            if (itr == _gameObjectTeleportStore.end()) return NULL;
-            return &itr->second;
-        }
+        GameObjectTeleport const* GetGameObjectTeleport(uint32 id);
 
         TrinityStringLocale const* GetTrinityStringLocale(int32 entry) const
         {

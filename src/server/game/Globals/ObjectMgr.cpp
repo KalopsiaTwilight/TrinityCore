@@ -9402,6 +9402,15 @@ PlayerInfo const* ObjectMgr::GetPlayerInfo(uint32 race, uint32 class_) const
     return info;
 }
 
+GameObjectTeleport const* ObjectMgr::GetGameObjectTeleport(uint32 id)
+{
+    GameObjectTeleportContainer::const_iterator itr = _gameObjectTeleportStore.find(id);
+    if (itr != _gameObjectTeleportStore.end())
+        return &(itr->second);
+
+    return NULL;
+}
+
 void ObjectMgr::LoadGameObjectTeleport()
 {
     uint32 oldMSTime = getMSTime();
@@ -9424,7 +9433,7 @@ void ObjectMgr::LoadGameObjectTeleport()
 
         ++count;
 
-        uint32 GOTeleport_ID = fields[0].GetUInt32();
+        uint32 id = fields[0].GetUInt32();
 
         GameObjectTeleport gobt;
 
@@ -9439,19 +9448,19 @@ void ObjectMgr::LoadGameObjectTeleport()
         MapEntry const* mapEntry = sMapStore.LookupEntry(gobt.target_map);
         if (!mapEntry)
         {
-            TC_LOG_ERROR("sql.sql", "GameObject Teleport (ID:%u) target map (ID: %u) does not exist in `Map.dbc`.", GOTeleport_ID, gobt.target_map);
+            TC_LOG_ERROR("sql.sql", "GameObject Teleport (ID:%u) target map (ID: %u) does not exist in `Map.dbc`.", id, gobt.target_map);
             continue;
         }
 
         if (gobt.target_posx == 0 && gobt.target_posy == 0 && gobt.target_posz == 0)
         {
-            TC_LOG_ERROR("sql.sql", "Area trigger (ID:%u) target coordinates not provided.", GOTeleport_ID);
+            TC_LOG_ERROR("sql.sql", "GameObject Teleport (ID:%u) target coordinates not provided.", id);
             continue;
         }
 
-        _gameObjectTeleportStore[GOTeleport_ID] = gobt;
+        _gameObjectTeleportStore[id] = gobt;
 
     } while (result->NextRow());
 
-    TC_LOG_INFO("server.loading", ">> Loaded %u area trigger teleport definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %u gameobject teleport definitions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
