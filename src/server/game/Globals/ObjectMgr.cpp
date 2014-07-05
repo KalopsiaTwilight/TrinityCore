@@ -9409,7 +9409,7 @@ void ObjectMgr::LoadGameObjectTeleport()
     _gameObjectTeleportStore.clear();                                  // need for reload case
 
     //                                               0    1           2                  3                  4                  5                   6          7
-    QueryResult result = WorldDatabase.Query("SELECT id,  target_map, target_position_x, target_position_y, target_position_z, target_orientation, req_level, phase FROM areatrigger_teleport");
+    QueryResult result = WorldDatabase.Query("SELECT id,  target_map, target_position_x, target_position_y, target_position_z, target_orientation, req_level, phase FROM gameobject_teleport");
     if (!result)
     {
         TC_LOG_INFO("server.loading", ">> Loaded 0 gameobject teleport definitions. DB table `gameobject_teleport` is empty.");
