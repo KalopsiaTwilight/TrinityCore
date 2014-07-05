@@ -624,8 +624,6 @@ struct GameObjectData
 //CUSTOM - gameobject_teleport
 struct GameObjectTeleport
 {
-    explicit GameObjectTeleport() : id(0), target_map(0), target_posx(0.0f), target_posy(0.0f), target_posz(0.0f), target_orientation(0.0f),
-                                        req_level(0), phase(0) { }
     uint32 id;
     uint16 target_map;
     float target_posx;
