@@ -1165,7 +1165,10 @@ public:
         if (!creature->IsPet())
         {
             creature->SaveToDB();
-            WorldDatabase.PExecute("UPDATE creature SET phaseId = '%u' WHERE guid = '%u'", phase, creature->GetGUIDLow); // CUSTOM - Temporary
+            if (phase > 1) // CUSTOM - Temporary
+                WorldDatabase.PExecute("UPDATE creature SET phaseId = '%u' WHERE guid = '%u'", phase, creature->GetGUIDLow());
+            else
+                WorldDatabase.PExecute("UPDATE creature SET phaseId = '0' WHERE guid = '%u'", creature->GetGUIDLow());
         }
 
         return true;

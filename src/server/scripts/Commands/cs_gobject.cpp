@@ -570,7 +570,10 @@ public:
         object->SaveToDB();
 
         // CUSTOM - Temporary
-        WorldDatabase.PExecute("UPDATE gameobject SET phaseId = '%u' WHERE guid = '%u'", phaseId, guidLow);
+        if (phaseId > 1)
+            WorldDatabase.PExecute("UPDATE gameobject SET phaseId = '%u' WHERE guid = '%u'", phaseId, guidLow);
+        else
+            WorldDatabase.PExecute("UPDATE gameobject SET phaseId = '0' WHERE guid = '%u'", guidLow);
 
         return true;
     }
