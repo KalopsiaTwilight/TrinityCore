@@ -120,6 +120,9 @@ bool Map::ExistVMap(uint32 mapid, int gx, int gy)
 
 void Map::LoadMMap(int gx, int gy)
 {
+    if (!MMAP::MMapFactory::IsPathfindingEnabled(GetId()))
+        return;
+
     bool mmapLoadResult = MMAP::MMapFactory::createOrGetMMapManager()->loadMap((sWorld->GetDataPath() + "mmaps").c_str(), GetId(), gx, gy);
 
     if (mmapLoadResult)
@@ -130,6 +133,8 @@ void Map::LoadMMap(int gx, int gy)
 
 void Map::LoadVMap(int gx, int gy)
 {
+    if (!VMAP::VMapFactory::createOrGetVMapManager()->isMapLoadingEnabled())
+        return;
                                                             // x and y are swapped !!
     int vmapLoadResult = VMAP::VMapFactory::createOrGetVMapManager()->loadMap((sWorld->GetDataPath()+ "vmaps").c_str(),  GetId(), gx, gy);
     switch (vmapLoadResult)

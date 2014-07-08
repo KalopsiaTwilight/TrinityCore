@@ -6145,31 +6145,6 @@ bool Unit::HandleDummyAuraProc(Unit* victim, uint32 damage, AuraEffect* triggere
                     }
                     break;
                 }
-                // Item - Shaman T10 Elemental 2P Bonus
-                case 70811:
-                {
-                    // Lightning Bolt & Chain Lightning
-                    if (procSpell->SpellFamilyFlags[0] & 0x3)
-                    {
-                        if (ToPlayer()->HasSpellCooldown(16166))
-                        {
-                            uint32 newCooldownDelay = ToPlayer()->GetSpellCooldownDelay(16166);
-                            if (newCooldownDelay < 3)
-                                newCooldownDelay = 0;
-                            else
-                                newCooldownDelay -= 2;
-                            ToPlayer()->AddSpellCooldown(16166, 0, uint32(time(NULL) + newCooldownDelay));
-
-                            WorldPacket data(SMSG_MODIFY_COOLDOWN, 4+8+4);
-                            data << uint32(16166);                  // Spell ID
-                            data << uint64(GetGUID());              // Player GUID
-                            data << int32(-2000);                   // Cooldown mod in milliseconds
-                            ToPlayer()->GetSession()->SendPacket(&data);
-                            return true;
-                        }
-                    }
-                    return false;
-                }
                 // Item - Shaman T10 Elemental 4P Bonus
                 case 70817:
                 {
@@ -6668,7 +6643,8 @@ bool Unit::HandleProcTriggerSpell(Unit* victim, uint32 damage, AuraEffect* trigg
         ? ToPlayer()->GetItemByGuid(triggeredByAura->GetBase()->GetCastItemGUID()) : NULL;
 
     // Try handle unknown trigger spells
-    if (sSpellMgr->GetSpellInfo(trigger_spell_id) == NULL)
+    // triggered spells exists only in serverside spell_dbc
+    /// @todo: reverify and move these spells to spellscripts
     {
         switch (auraSpellInfo->SpellFamilyName)
         {
@@ -13689,7 +13665,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
                     group->SendLooter(creature, NULL);
 
                 // Update round robin looter only if the creature had loot
-                if (!creature->loot.empty())
+                if (!loot->empty())
                     group->UpdateLooterGuid(creature);
             }
         }
@@ -13796,7 +13772,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
             creature->DeleteThreatList();
 
             // must be after setDeathState which resets dynamic flags
-            if (!creature->loot.empty())
+            if (!creature->loot.isLooted())
                 creature->SetFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
             else
                 creature->AllLootRemovedFromCorpse();

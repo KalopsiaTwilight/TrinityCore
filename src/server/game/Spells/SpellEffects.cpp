@@ -531,14 +531,6 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                 }
                 break;
             }
-            case SPELLFAMILY_MAGE:
-            {
-                // Deep Freeze should deal damage to permanently stun-immune targets.
-                if (m_spellInfo->Id == 71757)
-                    if (unitTarget->GetTypeId() != TYPEID_UNIT || !(unitTarget->IsImmunedToSpellEffect(sSpellMgr->GetSpellInfo(44572), 0)))
-                        return;
-                break;
-            }
         }
 
         if (m_originalCaster && damage > 0 && apply_direct_bonus)
@@ -4318,7 +4310,7 @@ void Spell::EffectLeap(SpellEffIndex /*effIndex*/)
         return;
 
     Position pos = destTarget->GetPosition();
-    pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetDistance(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ() + 2.0f), 0.0f);
+    pos = unitTarget->GetFirstCollisionPosition(unitTarget->GetDistance(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ()), 0.0f);
     unitTarget->NearTeleportTo(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation(), unitTarget == m_caster);
 }
 
