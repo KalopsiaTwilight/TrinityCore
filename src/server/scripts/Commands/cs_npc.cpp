@@ -1163,7 +1163,10 @@ public:
         creature->SetInPhase(phase, true, !creature->IsInPhase(phase));
 
         if (!creature->IsPet())
+        {
             creature->SaveToDB();
+            WorldDatabase.PExecute("UPDATE creature SET phaseId = '%u' WHERE guid = '%u'", phase, creature->GetGUIDLow); // CUSTOM - Temporary
+        }
 
         return true;
     }
