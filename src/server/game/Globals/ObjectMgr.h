@@ -184,7 +184,7 @@ struct CreatureOutfit
     uint32 outfit[MAX_CREATURE_OUTFIT_DISPLAYS];
 };
 
-typedef std::unordered_map<uint32, CreatureOutfit > CreatureOutfitContainer;
+typedef std::unordered_map<uint32, CreatureOutfit> CreatureOutfitContainer;
 
 
 enum ScriptsType

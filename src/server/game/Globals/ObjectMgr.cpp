@@ -8034,7 +8034,22 @@ void ObjectMgr::LoadCreatureOutfits()
         co.haircolor    = fields[i++].GetUInt8();
         co.facialhair   = fields[i++].GetUInt8();
         for (uint32 j = 0; j < MAX_CREATURE_OUTFIT_DISPLAYS; ++j)
-            co.outfit[j]    = fields[i+j].GetUInt32();
+        {
+            int32 displayInfo = fields[i + j].GetInt32();
+            if (displayInfo > 0) // entry
+            {
+                ItemTemplate const* proto = sObjectMgr->GetItemTemplate(uint32(displayInfo));
+                if (proto)
+                    co.outfit[j] = proto->DisplayInfoID;
+                else
+                {
+                    TC_LOG_ERROR("server.loading", ">> Creature entry %u in `creature_template_outfits` has invalid item entry %u", entry, uint32(displayInfo));
+                    co.outfit[j] = 0;
+                }
+            }
+            else // display
+                co.outfit[j] = uint32(-displayInfo);
+        }
 
         _creatureOutfitStore[entry] = co;
 

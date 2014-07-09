@@ -159,6 +159,7 @@ public:
             // CUSTOM
             { "npc_tele",                      rbac::RBAC_PERM_COMMANDS_RELOAD_NPC_TELE,                        true,  &HandleReloadNPCTeleCommand,                    "", NULL },
             { "gameobject_teleport",           rbac::RBAC_PERM_COMMANDS_RELOAD_GO_TELEPORT,                     true,  &HandleReloadGOTeleportCommand,                 "", NULL },
+            { "creature_template_outfits",     rbac::RBAC_PERM_COMMAND_RELOAD_CREATURE_TEMPLATE,                true,  &HandleReloadCreatureTemplateOutfitsCommand,    "", NULL },
             { NULL,                            0,                                                               false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =

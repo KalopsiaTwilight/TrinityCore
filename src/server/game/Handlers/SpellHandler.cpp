@@ -631,7 +631,7 @@ void WorldSession::HandleMirrorImageDataRequest(WorldPacket& recvData)
             data << uint8(it->second.hair);         // hair
             data << uint8(it->second.haircolor);    // haircolor
             data << uint8(it->second.facialhair);   // facialhair
-            data << uint32(0);                      // guildId
+            data << uint64(0);                      // guildId
 
             // item displays
             for (uint32 i = 0; i < MAX_CREATURE_OUTFIT_DISPLAYS; ++i)
