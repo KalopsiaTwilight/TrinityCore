@@ -269,7 +269,6 @@ public:
         }
         else
         {
-            printf("TEST %u %u\n", GObjectID, (uint32)isHex);
             if (GameObjectData const* gameObjectData = sObjectMgr->GetGOData(GObjectID))
                 object = ChatHandler(player->GetSession()).GetObjectGlobalyWithGuidOrNearWithDbGuid(GObjectID, gameObjectData->id);
         }
@@ -282,13 +281,15 @@ public:
     static void SendAddonMessage(Player* player, const char* msg)
     {
         WorldPacket* data =  new WorldPacket(); // Needs a custom built packet since TC doesnt send guid
+        const char* prefix = "GOMOVE";
         uint32 messageLength = (uint32)strlen(msg) + 1;
-        data->Initialize(SMSG_MESSAGECHAT, 100);
+        data->Initialize(SMSG_MESSAGECHAT, 150);
         *data << (uint8)CHAT_MSG_SYSTEM;
         *data << LANG_ADDON;
         *data << player->GetGUID();
         *data << uint32(0);
         *data << player->GetGUID();
+        *data << prefix;
         *data << messageLength;
         *data << msg;
         *data << uint8(0);
