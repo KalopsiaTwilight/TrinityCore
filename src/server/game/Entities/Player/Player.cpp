@@ -3898,7 +3898,7 @@ bool Player::addSpell(uint32 spellId, bool active, bool learning, bool dependent
     }
 
     // add dependent skills
-    uint16 maxskill     = GetMaxSkillValueForLevel();
+    uint16 maxskill = GetMaxSkillValueForLevel();
 
     SpellLearnSkillNode const* spellLearnSkill = sSpellMgr->GetSpellLearnSkill(spellId);
 
@@ -3918,6 +3918,20 @@ bool Player::addSpell(uint32 spellId, bool active, bool learning, bool dependent
             skill_max_value = new_skill_max_value;
 
         SetSkill(spellLearnSkill->skill, spellLearnSkill->step, skill_value, skill_max_value);
+    }
+
+    else
+    {
+        // not ranked skills
+        for (SkillLineAbilityMap::const_iterator _spell_idx = skill_bounds.first; _spell_idx != skill_bounds.second; ++_spell_idx)
+        {
+            SkillLineEntry const* pSkill = sSkillLineStore.LookupEntry(_spell_idx->second->skillId);
+            if (!pSkill)
+                continue;
+
+            if (!HasSkill(pSkill->id))
+                LearnDefaultSkill(pSkill->id, 0);
+        }
     }
 
     // learn dependent spells
@@ -25612,7 +25626,8 @@ void Player::_LoadSkills(PreparedQueryResult result)
             SkillRaceClassInfoEntry const* rcEntry = GetSkillRaceClassInfo(skill, getRace(), getClass());
             if (!rcEntry)
             {
-                TC_LOG_ERROR("entities.player", "Character %u has skill %u that does not exist.", GetGUIDLow(), skill);
+                TC_LOG_ERROR("entities.player", "Character: %s (GUID: %u Race: %u Class: %u) has skill %u not allowed for his race/class combination",
+                    GetName().c_str(), GetGUIDLow(), uint32(getRace()), uint32(getClass()), skill);
                 continue;
             }
 
