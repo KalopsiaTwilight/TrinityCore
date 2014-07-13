@@ -1896,12 +1896,12 @@ void IRCCmd::Spell_Player(_CDATA *CD)
             }
             if (_PARAMS[1] == "learn")
             {
-                plr->learnSpell(spell, true);
+                plr->LearnSpell(spell, true);
                 Send_IRCA(ChanOrPM(CD), "\00313["+_PARAMS[0]+"] : Has Learned Spell "+name+".", true, CD->TYPE);
             }
             if (_PARAMS[1] == "unlearn")
             {
-                plr->removeSpell(spell);
+                plr->RemoveSpell(spell);
                 Send_IRCA(ChanOrPM(CD), "\00313["+_PARAMS[0]+"] : Has Unlearned Spell "+name+".", true, CD->TYPE);
             }
         }
