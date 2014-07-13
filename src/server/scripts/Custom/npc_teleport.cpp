@@ -73,7 +73,8 @@ namespace
     {
         player->CastSpell(player, SPELL_VISUAL_TELEPORT, true);
         player->TeleportTo(map, X, Y, Z, orient);
-		player->SetPhaseMask(phase,true);
+        if (phase > 0)
+		    player->SetInPhase(phase, true, !player->IsInPhase(phase));
     }
 
     // Display categories
