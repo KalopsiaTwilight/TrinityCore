@@ -184,9 +184,8 @@ struct CreatureOutfit
     uint32 outfit[MAX_CREATURE_OUTFIT_DISPLAYS];
 };
 
-//typedef std::unordered_map<uint32, CreatureOutfit> CreatureOutfitContainer;
-typedef std::unordered_map<uint8, CreatureOutfit> CreatureOutfitContainerInternal;
-typedef std::unordered_map<uint32, CreatureOutfitContainerInternal> CreatureOutfitContainer;
+typedef std::unordered_map<uint32, CreatureOutfit> CreatureOutfitContainer;
+
 
 enum ScriptsType
 {
@@ -1267,22 +1266,7 @@ class ObjectMgr
         bool AddGameTele(GameTele& data);
         bool DeleteGameTele(std::string const& name);
 
-        //CreatureOutfitContainer* GetCreatureOutfitMap() { return &_creatureOutfitStore; }
-        CreatureOutfit* GetCreatureOutfitMap(uint32 entry)
-        {
-            CreatureOutfitContainer::const_iterator itr = _creatureOutfitStore.find(entry);
-            if (itr == _creatureOutfitStore.end())
-                return NULL;
-
-            if (itr->second.empty())
-                return NULL;
-
-            CreatureOutfitContainerInternal::const_iterator ritr = itr->second.begin();
-            std::advance(ritr, urand(0u, itr->second.size() - 1));
-            uint8 id = std::distance(itr->second.begin(), ritr) + 1;
-
-            return &_creatureOutfitStore[entry][id]; 
-        }
+        CreatureOutfitContainer* GetCreatureOutfitMap() { return &_creatureOutfitStore; }
 
         TrainerSpellData const* GetNpcTrainerSpells(uint32 entry) const
         {
