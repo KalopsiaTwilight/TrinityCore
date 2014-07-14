@@ -8032,9 +8032,9 @@ void ObjectMgr::LoadCreatureOutfits()
 
     _creatureOutfitStore.clear();                           // for reload case (test only)
 
-    //                                                 0     1      2      3     4     5       6           7
-    QueryResult result = WorldDatabase.Query("SELECT entry, race, gender, skin, face, hair, haircolor, facialhair, "
-        //8       9        10    11     12     13    14     15     16     17     18
+    //                                                 0    1   2     3       4     5     6     7          8
+    QueryResult result = WorldDatabase.Query("SELECT entry, id, race, gender, skin, face, hair, haircolor, facialhair, "
+       //9     10         11    12     13     14    15    16      17     18    19
         "head, shoulders, body, chest, waist, legs, feet, wrists, hands, back, tabard FROM creature_template_outfits");
 
     if (!result)
@@ -8058,7 +8058,11 @@ void ObjectMgr::LoadCreatureOutfits()
             continue;
         }
 
-        CreatureOutfit co; // const, shouldnt be changed after saving
+        uint8 id = fields[i++].GetUInt8();
+
+        //CreatureOutfit co; // const, shouldnt be changed after saving
+        CreatureOutfit co = _creatureOutfitStore[entry][id]; // const, shouldnt be changed after saving
+
         co.race         = fields[i++].GetUInt8();
         const ChrRacesEntry* rEntry = sChrRacesStore.LookupEntry(co.race);
         if (!rEntry)
@@ -8104,15 +8108,13 @@ void ObjectMgr::LoadCreatureOutfits()
                 co.outfit[j] = uint32(-displayInfo);
         }
 
-        _creatureOutfitStore[entry] = co;
-
+        _creatureOutfitStore[entry][id] = co;
         ++count;
     }
     while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %u creature outfits in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
-
 
 void ObjectMgr::LoadGameTele()
 {
