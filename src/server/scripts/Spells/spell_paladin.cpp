@@ -1120,7 +1120,7 @@ class spell_pal_templar_s_verdict : public SpellScriptLoader
                     switch (caster->GetPower(POWER_HOLY_POWER))
                     {
                         case 0: // 1 Holy Power
-                            damage = damage;
+                            // same damage
                             break;
                         case 1: // 2 Holy Power
                             damage *= 3;    // 3*30 = 90%
@@ -1165,7 +1165,7 @@ class spell_pal_seal_of_righteousness : public SpellScriptLoader
 
             bool CheckProc(ProcEventInfo& eventInfo)
             {
-                return eventInfo.GetProcTarget();
+                return eventInfo.GetProcTarget() != nullptr;
             }
 
             void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
