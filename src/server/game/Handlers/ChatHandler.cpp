@@ -479,7 +479,6 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 }
             }
 
-            sIRC.Send_WoW_IRC(sender, channel, msg);
             if (ChannelMgr* cMgr = ChannelMgr::forTeam(sender->GetTeam()))
             {
                 if (Channel* chn = cMgr->GetChannel(channel, sender))

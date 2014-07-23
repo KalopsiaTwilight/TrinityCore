@@ -82,7 +82,6 @@ enum WorldTimers
     WUPDATE_EVENTS,
     WUPDATE_CLEANDB,
     WUPDATE_AUTOBROADCAST,
-    WUPDATE_AUTOANC,
     WUPDATE_MAILBOXQUEUE,
     WUPDATE_DELETECHARS,
     WUPDATE_PINGDB,
@@ -555,7 +554,6 @@ class World
         void AddSession(WorldSession* s);
         void SendAutoBroadcast();
         bool RemoveSession(uint32 id);
-        void SendRNDBroadcastIRC();
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
         const SessionMap& GetAllSessions() const { return m_sessions; }

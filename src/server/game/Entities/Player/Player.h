@@ -2900,9 +2900,6 @@ class Player : public Unit, public GridObject<Player>
 
         uint32 _activeCheats;
         uint32 _maxPersonalArenaRate;
-        
-    public:
-        QuestStatusSaveMap m_RewardedQuestsSave2;
 };
 
 void AddItemsSetItem(Player* player, Item* item);

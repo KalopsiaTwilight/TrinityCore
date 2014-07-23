@@ -719,12 +719,13 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_SERVER_EMOTE                           = 1033,
     RBAC_PERM_COMMANDS_RELOAD_NPC_TELE                       = 1034,
     RBAC_PERM_COMMAND_CHARACTER_ACCOUNT                      = 1035,
-    RBAC_PERM_COMMAND_TCRECON                                = 1036,
+    //RBAC_PERM_COMMAND_TCRECON                                = 1036, REUSE
     RBAC_PERM_COMMAND_PET_SCALE                              = 1037,
     RBAC_PERM_COMMAND_REFRESH                                = 1038,
     RBAC_PERM_COMMAND_LFRP                                   = 1039,
     RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER                       = 1040,
     RBAC_PERM_COMMANDS_RELOAD_GO_TELEPORT                    = 1041,
+    // REUSE 1022 and 1036 first!
 
     RBAC_PERM_MAX
 };

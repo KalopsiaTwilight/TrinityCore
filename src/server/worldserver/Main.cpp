@@ -47,7 +47,6 @@
 #include "WorldSocket.h"
 
 using namespace boost::program_options;
-#include "../TriniChat/IRCClient.h"
 
 #ifndef _TRINITY_CORE_CONFIG
     #define _TRINITY_CORE_CONFIG  "worldserver.conf"

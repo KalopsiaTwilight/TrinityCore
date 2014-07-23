@@ -20,7 +20,6 @@
 #define TRINITYCORE_CHAT_H
 
 #include "SharedDefines.h"
-#include "../TriniChat/IRCClient.h"
 #include "WorldSession.h"
 #include "RBAC.h"
 
