@@ -383,12 +383,12 @@ public:
                 return false;
             }
 
-            uint32 maxStack = uint32(strtoul(param2, NULL, 0));
-            if (maxStack < 0)
-            {
-                 handler->PSendSysMessage("maxstack can't be a negative number.");
-                return false;
-            }
+            //uint32 maxStack = uint32(strtoul(param2, NULL, 0));
+            //if (maxStack < 0)
+            //{
+            //     handler->PSendSysMessage("maxstack can't be a negative number.");
+            //    return false;
+            //}
 
             if (strncmp(param1, "grey",l) == 0)
                 auctionbot->Commands(10, ahMapID, AHB_GREY, param2);
