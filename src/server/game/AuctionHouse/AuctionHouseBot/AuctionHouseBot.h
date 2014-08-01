@@ -1229,13 +1229,20 @@ private:
     void addNewAuctions(Player *AHBplayer, AHBConfig *config);
     void addNewAuctionBuyerBotBid(Player *AHBplayer, AHBConfig *config, WorldSession *session);
 
-    friend class ACE_Singleton<AuctionHouseBot, ACE_Null_Mutex>;
+    //friend class ACE_Singleton<AuctionHouseBot, ACE_Null_Mutex>;
     AuctionHouseBot();
 
 public:
+    static AuctionHouseBot* instance()
+    {
+        static AuctionHouseBot* instance = new AuctionHouseBot();
+        return instance;
+    }
+
     ~AuctionHouseBot();
     void Update();
     void Initialize();
+    void InitializeConfiguration();
     void LoadValues(AHBConfig*);
     void DecrementItemCounts(AuctionEntry* ah, uint32 itemEntry);
     void IncrementItemCounts(AuctionEntry* ah);
@@ -1243,6 +1250,6 @@ public:
     uint32 GetAHBplayerGUID() { return AHBplayerGUID; };
 };
 
-#define auctionbot (*ACE_Singleton<AuctionHouseBot, ACE_Null_Mutex>::instance())
+#define auctionbot AuctionHouseBot::instance()
 
 #endif

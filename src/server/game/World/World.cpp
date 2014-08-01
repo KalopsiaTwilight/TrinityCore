@@ -1832,7 +1832,7 @@ void World::SetInitialWorldSettings()
     LoadCharacterNameData();
 
     TC_LOG_INFO("server.loading", "Initialize AuctionHouseBot...");
-    auctionbot.Initialize();
+    auctionbot->Initialize();
     
     uint32 startupDuration = GetMSTimeDiffToNow(startupBegin);
 
@@ -2011,7 +2011,7 @@ void World::Update(uint32 diff)
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
     {
-        auctionbot.Update();
+        auctionbot->Update();
         m_timers[WUPDATE_AUCTIONS].Reset();
 
         ///- Update mails (return old mails with item, or delete them)

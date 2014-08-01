@@ -700,12 +700,12 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_MODIFY_BYTES2                          = 1014,
     RBAC_PERM_COMMAND_NPC_SET_DYNFLAGS                       = 1015,
     RBAC_PERM_COMMAND_NPC_SET_UNITFLAGS                      = 1016,
-    //RBAC_PERM_COMMAND_NPC_EMOTE                              = 1017, REUSE
+    //Role: Overseer                                         = 1017,
     RBAC_PERM_COMMAND_NPC_RETURN                             = 1018,
     RBAC_PERM_COMMAND_NPC_SCALE                              = 1019,
     RBAC_PERM_COMMAND_NPC_FACTION                            = 1020,
     RBAC_PERM_COMMAND_NPC_ATTACK                             = 1021,
-    //RBAC_PERM_COMMAND_NPC_FACTION                            = 1022, REUSE
+    //RBAC_PERM_COMMAND_NPC_FACTION                          = 1022, REUSE
     RBAC_PERM_COMMAND_ADDRPITEM                              = 1023,
     RBAC_PERM_COMMAND_TAXI                                   = 1024,
     RBAC_PERM_COMMAND_SCALE                                  = 1025,
@@ -718,6 +718,13 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_MOUNT                                  = 1032,
     RBAC_PERM_COMMAND_SERVER_EMOTE                           = 1033,
     RBAC_PERM_COMMANDS_RELOAD_NPC_TELE                       = 1034,
+    RBAC_PERM_COMMAND_CHARACTER_ACCOUNT                      = 1035, // 4.3.4
+    RBAC_PERM_COMMAND_TCRECON                                = 1036, // 4.3.4
+    RBAC_PERM_COMMAND_PET_SCALE                              = 1037, // 4.3.4
+    RBAC_PERM_COMMAND_REFRESH                                = 1038, // 4.3.4
+    RBAC_PERM_COMMAND_LFRP                                   = 1039, // 4.3.4
+    RBAC_PERM_COMMAND_LFRP_CLEAR_OTHER                       = 1040, // 4.3.4
+    RBAC_PERM_COMMANDS_RELOAD_GO_TELEPORT                    = 1041,
 
     RBAC_PERM_MAX
 };

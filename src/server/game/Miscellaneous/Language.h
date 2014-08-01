@@ -1172,7 +1172,7 @@ enum TrinityStrings
     LANG_BAN_ACCOUNT_YOUPERMBANNEDMESSAGE_WORLD   = 11007,
 
     LANG_NPCINFO_INHABIT_TYPE                     = 11008,
-    LANG_NPCINFO_FLAGS_EXTRA                      = 11009
+    LANG_NPCINFO_FLAGS_EXTRA                      = 11009,
 
     // CUSTOM
     LANG_COMMAND_RPITEMIDINVALID        = 11900,
@@ -1206,6 +1206,28 @@ enum TrinityStrings
     LANG_BAD_SCALE_VALUE_RACE           = 11928,
     LANG_BAD_SCALE_VALUE_LOCKED         = 11929,
     LANG_CUSTOM_SCALE_CREATE            = 11930,
+    LANG_CHARACTER_ITEMLIST_SLOT        = 11931, // 4.3.4
+    LANG_CHARACTER_ITEMLIST_MAIL        = 11932, // 4.3.4
+    LANG_CHARACTER_ITEMLIST_AUCTION     = 11933, // 4.3.4
+    LANG_COMMAND_CHAR_LISTITEMMESSAGE   = 11934, // 4.3.4
+    LANG_CUSTOM_SCALE_CURRENT           = 11935, // 4.3.4
+    LANG_RESTRICTED_OBJECT              = 11936, // 4.3.4
+    LANG_GAMEOBJECT_INVALID_DATA_CUSTOM = 11937, // 4.3.4
+    LANG_CHAR_ACCOUNT_CHAR_NOT_FOUND    = 11938, // 4.3.4
+    LANG_CHAR_ACCOUNT_CHANGED           = 11939, // 4.3.4
+    LANG_IRC_SYSTEMMSG                  = 11940, // 4.3.4
+    LANG_IRC_SERVEREVENT                = 11941, // 4.3.4
+    LANG_IRC_AUTOANNOUNCE               = 11942, // 4.3.4
+    LANG_NPCINFO_NAME                   = 11943, // 4.3.4
+    LANG_LFRP_CURRENTENTRY              = 11944, // 4.3.4
+    LANG_LFRP_NOCURRENTENTRY            = 11945, // 4.3.4
+    LANG_LFRP_CLEAR                     = 11946, // 4.3.4
+    LANG_LFRP_CLEAR_OTHER               = 11947, // 4.3.4
+    LANG_LFRP_NEWENTRY                  = 11948, // 4.3.4
+    LANG_LFRP_LIST_ENTRY                = 11949, // 4.3.4
+    LANG_LFRP_LIST_COUNT_ONLINE         = 11950, // 4.3.4
+    LANG_LFRP_LIST_ENTRY_START          = 11951, // 4.3.4
+    LANG_LFRP_LIST_COUNT_TOTAL          = 11952, // 4.3.4
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

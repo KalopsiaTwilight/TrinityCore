@@ -98,7 +98,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(0, ahMapID, NULL, NULL);
+            auctionbot->Commands(0, ahMapID, NULL, NULL);
         }
         else if (strncmp(opt, "minitems", l) == 0)
         {
@@ -109,7 +109,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(1, ahMapID, NULL, param1);
+            auctionbot->Commands(1, ahMapID, NULL, param1);
         }
         else if (strncmp(opt, "maxitems", l) == 0)
         {
@@ -120,7 +120,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(2, ahMapID, NULL, param1);
+            auctionbot->Commands(2, ahMapID, NULL, param1);
         }
         else if (strncmp(opt, "mintime", l) == 0)
         {
@@ -134,7 +134,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(3, ahMapID, NULL, param1);
+            auctionbot->Commands(3, ahMapID, NULL, param1);
             */
         }
         else if (strncmp(opt, "maxtime", l) == 0)
@@ -149,7 +149,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(4, ahMapID, NULL, param1);
+            auctionbot->Commands(4, ahMapID, NULL, param1);
             */
         }
         else if (strncmp(opt, "percentages", l) == 0)
@@ -234,7 +234,7 @@ public:
             strcat(param, param13);
             strcat(param, " ");
             strcat(param, param14);
-            auctionbot.Commands(5, ahMapID, NULL, param);
+            auctionbot->Commands(5, ahMapID, NULL, param);
         }
         else if (strncmp(opt, "minprice", l) == 0)
         {
@@ -248,19 +248,19 @@ public:
             }
 
             if (strncmp(param1, "grey", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(6, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(6, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(6, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(6, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(6, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, "orange", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(6, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(6, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(6, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions minprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
@@ -277,19 +277,19 @@ public:
                 return false;
             }
             if (strncmp(param1, "grey", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(7, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(7, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(7, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(7, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(7, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, "orange",l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(7, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(7, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(7, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
@@ -315,19 +315,19 @@ public:
             }
 
             if (strncmp(param1, "grey", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(8, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(8, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(8, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(8, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(8, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, "orange", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(8, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(8, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(8, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions minbidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
@@ -353,19 +353,19 @@ public:
             }
 
             if (strncmp(param1, "grey", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(9, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(9, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(9, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(9, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(9, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, " orange", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(9, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(9, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(9, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions max bidprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $price");
@@ -391,19 +391,19 @@ public:
             }
 
             if (strncmp(param1, "grey",l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(10, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(10, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(10, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(10, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(10, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, "orange", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(10, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(10, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(10, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions maxstack $ahMapID (2, 6 or 7) $color (grey, white, green, blue, purple, orange or yellow) $value");
@@ -422,19 +422,19 @@ public:
             }
 
             if (strncmp(param1, "grey", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_GREY, param2);
+                auctionbot->Commands(11, ahMapID, AHB_GREY, param2);
             else if (strncmp(param1, "white", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_WHITE, param2);
+                auctionbot->Commands(11, ahMapID, AHB_WHITE, param2);
             else if (strncmp(param1, "green", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_GREEN, param2);
+                auctionbot->Commands(11, ahMapID, AHB_GREEN, param2);
             else if (strncmp(param1, "blue", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_BLUE, param2);
+                auctionbot->Commands(11, ahMapID, AHB_BLUE, param2);
             else if (strncmp(param1, "purple", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_PURPLE, param2);
+                auctionbot->Commands(11, ahMapID, AHB_PURPLE, param2);
             else if (strncmp(param1, "orange", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_ORANGE, param2);
+                auctionbot->Commands(11, ahMapID, AHB_ORANGE, param2);
             else if (strncmp(param1, "yellow", l) == 0)
-                auctionbot.Commands(11, ahMapID, AHB_YELLOW, param2);
+                auctionbot->Commands(11, ahMapID, AHB_YELLOW, param2);
             else
             {
                 handler->PSendSysMessage("Syntax is: ahbotoptions buyerprice $ahMapID (2, 6 or 7) $color (grey, white, green, blue or purple) $price");
@@ -451,7 +451,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(12, ahMapID, NULL, param1);
+            auctionbot->Commands(12, ahMapID, NULL, param1);
         }
         else if (strncmp(opt, "bidsperinterval", l) == 0)
         {
@@ -463,7 +463,7 @@ public:
                 return false;
             }
 
-            auctionbot.Commands(13, ahMapID, NULL, param1);
+            auctionbot->Commands(13, ahMapID, NULL, param1);
         }
         else
         {
