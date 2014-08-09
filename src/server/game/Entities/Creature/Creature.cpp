@@ -965,10 +965,6 @@ void Creature::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
             displayId == cinfo->Modelid3 || displayId == cinfo->Modelid4)
             displayId = 0;
 
-        // Avoid bug when reloading and then saving a creature causing invalid modelID to save
-        if (GetUInt32Value(UNIT_FIELD_FLAGS_2) & UNIT_FLAG2_MIRROR_IMAGE)
-            displayId = 0;
-
         if (npcflag == cinfo->npcflag)
             npcflag = 0;
 
