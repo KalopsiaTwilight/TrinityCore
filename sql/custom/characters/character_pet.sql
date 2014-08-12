@@ -1,0 +1,2 @@
+ALTER TABLE `character_pet`
+  ADD `scale` FLOAT UNSIGNED NOT NULL DEFAULT '0';
