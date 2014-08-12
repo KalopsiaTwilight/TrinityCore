@@ -2939,12 +2939,11 @@ public:
         const uint32 XRAY_AURA = 54844;
         
         _player->AddAura(XRAY_AURA, _player);
-        _player->UpdateObjectVisibility();
-
-        if (_player->HasAura(XRAY_AURA, 0))
-            _player->RemoveAurasDueToSpell(XRAY_AURA);
+        Aura* XRayAura = _player->GetAura(XRAY_AURA);
         
-        _player->UpdateObjectVisibility();
+        XRayAura->SetMaxDuration(int32(150));
+        XRayAura->SetDuration(int32(150));
+        handler->PSendSysMessage(LANG_REFRESH);
         return true;
     }
 };
