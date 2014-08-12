@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS `creature_template_outfits` (
   `wrists` int(10) NOT NULL DEFAULT '0',
   `hands` int(10) NOT NULL DEFAULT '0',
   `back` int(10) NOT NULL DEFAULT '0',
-  `tabard` int(10) NOT NULL DEFAULT '0'
+  `tabard` int(10) NOT NULL DEFAULT '0',
+  `comment` text NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Use positive values for item entries and negative to use item displayid for head, shoulders etc.';
 
 ALTER TABLE `creature_template_outfits`
