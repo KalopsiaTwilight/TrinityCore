@@ -1090,7 +1090,7 @@ public:
             if (chr)
             {
                 uint32 factionid = chr->getFaction();
-                handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName(),factionid);
+                handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName().c_str(),factionid);
             }
             return true;
         }
@@ -1116,7 +1116,7 @@ public:
 
             if (factionid > 2)
             {
-                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName().c_str(),factionid);
 
                 chr->setFaction(factionid);
                 QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET faction='%u' WHERE guid='%u'", factionid, handler->getSelectedPlayer()->GetGUIDLow());
@@ -1125,7 +1125,7 @@ public:
             }
             else
             {
-                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+                handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName().c_str(),factionid);
 
                 chr->setFaction(factionid);
                 QueryResult result = CharacterDatabase.PQuery("UPDATE characters_addon SET faction='0' WHERE guid='%u'", handler->getSelectedPlayer()->GetGUIDLow());
@@ -1136,7 +1136,7 @@ public:
 
         else
         {
-            handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName(),factionid);
+            handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER_PERM, chr->GetName().c_str(),factionid);
 
             chr->setFaction(factionid);
             CharacterDatabase.PExecute("INSERT INTO characters_addon(guid,faction) VALUES ('%u','%u')", handler->getSelectedPlayer()->GetGUIDLow(), factionid);
