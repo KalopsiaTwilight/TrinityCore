@@ -2660,14 +2660,14 @@ public:
 
         uint8 chrLevel = handler->GetSession()->GetPlayer()->getLevel();
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed, scale_unlocked FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
+        QueryResult result = CharacterDatabase.PQuery("SELECT scale, scale_times_changed FROM characters_addon WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUIDLow());
         if(result)
         {
             Field* fields = result->Fetch();
 
             float customScale = fields[0].GetFloat();
             uint8 scaleTimesChanged = fields[1].GetUInt8();
-            uint8 scaleUnlocked = fields[2].GetUInt8();
+            //uint8 scaleUnlocked = fields[2].GetUInt8();
 
             if (scaleTimesChanged < 10)
             {
@@ -2869,7 +2869,7 @@ public:
         return true;
     }
 
-    static bool HandleMassSummonCommand(ChatHandler* handler, char const* args)
+    static bool HandleMassSummonCommand(ChatHandler* handler, char const* /*args*/)
     {
         Player* target = handler->GetSession()->GetPlayer();
         uint64 guid = target->GetGUID();
@@ -2879,10 +2879,6 @@ public:
         uint32 zone = target->GetZoneId();
         float orient = target->GetOrientation();
         uint32 phase = target->GetPhaseMask();
-
-        //handler->GetSession()->GetPlayer()->GetClosePoint(x, y, z, target->GetObjectSize());
-        //target->TeleportTo(handler->GetSession()->GetPlayer()->GetMapId(), x, y, z, target->GetOrientation());
-        //target->SetPhaseMask(handler->GetSession()->GetPlayer()->GetPhaseMask(), true);
 
         sWorld->MassSummon(guid, mapId, x, y, z, zone, orient, phase);
 

@@ -1741,7 +1741,7 @@ public:
     // CUSTOM
     
 
-    static bool HandleNpcReturnCommand(ChatHandler* handler, const char* args)
+    static bool HandleNpcReturnCommand(ChatHandler* handler, const char* /*args*/)
     {
         Creature* pCreature = handler->getSelectedCreature();
         if (!pCreature)

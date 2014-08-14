@@ -1025,9 +1025,6 @@ public:
     //Edit REAL Player Faction
     static bool HandleCharacterFactionCommand(ChatHandler* handler, char const* args)
     {
-        if (!*args)
-            return false;
-
         char* pfactionid = handler->extractKeyFromLink((char*)args,"Hfaction");
 
 	    Player *chr = handler->getSelectedPlayer();
@@ -1041,12 +1038,9 @@ public:
 
         if (!pfactionid)
         {
-            if (chr)
-            {
-                uint32 factionid = chr->getFaction();
-                uint32 flag      = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
-                handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName(),factionid,flag);
-            }
+            uint32 factionid = chr->getFaction();
+            uint32 flag      = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
+            handler->PSendSysMessage(LANG_CURRENT_FACTION_PLAYER,chr->GetName().c_str(),factionid,flag);
             return true;
         }
 

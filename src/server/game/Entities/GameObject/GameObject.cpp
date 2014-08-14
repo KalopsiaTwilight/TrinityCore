@@ -215,7 +215,6 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 /*phase
 
     UpdateRotationFields(rotation2, rotation3);              // GAMEOBJECT_FACING, GAMEOBJECT_ROTATION, GAMEOBJECT_PARENTROTATION+2/3
 
-    GameObjectData const* data = sObjectMgr->GetGOData(guidlow);
     if (scale > 0)
         SetObjectScale(scale);
     else

@@ -308,7 +308,7 @@ public:
         }
 
         bool found = false;
-        float x, y, z, o, scale;
+        float x, y, z, o, scale = 0;
         uint32 guidLow, id, phase;
         uint16 mapId;
         uint32 poolId;
@@ -348,7 +348,7 @@ public:
         if (target)
             scale = target->GetObjectScale();
         
-        if (!scale)
+        if (scale == 0)
         {
             handler->PSendSysMessage(LANG_GOINFO_SCALE_ERROR);
             return false;
