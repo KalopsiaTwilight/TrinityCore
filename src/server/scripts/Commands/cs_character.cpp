@@ -1333,7 +1333,7 @@ public:
         }
 
         //handler->PSendSysMessage(LANG_COMMAND_LISTITEMMESSAGE, itemId, inventoryCount + mailCount + auctionCount + guildCount, inventoryCount, mailCount, auctionCount, guildCount);
-        handler->PSendSysMessage(LANG_COMMAND_CHAR_LISTITEMMESSAGE, targetName, inventoryCount + mailCount + auctionCount, inventoryCount, mailCount, auctionCount);
+        handler->PSendSysMessage(LANG_COMMAND_CHAR_LISTITEMMESSAGE, targetName.c_str(), inventoryCount + mailCount + auctionCount, inventoryCount, mailCount, auctionCount);
 
         return true;
     }
