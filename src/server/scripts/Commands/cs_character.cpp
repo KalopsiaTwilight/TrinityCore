@@ -1060,7 +1060,7 @@ public:
             return false;
         }
 
-        handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER, chr->GetName(),factionid,flag);
+        handler->PSendSysMessage(LANG_YOU_CHANGE_FACTION_PLAYER, chr->GetName().c_str(),factionid,flag);
 
         chr->setFaction(factionid);
         chr->SetUInt32Value(UNIT_FIELD_FLAGS,flag);

@@ -3386,7 +3386,7 @@ void World::MassUnauraAll()
     }
 }
 
-void World::MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone, float orient, uint32 phase)
+void World::MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone)
 {
     for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
     {

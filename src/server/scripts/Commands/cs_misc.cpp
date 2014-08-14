@@ -2877,10 +2877,8 @@ public:
         target->GetPosition(x, y, z);
         uint32 mapId = target->GetMapId();
         uint32 zone = target->GetZoneId();
-        float orient = target->GetOrientation();
-        uint32 phase = target->GetPhaseMask();
 
-        sWorld->MassSummon(guid, mapId, x, y, z, zone, orient, phase);
+        sWorld->MassSummon(guid, mapId, x, y, z, zone);
 
         return true;
     }
