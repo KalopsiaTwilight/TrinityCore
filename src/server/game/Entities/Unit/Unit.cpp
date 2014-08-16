@@ -12794,6 +12794,10 @@ int32 Unit::ModSpellDuration(SpellInfo const* spellProto, Unit const* target, in
     if (duration < 0)
         return duration;
 
+    // some auras are not affected by duration modifiers
+    if (spellProto->AttributesEx7 & SPELL_ATTR7_IGNORE_DURATION_MODS)
+        return duration;
+
     // cut duration only of negative effects
     if (!positive)
     {
@@ -13611,7 +13615,7 @@ void Unit::DeleteCharmInfo()
 }
 
 CharmInfo::CharmInfo(Unit* unit)
-: _unit(unit), _CommandState(COMMAND_FOLLOW), _petnumber(0), _barInit(false), _oldReactState(REACT_PASSIVE),
+: _unit(unit), _CommandState(COMMAND_FOLLOW), _petnumber(0), _oldReactState(REACT_PASSIVE),
   _isCommandAttack(false), _isCommandFollow(false), _isAtStay(false), _isFollowing(false), _isReturning(false),
   _stayX(0.0f), _stayY(0.0f), _stayZ(0.0f)
 {
@@ -13997,7 +14001,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* target, uint32 procFlag, u
             // On melee based hit/miss/resist need update skill (for victim and attacker)
             if (procExtra & (PROC_EX_NORMAL_HIT|PROC_EX_MISS|PROC_EX_RESIST))
             {
-                if (target->GetTypeId() != TYPEID_PLAYER && target->GetCreatureType() != CREATURE_TYPE_CRITTER)
+                if (target->GetTypeId() != TYPEID_PLAYER && !target->IsCritter())
                     ToPlayer()->UpdateCombatSkills(target, attType, isVictim);
             }
             // Update defence if player is victim and parry/dodge/block
@@ -14661,7 +14665,7 @@ Unit* Unit::SelectNearbyTarget(Unit* exclude, float dist) const
     // remove not LoS targets
     for (std::list<Unit*>::iterator tIter = targets.begin(); tIter != targets.end();)
     {
-        if (!IsWithinLOSInMap(*tIter) || (*tIter)->IsTotem() || (*tIter)->IsSpiritService() || (*tIter)->GetCreatureType() == CREATURE_TYPE_CRITTER)
+        if (!IsWithinLOSInMap(*tIter) || (*tIter)->IsTotem() || (*tIter)->IsSpiritService() || (*tIter)->IsCritter())
             targets.erase(tIter++);
         else
             ++tIter;
@@ -15254,8 +15258,6 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
         if (creature)
         {
             Loot* loot = &creature->loot;
-            if (creature->loot.loot_type == LOOT_PICKPOCKETING)
-                creature->ResetPickPocketRefillTimer();
 
             loot->clear();
             if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
@@ -15284,7 +15286,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
         if (Unit* owner = GetOwner())
             owner->ProcDamageAndSpell(victim, PROC_FLAG_KILL, PROC_FLAG_NONE, PROC_EX_NONE, 0);
 
-    if (victim->GetCreatureType() != CREATURE_TYPE_CRITTER)
+    if (!victim->IsCritter())
         ProcDamageAndSpell(victim, PROC_FLAG_KILL, PROC_FLAG_KILLED, PROC_EX_NONE, 0);
 
     // Proc auras on death - must be before aura/combat remove
