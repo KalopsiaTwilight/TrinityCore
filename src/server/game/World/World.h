@@ -84,6 +84,7 @@ enum WorldTimers
     WUPDATE_AUTOBROADCAST,
     WUPDATE_MAILBOXQUEUE,
     WUPDATE_DELETECHARS,
+    WUPDATE_AHBOT,
     WUPDATE_PINGDB,
     WUPDATE_GUILDSAVE,
     WUPDATE_COUNT
@@ -130,6 +131,7 @@ enum WorldBoolConfigs
     CONFIG_BATTLEGROUND_CAST_DESERTER,
     CONFIG_BATTLEGROUND_QUEUE_ANNOUNCER_ENABLE,
     CONFIG_BATTLEGROUND_QUEUE_ANNOUNCER_PLAYERONLY,
+    CONFIG_BATTLEGROUND_STORE_STATISTICS_ENABLE,
     CONFIG_BG_XP_FOR_KILL,
     CONFIG_ARENA_QUEUE_ANNOUNCER_ENABLE,
     CONFIG_ARENA_QUEUE_ANNOUNCER_PLAYERONLY,
@@ -353,6 +355,7 @@ enum WorldIntConfigs
     CONFIG_BG_REWARD_WINNER_CONQUEST_FIRST,
     CONFIG_BG_REWARD_WINNER_CONQUEST_LAST,
     CONFIG_CREATURE_PICKPOCKET_REFILL,
+    CONFIG_AHBOT_UPDATE_INTERVAL,
     INT_CONFIG_VALUE_COUNT
 };
 
@@ -658,9 +661,9 @@ class World
         /// Are we in the middle of a shutdown?
         bool IsShuttingDown() const { return m_ShutdownTimer > 0; }
         uint32 GetShutDownTimeLeft() const { return m_ShutdownTimer; }
-        void ShutdownServ(uint32 time, uint32 options, uint8 exitcode);
+        void ShutdownServ(uint32 time, uint32 options, uint8 exitcode, const std::string& reason = std::string());
         void ShutdownCancel();
-        void ShutdownMsg(bool show = false, Player* player = NULL);
+        void ShutdownMsg(bool show = false, Player* player = NULL, const std::string& reason = std::string());
         static uint8 GetExitCode() { return m_ExitCode; }
         static void StopNow(uint8 exitcode) { m_stopEvent = true; m_ExitCode = exitcode; }
         static bool IsStopped() { return m_stopEvent; }

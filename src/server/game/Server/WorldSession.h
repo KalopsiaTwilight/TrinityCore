@@ -431,7 +431,10 @@ class WorldSession
         void HandleMoveUnRootAck(WorldPacket& recvPacket);
         void HandleMoveRootAck(WorldPacket& recvPacket);
         void HandleLookingForGroup(WorldPacket& recvPacket);
+
+        // cemetery/graveyard related
         void HandleReturnToGraveyard(WorldPacket& recvPacket);
+        void HandleRequestCemeteryList(WorldPacket& recvPacket);
 
         // new inspect
         void HandleInspectOpcode(WorldPacket& recvPacket);
@@ -580,6 +583,7 @@ class WorldSession
         void HandleGuildAssignRankOpcode(WorldPacket& recvPacket);
         void HandleGuildLeaveOpcode(WorldPacket& recvPacket);
         void HandleGuildDisbandOpcode(WorldPacket& recvPacket);
+        void HandleGuildSetAchievementTracking(WorldPacket& recvPacket);
         void HandleGuildSetGuildMaster(WorldPacket& recvPacket);
         void HandleGuildMOTDOpcode(WorldPacket& recvPacket);
         void HandleGuildNewsUpdateStickyOpcode(WorldPacket& recvPacket);
@@ -592,6 +596,7 @@ class WorldSession
         void HandleGuildChangeInfoTextOpcode(WorldPacket& recvPacket);
         void HandleSaveGuildEmblemOpcode(WorldPacket& recvPacket);
         void HandleGuildRequestPartyState(WorldPacket& recvPacket);
+        void HandleGuildRequestChallengeUpdate(WorldPacket& recvPacket);
         void HandleGuildRequestMaxDailyXP(WorldPacket& recvPacket);
         void HandleAutoDeclineGuildInvites(WorldPacket& recvPacket);
 
@@ -964,6 +969,7 @@ class WorldSession
         void HandleWorldStateUITimerUpdate(WorldPacket& recvData);
         void HandleReadyForAccountDataTimes(WorldPacket& recvData);
         void HandleQueryQuestsCompleted(WorldPacket& recvData);
+        void HandleQuestNPCQuery(WorldPacket& recvData);
         void HandleQuestPOIQuery(WorldPacket& recvData);
         void HandleEjectPassenger(WorldPacket& data);
         void HandleEnterPlayerVehicle(WorldPacket& data);

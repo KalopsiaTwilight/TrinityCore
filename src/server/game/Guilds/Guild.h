@@ -268,6 +268,14 @@ struct GuildReward
 
 uint32 const MinNewsItemLevel[MAX_CONTENT] = { 61, 90, 200, 353 };
 
+// Guild Challenge
+#define GUILD_CHALLENGES_TYPES 4
+
+const uint32 GuildChallengeGoldReward[GUILD_CHALLENGES_TYPES]         = { 0, 250,    1000,    500 };
+const uint32 GuildChallengeMaxLevelGoldReward[GUILD_CHALLENGES_TYPES] = { 0, 125,    500,     250 };
+const uint32 GuildChallengeXPReward[GUILD_CHALLENGES_TYPES]           = { 0, 300000, 3000000, 1500000 };
+const uint32 GuildChallengesPerWeek[GUILD_CHALLENGES_TYPES]           = { 0, 7,      1,       3 };
+
 // Emblem info
 class EmblemInfo
 {
@@ -387,6 +395,9 @@ private:
         uint32 GetTotalReputation() const { return m_totalReputation; }
         uint32 GetWeekReputation() const { return m_weekReputation; }
 
+        void SetTrackedCriteriaIds(std::set<uint32> criteriaIds) { m_trackedCriteriaIds.swap(criteriaIds); }
+        bool IsTrackingCriteriaId(uint32 criteriaId) const { return m_trackedCriteriaIds.find(criteriaId) != m_trackedCriteriaIds.end();  }
+
         bool IsOnline() { return (m_flags & GUILDMEMBER_STATUS_ONLINE); }
 
         void ChangeRank(uint8 newRank);
@@ -417,6 +428,8 @@ private:
         uint8 m_rankId;
         std::string m_publicNote;
         std::string m_officerNote;
+
+        std::set<uint32> m_trackedCriteriaIds;
 
         int32 m_bankWithdraw[GUILD_BANK_MAX_TABS + 1];
         uint32 m_achievementPoints;
@@ -767,12 +780,16 @@ public:
     std::string const& GetName() const { return m_name; }
     std::string const& GetMOTD() const { return m_motd; }
     std::string const& GetInfo() const { return m_info; }
+    uint32 GetMemberCount() const { return m_members.size(); }
+    time_t GetCreatedDate() const { return m_createdDate; }
+    uint64 GetBankMoney() const { return m_bankMoney; }
 
     bool SetName(std::string const& name);
 
     // Handle client commands
     void HandleRoster(WorldSession* session);
     void HandleQuery(WorldSession* session);
+    void HandleSetAchievementTracking(WorldSession* session, std::set<uint32> const& criteriaIds);
     void HandleSetMOTD(WorldSession* session, std::string const& motd);
     void HandleSetInfo(WorldSession* session, std::string const& info);
     void HandleSetEmblem(WorldSession* session, const EmblemInfo& emblemInfo);
@@ -795,6 +812,7 @@ public:
     void HandleDisband(WorldSession* session);
     void HandleGuildPartyRequest(WorldSession* session);
     void HandleNewsSetSticky(WorldSession* session, uint32 newsId, bool sticky);
+    void HandleGuildRequestChallengeUpdate(WorldSession* session);
 
     void UpdateMemberData(Player* player, uint8 dataid, uint32 value);
     void OnPlayerStatusChange(Player* player, uint32 flag, bool state);
@@ -828,6 +846,7 @@ public:
     void BroadcastAddonToGuild(WorldSession* session, bool officerOnly, std::string const& msg, std::string const& prefix) const;
     void BroadcastPacketToRank(WorldPacket* packet, uint8 rankId) const;
     void BroadcastPacket(WorldPacket* packet) const;
+    void BroadcastPacketIfTrackingAchievement(WorldPacket* packet, uint32 criteriaId) const;
 
     void MassInviteToEvent(WorldSession* session, uint32 minLevel, uint32 maxLevel, uint32 minRank);
 
