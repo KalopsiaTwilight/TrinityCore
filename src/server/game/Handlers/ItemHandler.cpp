@@ -1462,6 +1462,9 @@ void WorldSession::HandleTransmogrifyItems(WorldPacket& recvData)
         Item* itemTransmogrifier = NULL;
         if (newEntries[i])
         {
+            if (newEntries[i] > 200000 && newEntries[i] < 300000)
+                newEntries[i] = newEntries[i] - 200000;
+            
             // entry of the transmogrifier item
             ItemTemplate const* proto = sObjectMgr->GetItemTemplate(newEntries[i]);
             if (!proto)
@@ -1493,7 +1496,7 @@ void WorldSession::HandleTransmogrifyItems(WorldPacket& recvData)
             }
 
             // add cost
-            cost += itemTransmogrified->GetSpecialPrice();
+            //cost += itemTransmogrified->GetSpecialPrice(); // CUSTOM - Cost removed for RP purposes
         }
 
         transmogrifier[i] = itemTransmogrifier;
@@ -1502,9 +1505,9 @@ void WorldSession::HandleTransmogrifyItems(WorldPacket& recvData)
 
     if (cost) // 0 cost if reverting look
     {
-        //if (!player->HasEnoughMoney(cost)) -- CUSTOM, remove cost for RP purposes
-        //    return;
-        //player->ModifyMoney(-cost);
+        if (!player->HasEnoughMoney(cost))
+            return;
+        player->ModifyMoney(-cost);
     }
 
     // Everything is fine, proceed
