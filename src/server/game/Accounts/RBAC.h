@@ -722,7 +722,7 @@ enum RBACPermissions
     RBAC_PERM_COMMAND_NPC_SCALE                              = 1019,
     RBAC_PERM_COMMAND_NPC_FACTION                            = 1020,
     RBAC_PERM_COMMAND_NPC_ATTACK                             = 1021,
-    //RBAC_PERM_COMMAND_NPC_FACTION                          = 1022, REUSE
+    RBAC_PERM_COMMAND_RELOAD_PLAYERCREATEINFO                = 1022,
     RBAC_PERM_COMMAND_ADDRPITEM                              = 1023,
     RBAC_PERM_COMMAND_TAXI                                   = 1024,
     RBAC_PERM_COMMAND_SCALE                                  = 1025,
