@@ -329,6 +329,9 @@ private:
         if (!*args)
             return false;
 
+        if (strlen(args) > 255)
+            return false;
+
         // #delay [#exit_code] [reason]
         char* delayStr = strtok((char*)args, " ");
         if (!delayStr || !isNumeric(delayStr))
@@ -336,10 +339,7 @@ private:
 
         char* exitCodeStr = nullptr;
 
-        if (strlen(args) > 255)
-            return false;
-
-        char reason[255] = { 0 };
+        char reason[256] = { 0 };
 
         while (char* nextToken = strtok(nullptr, " "))
         {
@@ -348,8 +348,11 @@ private:
             else
             {
                 strcat(reason, nextToken);
-                strcat(reason, " ");
-                strcat(reason, strtok(nullptr, "\0"));
+                if (char* remainingTokens = strtok(nullptr, "\0"))
+                {
+                    strcat(reason, " ");
+                    strcat(reason, remainingTokens);
+                }
                 break;
             }
         }
