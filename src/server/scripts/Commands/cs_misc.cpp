@@ -2916,8 +2916,8 @@ public:
         _player->AddAura(XRAY_AURA, _player);
         Aura* XRayAura = _player->GetAura(XRAY_AURA);
         
-        XRayAura->SetMaxDuration(int32(150));
-        XRayAura->SetDuration(int32(150));
+        XRayAura->SetMaxDuration(int32(200));
+        XRayAura->SetDuration(int32(200));
         handler->PSendSysMessage(LANG_REFRESH);
         return true;
     }
