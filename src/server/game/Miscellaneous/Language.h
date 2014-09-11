@@ -1257,7 +1257,8 @@ enum TrinityStrings
     LANG_LFRP_LIST_COUNT_ONLINE         = 11950,
     LANG_LFRP_LIST_ENTRY_START          = 11951,
     LANG_LFRP_LIST_COUNT_TOTAL          = 11952,
-    // REUSE 11941-11942 first!
+	LANG_LFRP_LOGIN_NONE                = 11953,
+	LANG_LFRP_LOGIN_HELP                = 11954,
 
     // NOT RESERVED IDS                   12000-1999999999
     // `db_script_string` table index     2000000000-2000009999 (MIN_DB_SCRIPT_STRING_ID-MAX_DB_SCRIPT_STRING_ID)

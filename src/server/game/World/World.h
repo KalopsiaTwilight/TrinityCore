@@ -780,7 +780,7 @@ class World
         void AddItemAll(uint32 itemId, int32 count);
         void MassUnaura(uint32 spellId);
         void MassUnauraAll();
-        void MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone);
+		void MassSummon(uint64 guid, uint32 mapid, float x, float y, float z, uint32 zone);
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters

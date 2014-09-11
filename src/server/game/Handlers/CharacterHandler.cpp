@@ -1147,6 +1147,38 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
     if (!pCurrChar->IsStandState() && !pCurrChar->HasUnitState(UNIT_STATE_STUNNED))
         pCurrChar->SetStandState(UNIT_STAND_STATE_STAND);
 
+	// CUSTOM - On login show LFRP online list
+	uint32 listCount = 0;
+	chH.SendSysMessage(LANG_LFRP_LIST_ENTRY_START);
+
+	PreparedQueryResult result;
+	PreparedStatement* stmt;
+	stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ONLINE);
+	result = CharacterDatabase.Query(stmt);
+
+	if (result)
+	{
+		do
+		{
+			Field* fields = result->Fetch();
+			std::string name = fields[0].GetString();
+			std::string content = fields[1].GetString();
+			std::string timestamp = fields[2].GetString();
+
+			chH.PSendSysMessage(LANG_LFRP_LIST_ENTRY, timestamp.c_str(), name.c_str(), content.c_str());
+		} while (result->NextRow());
+
+		listCount = uint32(result->GetRowCount());
+	}
+
+	if (listCount == 0)
+		chH.SendSysMessage(LANG_LFRP_LOGIN_NONE);
+	else
+		chH.PSendSysMessage(LANG_LFRP_LIST_COUNT_ONLINE, listCount);
+
+	chH.SendSysMessage(LANG_LFRP_LOGIN_HELP);
+	// End LFRP list
+
     m_playerLoading = false;
 
     // Handle Login-Achievements (should be handled after loading)
