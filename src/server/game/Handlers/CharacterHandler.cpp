@@ -1151,10 +1151,8 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
 	uint32 listCount = 0;
 	chH.SendSysMessage(LANG_LFRP_LIST_ENTRY_START);
 
-	PreparedQueryResult result;
-	PreparedStatement* stmt;
 	stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_LFRP_LIST_ONLINE);
-	result = CharacterDatabase.Query(stmt);
+	PreparedQueryResult result = CharacterDatabase.Query(stmt);
 
 	if (result)
 	{
