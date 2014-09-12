@@ -290,7 +290,7 @@ public:
             return false;
 
         sWorld->SetRecordDiffInterval(newTime);
-        printf("Record diff every %u ms\n", newTime);
+        printf("Record diff every %i ms\n", newTime);
 
         return true;
     }
