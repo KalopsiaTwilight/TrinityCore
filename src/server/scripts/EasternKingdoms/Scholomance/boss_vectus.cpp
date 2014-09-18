@@ -89,6 +89,7 @@ public:
                     case EVENT_BLAST_WAVE:
                         DoCast(me, SPELL_BLAST_WAVE);
                         events.ScheduleEvent(EVENT_BLAST_WAVE, 12000);
+                        break;
                     case EVENT_FRENZY:
                         DoCast(me, SPELL_FRENZY);
                         Talk(EMOTE_FRENZY);
@@ -105,7 +106,6 @@ public:
         private:
             EventMap events;
     };
-
 
     CreatureAI* GetAI(Creature* creature) const override
     {

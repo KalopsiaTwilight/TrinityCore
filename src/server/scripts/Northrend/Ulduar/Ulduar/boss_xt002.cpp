@@ -196,6 +196,18 @@ class boss_xt002 : public CreatureScript
         {
             boss_xt002_AI(Creature* creature) : BossAI(creature, BOSS_XT002)
             {
+                Initialize();
+                _transferHealth = 0;
+            }
+
+            void Initialize()
+            {
+                _healthRecovered = false;
+                _gravityBombCasualty = false;
+                _hardMode = false;
+
+                _phase = 1;
+                _heartExposed = 0;
             }
 
             void Reset() override
@@ -206,12 +218,7 @@ class boss_xt002 : public CreatureScript
                 me->SetReactState(REACT_AGGRESSIVE);
                 DoCast(me, SPELL_STAND);
 
-                _healthRecovered = false;
-                _gravityBombCasualty = false;
-                _hardMode = false;
-
-                _phase = 1;
-                _heartExposed = 0;
+                Initialize();
 
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_MUST_DECONSTRUCT_FASTER);
             }
@@ -390,8 +397,9 @@ class boss_xt002 : public CreatureScript
                 Talk(SAY_HEART_CLOSED);
                 Talk(EMOTE_HEART_CLOSED);
 
-                DoCast(me, SPELL_STAND);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 me->SetReactState(REACT_AGGRESSIVE);
+                DoCast(me, SPELL_STAND);
 
                 _phase = 1;
 
@@ -489,14 +497,20 @@ class npc_scrapbot : public CreatureScript
         {
             npc_scrapbotAI(Creature* creature) : ScriptedAI(creature)
             {
+                Initialize();
                 _instance = me->GetInstanceScript();
+            }
+
+            void Initialize()
+            {
+                _rangeCheckTimer = 500;
             }
 
             void Reset() override
             {
                 me->SetReactState(REACT_PASSIVE);
 
-                _rangeCheckTimer = 500;
+                Initialize();
 
                 if (Creature* pXT002 = ObjectAccessor::GetCreature(*me, _instance->GetData64(BOSS_XT002)))
                     me->GetMotionMaster()->MoveFollow(pXT002, 0.0f, 0.0f);
@@ -546,14 +560,20 @@ class npc_pummeller : public CreatureScript
         {
             npc_pummellerAI(Creature* creature) : ScriptedAI(creature)
             {
+                Initialize();
                 _instance = creature->GetInstanceScript();
             }
 
-            void Reset() override
+            void Initialize()
             {
                 _arcingSmashTimer = TIMER_ARCING_SMASH;
                 _trampleTimer = TIMER_TRAMPLE;
                 _uppercutTimer = TIMER_UPPERCUT;
+            }
+
+            void Reset() override
+            {
+                Initialize();
 
                 if (Creature* xt002 = ObjectAccessor::GetCreature(*me, _instance->GetData64(BOSS_XT002)))
                 {
@@ -647,12 +667,18 @@ class npc_boombot : public CreatureScript
         {
             npc_boombotAI(Creature* creature) : ScriptedAI(creature)
             {
+                Initialize();
                 _instance = creature->GetInstanceScript();
+            }
+
+            void Initialize()
+            {
+                _boomed = false;
             }
 
             void Reset() override
             {
-                _boomed = false;
+                Initialize();
 
                 DoCast(SPELL_AURA_BOOMBOT); // For achievement
 
@@ -726,12 +752,18 @@ class npc_life_spark : public CreatureScript
         {
             npc_life_sparkAI(Creature* creature) : ScriptedAI(creature)
             {
+                Initialize();
+            }
+
+            void Initialize()
+            {
+                _shockTimer = 0; // first one is immediate.
             }
 
             void Reset() override
             {
                 DoCast(me, SPELL_STATIC_CHARGED);
-                _shockTimer = 0; // first one is immediate.
+                Initialize();
             }
 
             void UpdateAI(uint32 diff) override
@@ -1006,37 +1038,6 @@ class spell_xt002_submerged : public SpellScriptLoader
         }
 };
 
-class spell_xt002_stand : public SpellScriptLoader
-{
-    public:
-        spell_xt002_stand() : SpellScriptLoader("spell_xt002_stand") { }
-
-        class spell_xt002_stand_SpellScript : public SpellScript
-        {
-            PrepareSpellScript(spell_xt002_stand_SpellScript);
-
-            void HandleScript(SpellEffIndex /*eff*/)
-            {
-                Creature* target = GetHitCreature();
-                if (!target)
-                    return;
-
-                target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                target->SetByteValue(UNIT_FIELD_BYTES_1, 0, UNIT_STAND_STATE_STAND);
-            }
-
-            void Register() override
-            {
-                OnEffectHitTarget += SpellEffectFn(spell_xt002_stand_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
-            }
-        };
-
-        SpellScript* GetSpellScript() const override
-        {
-            return new spell_xt002_stand_SpellScript();
-        }
-};
-
 class achievement_nerf_engineering : public AchievementCriteriaScript
 {
     public:
@@ -1095,7 +1096,6 @@ void AddSC_boss_xt002()
     new spell_xt002_heart_overload_periodic();
     new spell_xt002_tympanic_tantrum();
     new spell_xt002_submerged();
-    new spell_xt002_stand();
 
     new achievement_nerf_engineering();
     new achievement_heartbreaker();

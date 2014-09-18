@@ -280,8 +280,8 @@ class spell_q11396_11399_force_shield_arcane_purple_x3 : public SpellScriptLoade
             void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 Unit* target = GetTarget();
-            target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-            target->AddUnitState(UNIT_STATE_ROOT);
+                target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+                target->AddUnitState(UNIT_STATE_ROOT);
             }
 
             void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -1777,7 +1777,7 @@ class spell_q12847_summon_soul_moveto_bunny : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const override
+        SpellScript* GetSpellScript() const override
         {
             return new spell_q12847_summon_soul_moveto_bunny_SpellScript();
         }
