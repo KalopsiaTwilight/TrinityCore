@@ -815,13 +815,15 @@ bool Guardian::InitStatsForLevel(uint8 petlevel)
     if (IsPet() && GetOwner()->GetTypeId() == TYPEID_PLAYER)
     {
         if (GetOwner()->getClass() == CLASS_WARLOCK
-            || GetOwner()->getClass() == CLASS_SHAMAN        // Fire Elemental
+            //|| GetOwner()->getClass() == CLASS_SHAMAN        // Fire Elemental
             || GetOwner()->getClass() == CLASS_DEATH_KNIGHT) // Risen Ghoul
         {
             petType = SUMMON_PET;
         }
-        else if (GetOwner()->getClass() == CLASS_HUNTER)
+        //else if (GetOwner()->getClass() == CLASS_HUNTER)
+        else if (GetOwner()->getClass() == CLASS_HUNTER || GetOwner()->getClass() == CLASS_DRUID || GetOwner()->getClass() == CLASS_PALADIN || GetOwner()->getClass() == CLASS_SHAMAN || GetOwner()->getClass() == CLASS_WARRIOR)
         {
+            // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
             petType = HUNTER_PET;
             m_unitTypeMask |= UNIT_MASK_HUNTER_PET;
         }

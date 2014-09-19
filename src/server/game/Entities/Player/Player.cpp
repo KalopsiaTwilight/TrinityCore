@@ -1991,7 +1991,9 @@ bool Player::BuildEnumData(PreparedQueryResult result, ByteBuffer* dataBuffer, B
     uint32 petLevel   = 0;
     uint32 petFamily  = 0;
     // show pet at selection character in character list only for non-ghost character
-    if (result && !(playerFlags & PLAYER_FLAGS_GHOST) && (plrClass == CLASS_WARLOCK || plrClass == CLASS_HUNTER || plrClass == CLASS_DEATH_KNIGHT))
+    //if (result && !(playerFlags & PLAYER_FLAGS_GHOST) && (plrClass == CLASS_WARLOCK || plrClass == CLASS_HUNTER || plrClass == CLASS_DEATH_KNIGHT))
+    // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+    if (result && !(playerFlags & PLAYER_FLAGS_GHOST) && (plrClass == CLASS_WARLOCK || plrClass == CLASS_HUNTER || plrClass == CLASS_DEATH_KNIGHT || plrClass == CLASS_DRUID || plrClass == CLASS_PALADIN || plrClass == CLASS_SHAMAN || plrClass == CLASS_WARRIOR))
     {
         uint32 entry = fields[16].GetUInt32();
         CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(entry);
@@ -14422,7 +14424,9 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                         canTalk = false;
                     break;
                 case GOSSIP_OPTION_STABLEPET:
-                    if (getClass() != CLASS_HUNTER)
+                    //if (getClass() != CLASS_HUNTER)
+                    // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+                    if (getClass() != CLASS_HUNTER && getClass() != CLASS_DRUID && getClass() != CLASS_PALADIN && getClass() != CLASS_SHAMAN && getClass() != CLASS_WARRIOR)
                         canTalk = false;
                     break;
                 case GOSSIP_OPTION_QUESTGIVER:

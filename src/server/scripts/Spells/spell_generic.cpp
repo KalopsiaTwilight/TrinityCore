@@ -2555,7 +2555,9 @@ class spell_gen_pet_summoned : public SpellScriptLoader
                 Player* player = GetCaster()->ToPlayer();
                 if (player->GetLastPetNumber())
                 {
-                    PetType newPetType = (player->getClass() == CLASS_HUNTER) ? HUNTER_PET : SUMMON_PET;
+                    //PetType newPetType = (player->getClass() == CLASS_HUNTER) ? HUNTER_PET : SUMMON_PET;
+                    // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+                    PetType newPetType = (player->getClass() == CLASS_HUNTER || player->getClass() == CLASS_DRUID || player->getClass() == CLASS_PALADIN || player->getClass() == CLASS_SHAMAN || player->getClass() == CLASS_WARRIOR) ? HUNTER_PET : SUMMON_PET;
                     Pet* newPet = new Pet(player, newPetType);
                     if (newPet->LoadPetFromDB(player, 0, player->GetLastPetNumber(), true))
                     {

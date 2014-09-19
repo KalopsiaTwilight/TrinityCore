@@ -2709,7 +2709,9 @@ void Spell::EffectTameCreature(SpellEffIndex /*effIndex*/)
     if (creatureTarget->IsPet())
         return;
 
-    if (m_caster->getClass() != CLASS_HUNTER)
+    //if (m_caster->getClass() != CLASS_HUNTER)
+    // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+    if (m_caster->getClass() != CLASS_HUNTER  && m_caster->getClass() != CLASS_DRUID && m_caster->getClass() != CLASS_PALADIN && m_caster->getClass() != CLASS_SHAMAN && m_caster->getClass() != CLASS_WARRIOR)
         return;
 
     // cast finish successfully
@@ -5287,7 +5289,9 @@ void Spell::EffectCreateTamedPet(SpellEffIndex effIndex)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER || unitTarget->GetPetGUID() || unitTarget->getClass() != CLASS_HUNTER)
+    //if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER || unitTarget->GetPetGUID() || unitTarget->getClass() != CLASS_HUNTER)
+    // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER || unitTarget->GetPetGUID() || unitTarget->getClass() != CLASS_HUNTER && unitTarget->getClass() != CLASS_DRUID && unitTarget->getClass() != CLASS_PALADIN && unitTarget->getClass() != CLASS_SHAMAN && unitTarget->getClass() != CLASS_WARRIOR)
         return;
 
     uint32 creatureEntry = m_spellInfo->Effects[effIndex].MiscValue;

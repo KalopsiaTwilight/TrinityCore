@@ -1699,7 +1699,9 @@ public:
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
 
-        if (player->getClass() == CLASS_HUNTER)
+        //if (player->getClass() == CLASS_HUNTER)
+        // Custom - Allow Druid, Paladin, Shaman, and Warrior to have/tame pets like Hunters
+        if (player->getClass() == CLASS_HUNTER || player->getClass() == CLASS_DRUID || player->getClass() == CLASS_PALADIN || player->getClass() == CLASS_SHAMAN || player->getClass() == CLASS_WARRIOR)
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_PET1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
             if (player->GetPet() && player->GetPet()->getPetType() == HUNTER_PET)
