@@ -125,14 +125,14 @@ namespace
         if (player->getLevel() < dest.m_level && !player->IsGameMaster()) 
         {
             std::string msg ("You do not have the required level. This destination requires level " + ConvertStr(dest.m_level) + ".");
-            creature->MonsterWhisper(msg.c_str(), player);
+            creature->Whisper(msg.c_str(), LANG_UNIVERSAL, player);
             return;
         }
 
         if (player->GetMoney() < dest.m_cost && !player->IsGameMaster())
         {
             std::string msg ("You do not have enough money. The price for teleportation is " + ConvertMoney(dest.m_cost) + ".");
-            creature->MonsterWhisper(msg.c_str(), player);
+            creature->Whisper(msg.c_str(), LANG_UNIVERSAL, player);
             return;
         }
 
@@ -155,7 +155,7 @@ bool OnGossipHello(Player *player, Creature *creature)
     if(player->IsInCombat())
     {
         player->CLOSE_GOSSIP_MENU();
-        creature->MonsterWhisper("You are in combat. Come back later", player);
+        creature->Whisper("You are in combat. Come back later", LANG_UNIVERSAL, player);
         return true;
     }
     AffichCat(player, creature);
