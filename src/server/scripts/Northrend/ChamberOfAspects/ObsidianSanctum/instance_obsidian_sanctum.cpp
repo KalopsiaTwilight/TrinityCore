@@ -30,15 +30,9 @@ public:
 
     struct instance_obsidian_sanctum_InstanceMapScript : public InstanceScript
     {
-        instance_obsidian_sanctum_InstanceMapScript(Map* map) : InstanceScript(map) { }
-
-        void Initialize() override
+        instance_obsidian_sanctum_InstanceMapScript(Map* map) : InstanceScript(map)
         {
             SetHeaders(DataHeader);
-            sartharionGUID = 0;
-            tenebronGUID   = 0;
-            shadronGUID    = 0;
-            vesperonGUID   = 0;
         }
 
         void OnCreatureCreate(Creature* creature) override
@@ -83,7 +77,7 @@ public:
             return true;
         }
 
-        uint64 GetData64(uint32 Data) const override
+        ObjectGuid GetGuidData(uint32 Data) const override
         {
             switch (Data)
             {
@@ -96,14 +90,14 @@ public:
                 case DATA_VESPERON:
                     return vesperonGUID;
             }
-            return 0;
+            return ObjectGuid::Empty;
         }
 
     protected:
-        uint64 sartharionGUID;
-        uint64 tenebronGUID;
-        uint64 shadronGUID;
-        uint64 vesperonGUID;
+        ObjectGuid sartharionGUID;
+        ObjectGuid tenebronGUID;
+        ObjectGuid shadronGUID;
+        ObjectGuid vesperonGUID;
     };
 
     InstanceScript* GetInstanceScript(InstanceMap* map) const override

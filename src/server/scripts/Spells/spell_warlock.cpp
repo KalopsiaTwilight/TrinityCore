@@ -139,12 +139,13 @@ class spell_warl_banish : public SpellScriptLoader
         {
             PrepareSpellScript(spell_warl_banish_SpellScript);
 
-            bool Load() override
+        public:
+            spell_warl_banish_SpellScript()
             {
                 _removed = false;
-                return true;
             }
 
+        private:
             void HandleBanish()
             {
                 /// Casting Banish on a banished target will cancel the effect
@@ -1001,7 +1002,7 @@ class spell_warl_seduction : public SpellScriptLoader
                 {
                     if (caster->GetOwner() && caster->GetOwner()->HasAura(SPELL_WARLOCK_GLYPH_OF_SUCCUBUS))
                     {
-                        target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, 0, target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH)); // SW:D shall not be removed.
+                        target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, ObjectGuid::Empty, target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH)); // SW:D shall not be removed.
                         target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT);
                         target->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
                     }

@@ -56,35 +56,25 @@ class instance_deadmines : public InstanceMapScript
 
         struct instance_deadmines_InstanceMapScript : public InstanceScript
         {
-            instance_deadmines_InstanceMapScript(Map* map) : InstanceScript(map) { }
+            instance_deadmines_InstanceMapScript(Map* map) : InstanceScript(map)
+            {
+                SetHeaders(DataHeader);
 
-            uint64 FactoryDoorGUID;
-            uint64 IronCladDoorGUID;
-            uint64 DefiasCannonGUID;
-            uint64 DoorLeverGUID;
-            uint64 DefiasPirate1GUID;
-            uint64 DefiasPirate2GUID;
-            uint64 DefiasCompanionGUID;
+                State = CANNON_NOT_USED;
+            }
+
+            ObjectGuid FactoryDoorGUID;
+            ObjectGuid IronCladDoorGUID;
+            ObjectGuid DefiasCannonGUID;
+            ObjectGuid DoorLeverGUID;
+            ObjectGuid DefiasPirate1GUID;
+            ObjectGuid DefiasPirate2GUID;
+            ObjectGuid DefiasCompanionGUID;
 
             uint32 State;
             uint32 CannonBlast_Timer;
             uint32 PiratesDelay_Timer;
-            uint64 uiSmiteChestGUID;
-
-            void Initialize() override
-            {
-                SetHeaders(DataHeader);
-                FactoryDoorGUID = 0;
-                IronCladDoorGUID = 0;
-                DefiasCannonGUID = 0;
-                DoorLeverGUID = 0;
-                DefiasPirate1GUID = 0;
-                DefiasPirate2GUID = 0;
-                DefiasCompanionGUID = 0;
-
-                State = CANNON_NOT_USED;
-                uiSmiteChestGUID = 0;
-            }
+            ObjectGuid uiSmiteChestGUID;
 
             virtual void Update(uint32 diff) override
             {
@@ -227,7 +217,7 @@ class instance_deadmines : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 data) const override
+            ObjectGuid GetGuidData(uint32 data) const override
             {
                 switch (data)
                 {
@@ -235,7 +225,7 @@ class instance_deadmines : public InstanceMapScript
                         return uiSmiteChestGUID;
                 }
 
-                return 0;
+                return ObjectGuid::Empty;
             }
         };
 

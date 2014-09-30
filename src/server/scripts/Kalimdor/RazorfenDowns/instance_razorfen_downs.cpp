@@ -55,17 +55,12 @@ public:
         {
             SetHeaders(DataHeader);
             SetBossNumber(EncounterCount);
-        }
-
-        void Initialize() override
-        {
-            goGongGUID      = 0;
-            gongWave        = 0;
-            fiendsKilled    = 0;
-            reaversKilled   = 0;
-            summonLowRange  = 0;
+            gongWave = 0;
+            fiendsKilled = 0;
+            reaversKilled = 0;
+            summonLowRange = 0;
             summonHighRange = 0;
-            summonCreature  = 0;
+            summonCreature = 0;
         }
 
         void OnGameObjectCreate(GameObject* gameObject) override
@@ -172,7 +167,7 @@ public:
         }
 
     protected:
-        uint64 goGongGUID;
+        ObjectGuid goGongGUID;
         uint16 gongWave;
         uint8  fiendsKilled;
         uint8  reaversKilled;

@@ -537,16 +537,17 @@ class spell_mage_focus_magic : public SpellScriptLoader
         {
             PrepareAuraScript(spell_mage_focus_magic_AuraScript);
 
+        public:
+            spell_mage_focus_magic_AuraScript()
+            {
+                _procTarget = nullptr;
+            }
+
+        private:
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MAGE_FOCUS_MAGIC_PROC))
                     return false;
-                return true;
-            }
-
-            bool Load() override
-            {
-                _procTarget = NULL;
                 return true;
             }
 
@@ -670,7 +671,7 @@ class spell_mage_glyph_of_icy_veins : public SpellScriptLoader
             {
                 PreventDefaultAction();
 
-                GetTarget()->RemoveAurasByType(SPELL_AURA_HASTE_SPELLS, 0, 0, true, false);
+                GetTarget()->RemoveAurasByType(SPELL_AURA_HASTE_SPELLS, ObjectGuid::Empty, 0, true, false);
                 GetTarget()->RemoveAurasByType(SPELL_AURA_MOD_DECREASE_SPEED);
             }
 
@@ -708,7 +709,7 @@ class spell_mage_glyph_of_polymorph : public SpellScriptLoader
                 PreventDefaultAction();
                 Unit* target = eventInfo.GetProcTarget();
 
-                target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, 0, target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH)); // SW:D shall not be removed.
+                target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE, ObjectGuid::Empty, target->GetAura(SPELL_PRIEST_SHADOW_WORD_DEATH)); // SW:D shall not be removed.
                 target->RemoveAurasByType(SPELL_AURA_PERIODIC_DAMAGE_PERCENT);
                 target->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
             }

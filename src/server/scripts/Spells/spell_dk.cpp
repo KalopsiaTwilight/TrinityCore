@@ -78,6 +78,13 @@ class spell_dk_anti_magic_shell_raid : public SpellScriptLoader
         {
             PrepareAuraScript(spell_dk_anti_magic_shell_raid_AuraScript);
 
+        public:
+            spell_dk_anti_magic_shell_raid_AuraScript()
+            {
+                absorbPct = 0;
+            }
+
+        private:
             uint32 absorbPct;
 
             bool Load() override
@@ -120,6 +127,14 @@ class spell_dk_anti_magic_shell_self : public SpellScriptLoader
         {
             PrepareAuraScript(spell_dk_anti_magic_shell_self_AuraScript);
 
+        public:
+            spell_dk_anti_magic_shell_self_AuraScript()
+            {
+                absorbPct = 0;
+                hpPct = 0;
+            }
+
+        private:
             uint32 absorbPct, hpPct;
             bool Load() override
             {
@@ -177,6 +192,13 @@ class spell_dk_anti_magic_zone : public SpellScriptLoader
         {
             PrepareAuraScript(spell_dk_anti_magic_zone_AuraScript);
 
+        public:
+            spell_dk_anti_magic_zone_AuraScript()
+            {
+                absorbPct = 0;
+            }
+
+        private:
             uint32 absorbPct;
 
             bool Load() override
@@ -228,6 +250,13 @@ class spell_dk_blood_boil : public SpellScriptLoader
         {
             PrepareSpellScript(spell_dk_blood_boil_SpellScript);
 
+        public:
+            spell_dk_blood_boil_SpellScript()
+            {
+                _executed = false;
+            }
+
+        private:
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_DK_BLOOD_BOIL_TRIGGERED))
@@ -237,7 +266,6 @@ class spell_dk_blood_boil : public SpellScriptLoader
 
             bool Load() override
             {
-                _executed = false;
                 return GetCaster()->GetTypeId() == TYPEID_PLAYER && GetCaster()->getClass() == CLASS_DEATH_KNIGHT;
             }
 
@@ -274,16 +302,17 @@ class spell_dk_blood_gorged : public SpellScriptLoader
         {
             PrepareAuraScript(spell_dk_blood_gorged_AuraScript);
 
+        public:
+            spell_dk_blood_gorged_AuraScript()
+            {
+                _procTarget = nullptr;
+            }
+
+        private:
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_DK_BLOOD_GORGED_HEAL))
                     return false;
-                return true;
-            }
-
-            bool Load() override
-            {
-                _procTarget = NULL;
                 return true;
             }
 
@@ -873,7 +902,12 @@ class spell_dk_improved_frost_presence : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
                 if ((target->HasAura(SPELL_DK_BLOOD_PRESENCE) || target->HasAura(SPELL_DK_UNHOLY_PRESENCE)) && !target->HasAura(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED))
-                    target->CastCustomSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), target, true, NULL, aurEff);
+                {
+                    CustomSpellValues val;
+                    val.AddSpellMod(SPELLVALUE_BASE_POINT0, aurEff->GetAmount());
+                    val.AddSpellMod(SPELLVALUE_BASE_POINT1, aurEff->GetAmount());
+                    target->CastCustomSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED, val, target, TRIGGERED_FULL_MASK, nullptr, aurEff);
+                }
             }
 
             void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -1111,7 +1145,12 @@ class spell_dk_presence : public SpellScriptLoader
                 Unit* target = GetTarget();
                 if (AuraEffect const* impAurEff = target->GetAuraEffectOfRankedSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_R1, EFFECT_0))
                     if (!target->HasAura(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED))
-                        target->CastCustomSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED, SPELLVALUE_BASE_POINT0, impAurEff->GetAmount(), target, true, NULL, aurEff);
+                    {
+                        CustomSpellValues val;
+                        val.AddSpellMod(SPELLVALUE_BASE_POINT0, impAurEff->GetAmount());
+                        val.AddSpellMod(SPELLVALUE_BASE_POINT1, impAurEff->GetAmount());
+                        target->CastCustomSpell(SPELL_DK_IMPROVED_FROST_PRESENCE_TRIGGERED, val, target, TRIGGERED_FULL_MASK, nullptr, aurEff);
+                    }
             }
 
             void HandleImprovedUnholyPresence(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
@@ -1182,6 +1221,14 @@ class spell_dk_raise_dead : public SpellScriptLoader
         {
             PrepareSpellScript(spell_dk_raise_dead_SpellScript);
 
+        public:
+            spell_dk_raise_dead_SpellScript()
+            {
+                _result = SPELL_CAST_OK;
+                _corpse = false;
+            }
+
+        private:
             bool Validate(SpellInfo const* spellInfo) override
             {
                 if (!sSpellMgr->GetSpellInfo(spellInfo->Effects[EFFECT_1].CalcValue())
@@ -1194,8 +1241,6 @@ class spell_dk_raise_dead : public SpellScriptLoader
 
             bool Load() override
             {
-                _result = SPELL_CAST_OK;
-                _corpse = false;
                 return GetCaster()->GetTypeId() == TYPEID_PLAYER;
             }
 
@@ -1377,13 +1422,15 @@ class spell_dk_scourge_strike : public SpellScriptLoader
         class spell_dk_scourge_strike_SpellScript : public SpellScript
         {
             PrepareSpellScript(spell_dk_scourge_strike_SpellScript);
-            float multiplier;
 
-            bool Load() override
+        public:
+            spell_dk_scourge_strike_SpellScript()
             {
                 multiplier = 1.0f;
-                return true;
             }
+
+        private:
+            float multiplier;
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {

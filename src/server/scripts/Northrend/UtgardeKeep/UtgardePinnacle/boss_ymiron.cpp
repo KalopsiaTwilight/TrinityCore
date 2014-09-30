@@ -124,8 +124,8 @@ public:
             ActivedNumber = 0;
             HealthAmountModifier = 1;
             HealthAmountMultipler = DUNGEON_MODE(20, 25);
-            ActiveAncestorGUID = 0;
-            SpiritFountGUID = 0;
+            ActiveAncestorGUID.Clear();
+            SpiritFountGUID.Clear();
         }
 
         void Reset() override
@@ -204,7 +204,7 @@ public:
 
         void DamageTaken(Unit* /*attacker*/, uint32& damage) override
         {
-            if (me->HealthBelowPctDamaged(100 - HealthAmountMultipler * HealthAmountModifier, damage))
+            if (me->HealthBelowPctDamaged(100 - HealthAmountMultipler * HealthAmountModifier, damage) && !(damage >= me->GetHealth()))
             {
                 uint8 Order = HealthAmountModifier - 1;
                 ++HealthAmountModifier;
@@ -283,14 +283,14 @@ public:
                 Talk(SAY_SLAY);
         }
 
-        void DespawnBoatGhosts(uint64& CreatureGUID)
+        void DespawnBoatGhosts(ObjectGuid& CreatureGUID)
         {
             // @todo: fire visual after ancestor despawns.
             if (CreatureGUID)
                 if (Creature* temp = ObjectAccessor::GetCreature(*me, CreatureGUID))
                     temp->DisappearAndDie();
 
-            CreatureGUID = 0;
+            CreatureGUID.Clear();
         }
 
     private:
@@ -299,8 +299,8 @@ public:
         uint8 ActivedNumber;
         uint32 HealthAmountModifier;
         uint32 HealthAmountMultipler;
-        uint64 ActiveAncestorGUID;
-        uint64 SpiritFountGUID;
+        ObjectGuid ActiveAncestorGUID;
+        ObjectGuid SpiritFountGUID;
     };
 
     CreatureAI* GetAI(Creature* creature) const override

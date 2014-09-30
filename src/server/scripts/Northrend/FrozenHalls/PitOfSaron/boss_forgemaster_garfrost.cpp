@@ -121,7 +121,7 @@ class boss_garfrost : public CreatureScript
                 Talk(SAY_DEATH);
                 me->RemoveAllGameObjects();
 
-                if (Creature* tyrannus = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_TYRANNUS)))
+                if (Creature* tyrannus = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_TYRANNUS)))
                     tyrannus->AI()->Talk(SAY_TYRANNUS_DEATH);
             }
 
@@ -256,12 +256,13 @@ class spell_garfrost_permafrost : public SpellScriptLoader
         {
             PrepareSpellScript(spell_garfrost_permafrost_SpellScript);
 
-            bool Load() override
+        public:
+            spell_garfrost_permafrost_SpellScript()
             {
                 prevented = false;
-                return true;
             }
 
+        private:
             void PreventHitByLoS()
             {
                 if (Unit* target = GetHitUnit())
