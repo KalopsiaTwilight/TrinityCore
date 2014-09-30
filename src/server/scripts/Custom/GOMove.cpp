@@ -355,11 +355,11 @@ public:
         {
             GObjects.erase(object->GetGUIDHigh()); // remove from temp store
 
-            uint64 ownerGuid = object->GetOwnerGUID();
+            ObjectGuid ownerGuid = object->GetOwnerGUID();
             if (ownerGuid)
             {
                 Unit* owner = ObjectAccessor::GetUnit(*object, ownerGuid);
-                if (owner && IS_PLAYER_GUID(ownerGuid))
+                if (owner && ownerGuid.IsPlayer())
                     owner->RemoveGameObject(object, false);
             }
             object->SetRespawnTime(0);

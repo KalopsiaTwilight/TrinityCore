@@ -1430,7 +1430,7 @@ public:
         }
 
         // check online security
-        if (handler->HasLowerSecurity(chr, 0))
+        if (handler->HasLowerSecurity(chr, ObjectGuid::Empty))
             return false;
 
         QueryResult result = CharacterDatabase.PQuery("SELECT scale FROM characters_addon WHERE guid='%u'", chr->GetGUIDLow());
@@ -1471,7 +1471,7 @@ public:
             target = handler->GetSession()->GetPlayer();
 
         // check online security
-        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), ObjectGuid::Empty))
             return false;
 
         QueryResult result = CharacterDatabase.PQuery("SELECT display FROM characters_addon WHERE guid='%u'", target->GetGUIDLow());
@@ -1525,7 +1525,7 @@ public:
         }
 
         // check online security
-        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), 0))
+        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), ObjectGuid::Empty))
             return false;
 
         uint32 bytes1 = (uint32)atoi(args);
@@ -1568,7 +1568,7 @@ public:
         }
 
         // check online security
-        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), 0))
+        if (unit->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(unit->ToPlayer(), ObjectGuid::Empty))
             return false;
 
         uint32 bytes2 = (uint32)atoi(args);

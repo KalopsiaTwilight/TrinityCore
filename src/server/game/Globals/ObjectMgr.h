@@ -1227,13 +1227,6 @@ class ObjectMgr
         void DeleteGOData(uint32 guid);
 
         TrinityString const* GetTrinityString(uint32 entry) const
-        
-        //CUSTOM
-        void LoadGameObjectTeleport();
-        GameObjectTeleportContainer const* GetGameObjectTeleport() const { return &_gameObjectTeleportStore; }
-        GameObjectTeleport const* GetGameObjectTeleport(uint32 id);
-
-        TrinityStringLocale const* GetTrinityStringLocale(int32 entry) const
         {
             TrinityStringContainer::const_iterator itr = _trinityStringStore.find(entry);
             if (itr == _trinityStringStore.end())
@@ -1384,6 +1377,11 @@ class ObjectMgr
         }
 
         void LoadMissingKeyChains();
+
+        //CUSTOM
+        void LoadGameObjectTeleport();
+        GameObjectTeleportContainer const* GetGameObjectTeleport() const { return &_gameObjectTeleportStore; }
+        GameObjectTeleport const* GetGameObjectTeleport(uint32 id);
 
     private:
         // first free id for selected id type

@@ -205,7 +205,7 @@ bool OnGossipSelect(Player *player, Creature *creature, uint32 sender, uint32 pa
       // Teleportation
       case GOSSIP_TELEPORT:
         player->CLOSE_GOSSIP_MENU();
-        if(player->HasAura(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS,0)) {
+        if (player->HasAura(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS, ObjectGuid::Empty)) {
             creature->CastSpell(player,38588,false); // Healing effect
             player->RemoveAurasDueToSpell(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS);
         }

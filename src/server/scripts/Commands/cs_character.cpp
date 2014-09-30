@@ -1096,7 +1096,7 @@ public:
         }
 
         // check online security
-        if (handler->HasLowerSecurity(chr, 0))
+        if (handler->HasLowerSecurity(chr, ObjectGuid::Empty))
             return false;
 
         uint32 factionid = atoi(pfactionid);
@@ -1152,7 +1152,7 @@ public:
             return false;
 
         Player* target;
-        uint64 targetGuid;
+        ObjectGuid targetGuid;
         std::string targetName;
         uint32 itemId = 0;
         if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
@@ -1161,7 +1161,7 @@ public:
         if (target)
         {
             // check online security
-            if (handler->HasLowerSecurity(target, 0))
+            if (handler->HasLowerSecurity(target, ObjectGuid::Empty))
                 return false;
         }
         else
@@ -1350,7 +1350,7 @@ public:
             return false;
 
         uint32 accountId;
-        uint64 characterGuid;
+        ObjectGuid characterGuid;
         std::string accountName;
         std::string characterName;
         Player* target = NULL;
@@ -1410,7 +1410,7 @@ public:
 
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_ACC_BY_GUID);
         stmt->setUInt32(0, accountId);
-        stmt->setUInt32(1, GUID_LOPART(characterGuid));
+        stmt->setUInt32(1, characterGuid.GetCounter());
         CharacterDatabase.Execute(stmt);
 
         handler->PSendSysMessage(LANG_CHAR_ACCOUNT_CHANGED, characterName.c_str(), accountName.c_str());

@@ -593,7 +593,7 @@ public:
 
         if (!player)
             player = handler->GetSession()->GetPlayer();
-        else if (handler->HasLowerSecurity(player, 0)) // check online security
+        else if (handler->HasLowerSecurity(player, ObjectGuid::Empty)) // check online security
             return false;
 
         // If player is not mounted, so go out :)
@@ -2941,7 +2941,7 @@ public:
         Unit* target = handler->getSelectedUnit();
         if (!target)
             target = handler->GetSession()->GetPlayer();
-        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), 0))
+        else if (target->GetTypeId() == TYPEID_PLAYER && handler->HasLowerSecurity(target->ToPlayer(), ObjectGuid::Empty))
             return false;
 
         target->Mount(mId);
