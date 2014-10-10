@@ -196,8 +196,8 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map* map, uint32 /*phase
         m_updateFlag |= UPDATEFLAG_TRANSPORT;
 
     //Object::_Create(guidlow, goinfo->entry, HIGHGUID_GAMEOBJECT);
-    static uint32 GOMoveID = 0;
-    Object::_Create(guidlow, goinfo->entry, !guidlow ? HighGuid(70000+(++GOMoveID)) : HIGHGUID_GAMEOBJECT);
+    static uint32 GOMoveID = 70000;
+    Object::_Create(guidlow, goinfo->entry, guidlow == 0 ? HighGuid(++GOMoveID) : HIGHGUID_GAMEOBJECT);
 
     m_goInfo = goinfo;
 
