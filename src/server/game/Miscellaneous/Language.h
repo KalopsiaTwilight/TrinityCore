@@ -1266,6 +1266,7 @@ enum TrinityStrings
     LANG_LFRP_LIST_COUNT_TOTAL          = 11952,
 	LANG_LFRP_LOGIN_NONE                = 11953,
 	LANG_LFRP_LOGIN_HELP                = 11954,
+	LANG_REFRESH_DEAD                   = 11955,
 
     // NOT RESERVED IDS                   12000-1999999999
     // For other tables maybe             2000010000-2147483647 (max index)

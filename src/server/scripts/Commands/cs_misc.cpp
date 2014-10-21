@@ -3019,6 +3019,13 @@ public:
     {
         Player* _player = handler->GetSession()->GetPlayer();
 
+        if (_player->isDead())
+        {
+            handler->PSendSysMessage(LANG_REFRESH_DEAD);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
         const uint32 XRAY_AURA = 54844;
         
         _player->AddAura(XRAY_AURA, _player);
