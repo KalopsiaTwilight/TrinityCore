@@ -24,6 +24,7 @@
 #define __WORLD_H
 
 #include "Common.h"
+#include "Commands.h"
 #include "ObjectGuid.h"
 #include "Timer.h"
 #include "SharedDefines.h"
@@ -157,6 +158,7 @@ enum WorldBoolConfigs
     CONFIG_PDUMP_NO_OVERWRITE,
     CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
     CONFIG_QUEST_IGNORE_AUTO_COMPLETE,
+    CONFIG_QUEST_ENABLE_QUEST_TRACKER,
     CONFIG_WARDEN_ENABLED,
     CONFIG_ENABLE_MMAPS,
     CONFIG_WINTERGRASP_ENABLE,
@@ -167,6 +169,8 @@ enum WorldBoolConfigs
     CONFIG_INSTANCES_RESET_ANNOUNCE,
     CONFIG_IP_BASED_ACTION_LOGGING,
     CONFIG_ALLOW_TRACK_BOTH_RESOURCES,
+    CONFIG_CALCULATE_CREATURE_ZONE_AREA_DATA,
+    CONFIG_CALCULATE_GAMEOBJECT_ZONE_AREA_DATA,
 
     CONFIG_MAIL_LOAD_ACCOUNTWIDE,
     BOOL_CONFIG_VALUE_COUNT
@@ -890,7 +894,7 @@ class World
         std::deque<std::future<PreparedQueryResult>> m_realmCharCallbacks;
 };
 
-extern uint32 realmID;
+extern Battlenet::RealmHandle realmHandle;
 
 #define sWorld World::instance()
 #endif

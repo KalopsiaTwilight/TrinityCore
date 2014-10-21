@@ -20,13 +20,9 @@
 /// @{
 /// \file
 
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/program_options.hpp>
-
 #include "Common.h"
+#include "Commands.h"
+#include "ZmqContext.h"
 #include "DatabaseEnv.h"
 #include "AsyncAcceptor.h"
 #include "RASession.h"
@@ -47,6 +43,12 @@
 #include "SystemConfig.h"
 #include "WorldSocket.h"
 #include "WorldSocketMgr.h"
+#include "BattlenetServerManager.h"
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/program_options.hpp>
 
 using namespace boost::program_options;
 
@@ -79,7 +81,7 @@ uint32 _maxCoreStuckTimeInMs(0);
 WorldDatabaseWorkerPool WorldDatabase;                      ///< Accessor to the world database
 CharacterDatabaseWorkerPool CharacterDatabase;              ///< Accessor to the character database
 LoginDatabaseWorkerPool LoginDatabase;                      ///< Accessor to the realm/login database
-uint32 realmID;                                             ///< Id of the realm
+Battlenet::RealmHandle realmHandle;                         ///< Id of the realm
 
 void SignalHandler(const boost::system::error_code& error, int signalNumber);
 void FreezeDetectorHandler(const boost::system::error_code& error);
@@ -88,6 +90,7 @@ bool StartDB();
 void StopDB();
 void WorldUpdateLoop();
 void ClearOnlineAccounts();
+void ShutdownCLIThread(std::thread* cliThread);
 void ShutdownThreadPool(std::vector<std::thread>& threadPool);
 variables_map GetConsoleArguments(int argc, char** argv, std::string& cfg_file, std::string& cfg_service);
 
@@ -187,7 +190,7 @@ extern int main(int argc, char** argv)
     }
 
     // Set server offline (not connectable)
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = (flag & ~%u) | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, REALM_FLAG_INVALID, realmID);
+    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = (flag & ~%u) | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, REALM_FLAG_INVALID, realmHandle.Index);
 
     // Initialize the World
     sWorld->SetInitialWorldSettings();
@@ -222,7 +225,7 @@ extern int main(int argc, char** argv)
     sWorldSocketMgr.StartNetwork(_ioService, worldListener, worldPort);
 
     // Set server online (allow connecting now)
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag & ~%u, population = 0 WHERE id = '%u'", REALM_FLAG_INVALID, realmID);
+    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag & ~%u, population = 0 WHERE id = '%u'", REALM_FLAG_INVALID, realmHandle.Index);
 
     // Start the freeze check callback cycle in 5 seconds (cycle itself is 1 sec)
     if (int coreStuckTime = sConfigMgr->GetIntDefault("MaxCoreStuckTime", 0))
@@ -232,6 +235,10 @@ extern int main(int argc, char** argv)
         _freezeCheckTimer.async_wait(FreezeDetectorHandler);
         TC_LOG_INFO("server.worldserver", "Starting up anti-freeze thread (%u seconds max stuck time)...", coreStuckTime);
     }
+
+    sIpcContext->Initialize();
+
+    sBattlenetServer.InitializeConnection();
 
     TC_LOG_INFO("server.worldserver", "%s (worldserver-daemon) ready...", _FULLVERSION);
 
@@ -243,6 +250,10 @@ extern int main(int argc, char** argv)
     ShutdownThreadPool(threadPool);
 
     sScriptMgr->OnShutdown();
+
+    sIpcContext->Close();
+
+    sBattlenetServer.CloseConnection();
 
     sWorld->KickAll();                                       // save and kick all players
     sWorld->UpdateSessions(1);                             // real players unload required UpdateSessions call
@@ -259,7 +270,7 @@ extern int main(int argc, char** argv)
     sOutdoorPvPMgr->Die();
 
     // set server offline
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmID);
+    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = flag | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, realmHandle.Index);
 
     // Clean up threads if any
     if (soapThread != nullptr)
@@ -277,27 +288,7 @@ extern int main(int argc, char** argv)
 
     TC_LOG_INFO("server.worldserver", "Halting process...");
 
-    if (cliThread != nullptr)
-    {
-#ifdef _WIN32
-        if (!CancelSynchronousIo(cliThread->native_handle()))
-        {
-            DWORD errorCode = GetLastError();
-            LPSTR errorBuffer;
-
-            DWORD formatReturnCode = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                                   nullptr, errorCode, 0, (LPTSTR)&errorBuffer, 0, nullptr);
-            if (!formatReturnCode)
-                errorBuffer = "Unknown error";
-
-            TC_LOG_ERROR("server.worldserver", "Error cancelling I/O of CliThread, error code %u, detail: %s", 
-                errorCode, errorBuffer);
-            LocalFree(errorBuffer);
-        }
-#endif
-        cliThread->join();
-        delete cliThread;
-    }
+    ShutdownCLIThread(cliThread);
 
     OpenSSLCrypto::threadsCleanup();
 
@@ -306,6 +297,66 @@ extern int main(int argc, char** argv)
     // 2 - restart command used, this code can be used by restarter for restart Trinityd
 
     return World::GetExitCode();
+}
+
+void ShutdownCLIThread(std::thread* cliThread)
+{
+    if (cliThread != nullptr)
+    {
+#ifdef _WIN32
+        // First try to cancel any I/O in the CLI thread
+        if (!CancelSynchronousIo(cliThread->native_handle()))
+        {
+            // if CancelSynchronousIo() fails, print the error and try with old way
+            DWORD errorCode = GetLastError();
+            LPSTR errorBuffer;
+
+            DWORD formatReturnCode = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                                   nullptr, errorCode, 0, (LPTSTR)&errorBuffer, 0, nullptr);
+            if (!formatReturnCode)
+                errorBuffer = "Unknown error";
+
+            TC_LOG_DEBUG("server.worldserver", "Error cancelling I/O of CliThread, error code %u, detail: %s",
+                errorCode, errorBuffer);
+            LocalFree(errorBuffer);
+
+            // send keyboard input to safely unblock the CLI thread
+            INPUT_RECORD b[4];
+            HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
+            b[0].EventType = KEY_EVENT;
+            b[0].Event.KeyEvent.bKeyDown = TRUE;
+            b[0].Event.KeyEvent.uChar.AsciiChar = 'X';
+            b[0].Event.KeyEvent.wVirtualKeyCode = 'X';
+            b[0].Event.KeyEvent.wRepeatCount = 1;
+
+            b[1].EventType = KEY_EVENT;
+            b[1].Event.KeyEvent.bKeyDown = FALSE;
+            b[1].Event.KeyEvent.uChar.AsciiChar = 'X';
+            b[1].Event.KeyEvent.wVirtualKeyCode = 'X';
+            b[1].Event.KeyEvent.wRepeatCount = 1;
+
+            b[2].EventType = KEY_EVENT;
+            b[2].Event.KeyEvent.bKeyDown = TRUE;
+            b[2].Event.KeyEvent.dwControlKeyState = 0;
+            b[2].Event.KeyEvent.uChar.AsciiChar = '\r';
+            b[2].Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+            b[2].Event.KeyEvent.wRepeatCount = 1;
+            b[2].Event.KeyEvent.wVirtualScanCode = 0x1c;
+
+            b[3].EventType = KEY_EVENT;
+            b[3].Event.KeyEvent.bKeyDown = FALSE;
+            b[3].Event.KeyEvent.dwControlKeyState = 0;
+            b[3].Event.KeyEvent.uChar.AsciiChar = '\r';
+            b[3].Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+            b[3].Event.KeyEvent.wVirtualScanCode = 0x1c;
+            b[3].Event.KeyEvent.wRepeatCount = 1;
+            DWORD numb;
+            WriteConsoleInput(hStdIn, b, 4, &numb);
+        }
+#endif
+        cliThread->join();
+        delete cliThread;
+    }
 }
 
 void ShutdownThreadPool(std::vector<std::thread>& threadPool)
@@ -482,13 +533,24 @@ bool StartDB()
     }
 
     ///- Get the realm Id from the configuration file
-    realmID = sConfigMgr->GetIntDefault("RealmID", 0);
-    if (!realmID)
+    realmHandle.Index = sConfigMgr->GetIntDefault("RealmID", 0);
+    if (!realmHandle.Index)
     {
         TC_LOG_ERROR("server.worldserver", "Realm ID not defined in configuration file");
         return false;
     }
-    TC_LOG_INFO("server.worldserver", "Realm running as realm ID %d", realmID);
+
+    QueryResult realmIdQuery = LoginDatabase.PQuery("SELECT `Region`,`Battlegroup` FROM `realmlist` WHERE `id`=%u", realmHandle.Index);
+    if (!realmIdQuery)
+    {
+        TC_LOG_ERROR("server.worldserver", "Realm id %u not defined in realmlist table", realmHandle.Index);
+        return false;
+    }
+
+    realmHandle.Region = (*realmIdQuery)[0].GetUInt8();
+    realmHandle.Battlegroup = (*realmIdQuery)[1].GetUInt8();
+
+    TC_LOG_INFO("server.worldserver", "Realm running as realm ID %u region %u battlegroup %u", realmHandle.Index, uint32(realmHandle.Region), uint32(realmHandle.Battlegroup));
 
     ///- Clean the database before starting
     ClearOnlineAccounts();
@@ -515,7 +577,7 @@ void StopDB()
 void ClearOnlineAccounts()
 {
     // Reset online status for all accounts with characters on the current realm
-    LoginDatabase.DirectPExecute("UPDATE account SET online = 0 WHERE online > 0 AND id IN (SELECT acctid FROM realmcharacters WHERE realmid = %d)", realmID);
+    LoginDatabase.DirectPExecute("UPDATE account SET online = 0 WHERE online > 0 AND id IN (SELECT acctid FROM realmcharacters WHERE realmid = %d)", realmHandle.Index);
 
     // Reset online status for all characters
     CharacterDatabase.DirectExecute("UPDATE characters SET online = 0 WHERE online <> 0");
