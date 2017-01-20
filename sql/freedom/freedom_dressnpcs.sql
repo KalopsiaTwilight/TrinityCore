@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `creature_template_outfits` (
     `hands` INT(10) NOT NULL DEFAULT '0',
     `back` INT(10) NOT NULL DEFAULT '0',
     `tabard` INT(10) NOT NULL DEFAULT '0',
+    `comment` text NOT NULL,
     PRIMARY KEY (`entry`)
 )
 COMMENT='Use positive values for item entries and negative to use item displayid for head, shoulders etc.'
