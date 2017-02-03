@@ -40,7 +40,8 @@
 #include "MiscPackets.h"
 #include "Transport.h"
 #include "BattlenetAccountMgr.h"
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 class fmisc_commandscript : public CommandScript
 {

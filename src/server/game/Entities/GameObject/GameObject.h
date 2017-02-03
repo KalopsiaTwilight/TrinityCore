@@ -25,7 +25,7 @@
 #include "Object.h"
 #include "LootMgr.h"
 #include "DatabaseEnv.h"
-#include "G3D\Quat.h"
+#include <G3D/Quat.h>
 
 class GameObjectAI;
 class Group;

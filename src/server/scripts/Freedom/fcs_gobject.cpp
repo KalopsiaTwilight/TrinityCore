@@ -9,7 +9,8 @@
 #include "Opcodes.h"
 #include "Config.h"
 #include "BattlenetAccountMgr.h"
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 class fgobject_commandscript : public CommandScript
 {

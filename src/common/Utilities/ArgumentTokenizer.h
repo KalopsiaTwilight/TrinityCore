@@ -4,7 +4,7 @@
 #include <cctype> 
 #include "Define.h"
 
-class ArgumentTokenizer
+class TC_COMMON_API ArgumentTokenizer
 {
 public:
     typedef std::vector<std::string> TokenStorage;

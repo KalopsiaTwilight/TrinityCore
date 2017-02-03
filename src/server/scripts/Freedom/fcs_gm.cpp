@@ -6,6 +6,7 @@
 #include "World.h"
 #include "Player.h"
 #include "Opcodes.h"
+#include "FreedomMgr.h"
 
 class fgm_commandscript : public CommandScript
 {

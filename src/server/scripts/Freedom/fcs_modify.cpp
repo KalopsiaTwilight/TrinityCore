@@ -30,7 +30,8 @@ EndScriptData */
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
 #include "SpellPackets.h"
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 class fmodify_commandscript : public CommandScript
 {

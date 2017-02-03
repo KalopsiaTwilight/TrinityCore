@@ -10,7 +10,8 @@
 #include "Pet.h"
 #include "Config.h"
 #include "BattlenetAccountMgr.h"
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 template<typename E, typename T = char const*>
 struct EnumName

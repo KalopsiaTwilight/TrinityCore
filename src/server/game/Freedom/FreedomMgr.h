@@ -148,7 +148,7 @@ enum RotationAxis
     AXIS_YAW
 };
 
-class FreedomMgr
+class TC_GAME_API FreedomMgr
 {
     private:
         FreedomMgr();

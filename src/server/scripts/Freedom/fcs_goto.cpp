@@ -6,7 +6,8 @@
 #include "Language.h"
 #include "Player.h"
 #include "Transport.h"
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 class fgoto_commandscript : public CommandScript
 {

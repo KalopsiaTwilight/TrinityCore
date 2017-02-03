@@ -14,8 +14,9 @@
 #include "CharacterPackets.h"
 #include "Guild.h"
 #include "GuildMgr.h"
+#include "FreedomMgr.h"
 #include <boost/algorithm/string/predicate.hpp>
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
 
 enum FreedomCmdAuraSpells
 {

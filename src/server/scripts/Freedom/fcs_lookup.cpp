@@ -32,7 +32,8 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "SpellInfo.h"
 #include <boost/algorithm/string/predicate.hpp>
-#include "ArgumentTokenizer.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
 
 class flookup_commandscript : public CommandScript
 {
