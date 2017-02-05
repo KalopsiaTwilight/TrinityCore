@@ -628,7 +628,7 @@ namespace WorldPackets
             bool ReferAFriend = false;
         };
 
-        class TitleEarned final : public ServerPacket
+        class TC_GAME_API TitleEarned final : public ServerPacket
         {
         public:
             TitleEarned(OpcodeServer opcode) : ServerPacket(opcode, 4) { }
