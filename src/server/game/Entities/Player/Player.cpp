@@ -2559,7 +2559,14 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(UNIT_FIELD_MOD_HASTE_REGEN, 1.0f);
 
     // reset size before reapply auras
-    SetObjectScale(1.0f);
+    QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if (result)
+    {
+        float scale = (*result)[0].GetFloat();
+        SetObjectScale(scale);
+    }
+    else
+        SetObjectScale(1.0f);
 
     // save base values (bonuses already included in stored stats
     for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -4060,6 +4067,20 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
             Garrison::DeleteFromDB(guid, trans);
 
             CharacterDatabase.CommitTransaction(trans);
+
+            // Delete character-related entries in Freedom tables
+            SQLTransaction transF = FreedomDatabase.BeginTransaction();
+
+            stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_EXTRA);
+            stmt->setUInt64(0, guid);
+            transF->Append(stmt);
+
+            stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_MORPHS);
+            stmt->setUInt64(0, guid);
+            transF->Append(stmt);
+
+            FreedomDatabase.CommitTransaction(transF);
+
 
             sWorld->DeleteCharacterInfo(playerguid);
             break;
@@ -16483,6 +16504,19 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     //Other way is to saves m_team into characters table.
     setFactionForRace(getRace());
 
+    /* Prepped for in case we wish to bring in custom factions for characters
+    QueryResult resultFaction = FreedomDatabase.PQuery("SELECT faction FROM character_extra WHERE faction>0 AND guid='%u'", guid);
+    if (resultFaction)
+        {
+            uint32 cfaction = (*resultFaction)[0].GetUInt32();
+            setFaction(cfaction);
+        }
+    else
+        {
+            setFactionForRace(getRace());
+        }
+    */
+
     // load home bind and check in same time class/race pair, it used later for restore broken positions
     if (!_LoadHomeBind(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_HOME_BIND)))
         return false;
@@ -21039,9 +21073,30 @@ void Player::InitDisplayIds()
         return;
     }
 
-    uint8 gender = GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER);
-    switch (gender)
+    QueryResult result = FreedomDatabase.PQuery("SELECT display FROM character_extra WHERE display>'0' AND guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    if (result)
     {
+        uint32 display = (*result)[0].GetUInt32();
+        SetDisplayId(display);
+
+        uint8 gender = GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER);
+        switch (gender)
+        {
+        case GENDER_FEMALE:
+            SetNativeDisplayId(info->displayId_f);
+            break;
+        case GENDER_MALE:
+            SetNativeDisplayId(info->displayId_m);
+            break;
+        default:
+            TC_LOG_ERROR("entities.player", "Player::InitDisplayIds: Player '%s' (%s) has invalid gender %u", GetName().c_str(), GetGUID().ToString().c_str(), gender);
+        }
+    }
+    else
+    {
+        uint8 gender = GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER);
+        switch (gender)
+        {
         case GENDER_FEMALE:
             SetDisplayId(info->displayId_f);
             SetNativeDisplayId(info->displayId_f);
@@ -21052,6 +21107,7 @@ void Player::InitDisplayIds()
             break;
         default:
             TC_LOG_ERROR("entities.player", "Player::InitDisplayIds: Player '%s' (%s) has invalid gender %u", GetName().c_str(), GetGUID().ToString().c_str(), gender);
+        }
     }
 }
 

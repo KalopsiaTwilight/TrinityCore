@@ -53,6 +53,11 @@ INSERT INTO rbac_permissions (`id`, `name`) VALUES
 (1009, 'Freedom administration commands'),
 (1010, 'Freedom moderator/storyteller commands'),
 (1100, 'Command: .goto ...'),
+(1200, 'Command: .cast player'),
+(1201, 'Command: .cast all'),
+(1202, 'Command: .playlocal'),
+(1203, 'Command: .additemall'),
+(1204, 'Command: .unauraall'),
 (9000, 'Command: reload playercreateinfo_spell_custom'),
 (9001, 'Command: reload playercreateinfo_skill_custom')
 ;
@@ -227,8 +232,10 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 774), -- wp show
 
 -- [CUSTOM COMMANDS]
-(@MODERATOR, 1100),-- goto ...
+(@MODERATOR, 1100), -- goto ...
 (@MODERATOR, 1010), -- freedom storyteller/moderator commands
+(@MODERATOR, 1200), -- cast player
+(@MODERATOR, 1202), -- playlocal
 
 -- [191 - Role: [GM2] Gamemaster]
 (@GM, @MODERATOR), -- Inherit moderator permissions
@@ -637,7 +644,12 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 734), -- server shutdown
 (@ADMIN, 735), -- server shutdown cancel
 (@ADMIN, 736), -- server motd
-(@ADMIN, 836)  -- debug boundary
+(@ADMIN, 836), -- debug boundary
+
+-- [CUSTOM COMMANDS]
+(@ADMIN, 1201), -- cast all
+(@ADMIN, 1203), -- additem all
+(@ADMIN, 1204)  -- unauraall
 ;
 
 -- [RECREATION: LINKED PERMS TO DEFAULT SEC LEVELS]

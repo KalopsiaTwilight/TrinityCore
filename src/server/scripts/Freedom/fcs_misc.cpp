@@ -83,6 +83,7 @@ public:
             { "mutehistory",      rbac::RBAC_PERM_COMMAND_MUTEHISTORY,       true, &HandleMuteInfoCommand,         "" },
             { "neargrave",        rbac::RBAC_PERM_COMMAND_NEARGRAVE,        false, &HandleNearGraveCommand,        "" },
             { "pinfo",            rbac::RBAC_PERM_COMMAND_PINFO,             true, &HandlePInfoCommand,            "" },
+            { "playerinfo",       rbac::RBAC_PERM_COMMAND_PINFO,             true, &HandlePInfoCommand,            "" }, // Custom, added for those used to .pl
             { "playall",          rbac::RBAC_PERM_COMMAND_PLAYALL,          false, &HandlePlayAllCommand,          "" },
             { "possess",          rbac::RBAC_PERM_COMMAND_POSSESS,          false, &HandlePossessCommand,          "" },
             { "pvpstats",         rbac::RBAC_PERM_COMMAND_PVPSTATS,          true, &HandlePvPstatsCommand,         "" },
@@ -104,6 +105,9 @@ public:
             { "wchange",          rbac::RBAC_PERM_COMMAND_WCHANGE,          false, &HandleChangeWeather,           "" },
             { "mailbox",          rbac::RBAC_PERM_COMMAND_MAILBOX,          false, &HandleMailBoxCommand,          "" },
             { "auras  ",          rbac::RBAC_PERM_COMMAND_LIST_AURAS,       false, &HandleAurasCommand,            "" },
+            { "playlocal",        rbac::RBAC_FPERM_COMMAND_PLAYLOCAL,       false, &HandlePlayLocalCommand,        "" },
+            { "additemall",       rbac::RBAC_FPERM_COMMAND_ADDITEMALL,      false, &HandleAddItemAllCommand,       "" },
+            { "unauraall",        rbac::RBAC_FPERM_COMMAND_UNAURAALL,       false, &HandleUnAuraAllCommand,        "" },
         };
         return commandTable;
     }
@@ -2695,6 +2699,127 @@ public:
                     handler->PSendSysMessage("%u: %s)", aura->GetId(), name);
             }
         }
+        return true;
+    }
+
+    static bool HandleAddItemAllCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 itemId = 0;
+
+        if (args[0] == '[')                                        // [name] manual form
+        {
+            char const* itemNameStr = strtok((char*)args, "]");
+
+            if (itemNameStr && itemNameStr[0])
+            {
+                std::string itemName = itemNameStr + 1;
+                auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* itemSparse)
+                {
+                    for (uint32 i = 0; i < MAX_LOCALES; ++i)
+                        if (itemName == itemSparse->Name->Str[i])
+                            return true;
+                    return false;
+                });
+
+                if (itr == sItemSparseStore.end())
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr + 1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+
+                itemId = itr->ID;
+            }
+            else
+                return false;
+        }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
+            if (!id)
+                return false;
+            itemId = atoul(id);
+        }
+
+        char const* ccount = strtok(NULL, " ");
+
+        int32 count = 1;
+
+        if (ccount)
+            count = strtol(ccount, NULL, 10);
+
+        if (count == 0)
+            count = 1;
+
+        std::vector<int32> bonusListIDs;
+        char const* bonuses = strtok(NULL, " ");
+
+        // semicolon separated bonuslist ids (parse them after all arguments are extracted by strtok!)
+        if (bonuses)
+        {
+            Tokenizer tokens(bonuses, ';');
+            for (char const* token : tokens)
+                bonusListIDs.push_back(atoul(token));
+        }
+
+        sWorld->AddItemAll(itemId, count);
+
+        //Subtract
+        if (count < 0)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_REMOVEITEM_ALL, itemId, -count);
+            return true;
+        }
+        else
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_ADDITEM_ALL, itemId, count);
+            return true;
+        }
+
+        return true;
+    }
+
+    static bool HandlePlayLocalCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 soundId = atoi((char*)args);
+
+        if (!sSoundEntriesStore.LookupEntry(soundId))
+        {
+            handler->PSendSysMessage(LANG_SOUND_NOT_EXIST, soundId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        WorldPacket data(SMSG_PLAY_SOUND, 4);
+        data << uint32(soundId);
+        handler->GetSession()->GetPlayer()->Player::SendMessageToSetInRange(&data, MAX_VISIBILITY_DISTANCE, true);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_PLAYED_LOCALLY, soundId);
+        return true;
+    }
+
+    static bool HandleUnAuraAllCommand(ChatHandler* handler, char const* args)
+    {
+        std::string argstr = args;
+        if (argstr == "all")
+        {
+            sWorld->MassUnauraAll();
+            return true;
+        }
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId)
+            return false;
+
+        sWorld->MassUnaura(spellId);
+
         return true;
     }
 #pragma endregion

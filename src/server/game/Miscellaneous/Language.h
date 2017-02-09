@@ -1570,5 +1570,8 @@ enum TrinityStrings
     FREEDOM_CMDI_GAMEOBJECT_INFO_LI_ROLL            = 100347,
     FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PITCH           = 100348,
     FREEDOM_CMDI_GAMEOBJECT_INFO_LI_YAW             = 100349,
+    FREEDOM_CMDI_ADDITEM_ALL                        = 100350,
+    FREEDOM_CMDI_REMOVEITEM_ALL                     = 100351,
+    FREEDOM_CMDI_PLAYED_LOCALLY                     = 100352,
 };
 #endif

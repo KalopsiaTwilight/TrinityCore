@@ -366,6 +366,12 @@ INSERT INTO wod_world.trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDI_GAMEOBJECT_INFO_LI_ROLL				*/ (100347, '> Roll: %.6f (Deg: %.2f°)'),
 /* FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PITCH				*/ (100348, '> Pitch: %.6f (Deg: %.2f°)'),
 /* FREEDOM_CMDI_GAMEOBJECT_INFO_LI_YAW					*/ (100349, '> Yaw: %.6f (Deg: %.2f°)'),
+/* FREEDOM_CMDI_ADDITEM_ALL                             */ (100350, CONCAT(@T_CMD_INFO, 'Mass-added itemID = %i, amount = %i')),
+/* FREEDOM_CMDI_REMOVEITEM_ALL							*/ (100351, CONCAT(@T_CMD_INFO, 'Mass-removed itemID = %i, amount = %i')),
+/* FREEDOM_CMDI_PLAYED_LOCALLY							*/ (100352, CONCAT(@T_CMD_INFO, 'Sound %u played to nearby (in sight) players.')),
+
+
+
 
 (200000, 'Dummy');
 -- Select new changes

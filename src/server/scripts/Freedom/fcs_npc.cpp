@@ -222,6 +222,7 @@ public:
             { "yell",       rbac::RBAC_PERM_COMMAND_NPC_YELL,                   false, &HandleNpcYellCommand,               "" },
             { "select",     rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSelectCommand,             "" },
             { "spawn",      rbac::RBAC_PERM_COMMAND_NPC_ADD,                    false, &HandleNpcAddCommand,                "" },
+            { "return",     rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcReturnCommand,             "" },
             { "add",        rbac::RBAC_PERM_COMMAND_NPC_ADD,                    false, NULL,                                "", npcAddCommandTable },
             { "delete",     rbac::RBAC_PERM_COMMAND_NPC_DELETE,                 false, NULL,                                "", npcDeleteCommandTable },
             { "follow",     rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,                 false, NULL,                                "", npcFollowCommandTable },
@@ -2322,6 +2323,20 @@ public:
             sFreedomMgr->ToChatLink("Hcreature", guidLow, creature->GetName()), 
             leaderGUID);
 
+        return true;
+    }
+
+    static bool HandleNpcReturnCommand(ChatHandler* handler, const char* /*args*/)
+    {
+        Creature* pCreature = handler->getSelectedCreature();
+        if (!pCreature)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        pCreature->AI()->EnterEvadeMode();
         return true;
     }
 

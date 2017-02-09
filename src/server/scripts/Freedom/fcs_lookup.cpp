@@ -393,8 +393,8 @@ public:
             weaponFilter = true;
 
         uint32 maxResults = sWorld->getIntConfig(CONFIG_MAX_RESULTS_LOOKUP_COMMANDS);
-        if (maxResults = 0)
-            maxResults == 1000; //Hard-code a max if not set so that results are actually displayed
+        if (maxResults == 0)
+            maxResults = 1000; //Hard-code a max if not set so that results are actually displayed
 
         PreparedStatement* stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_ITEMTEMPLATEEXTRA_LOOKUP);
         stmt->setString(0, namePart);

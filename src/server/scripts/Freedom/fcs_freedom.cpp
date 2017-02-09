@@ -369,6 +369,13 @@ public:
             return true;
         }
 
+        QueryResult result = FreedomDatabase.PQuery("SELECT display FROM character_extra WHERE guid='%u'", source->GetGUID().GetCounter());
+
+        if (result)
+            FreedomDatabase.PExecute("UPDATE character_extra SET display='%u' WHERE guid='%u'", morphData->displayId, source->GetGUID().GetCounter());
+        else
+            FreedomDatabase.PExecute("INSERT INTO character_extra(guid,display) VALUES ('%u','%u')", source->GetGUID().GetCounter(), morphData->displayId);
+
         source->SetDisplayId(morphData->displayId);
         handler->PSendSysMessage(FREEDOM_CMDI_MORPH, morphData->name, morphData->displayId);
         return true;
@@ -1276,6 +1283,11 @@ public:
     static bool HandleFreedomDemorphCommand(ChatHandler* handler, char const* args)
     {
         Player* source = handler->GetSession()->GetPlayer();
+
+        QueryResult result = FreedomDatabase.PQuery("SELECT display FROM character_extra WHERE guid='%u'", source->GetGUID().GetCounter());
+        if (result)
+            FreedomDatabase.PExecute("UPDATE character_extra SET display='0' WHERE guid='%u'", source->GetGUID().GetCounter());
+
         source->DeMorph();
         handler->PSendSysMessage(FREEDOM_CMDI_DEMORPH);
         return true;
@@ -1405,7 +1417,8 @@ public:
     {
         if (!*args)
         {
-            handler->PSendSysMessage(FREEDOM_CMDH_SCALE);
+            float currentScale = handler->GetSession()->GetPlayer()->GetObjectScale();
+            handler->PSendSysMessage(FREEDOM_CMDH_SCALE, currentScale);
             return true;
         }
 
@@ -1420,8 +1433,38 @@ public:
             return true;
         }
 
+
+        QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUID().GetCounter());
+        if (result)
+        {
+            Field* fields = result->Fetch();
+
+            //float currentScale = fields[0].GetFloat();
+
+            Player *chr = handler->GetSession()->GetPlayer();
+            //handler->PSendSysMessage(FREEDOM_CMDI_SCALE_CHANGE, currentScale, scale);
+            handler->PSendSysMessage(FREEDOM_CMDI_SCALE, scale);
+            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+
+            FreedomDatabase.PExecute("UPDATE character_extra SET scale='%f' WHERE guid='%u'", scale, chr->GetGUID().GetCounter());
+            return true;
+        }
+
+        else
+        {
+            Player *chr = handler->GetSession()->GetPlayer();
+
+            handler->PSendSysMessage(FREEDOM_CMDI_SCALE, scale);
+            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+            FreedomDatabase.PExecute("INSERT INTO character_extra (guid,scale) VALUES ('%u','%f')", chr->GetGUID().GetCounter(), scale);
+
+            return true;
+        }
+
+
+
+
         source->SetObjectScale(scale);
-        handler->PSendSysMessage(FREEDOM_CMDI_SCALE, scale);
         return true;
     }
 

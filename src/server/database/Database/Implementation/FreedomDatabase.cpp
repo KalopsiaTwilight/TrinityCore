@@ -47,6 +47,8 @@ void FreedomDatabaseConnection::DoPrepareStatements()
     PrepareStatement(FREEDOM_DEL_MORPHS_NAME, "DELETE FROM morphs WHERE name = ? AND guid = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_DEL_GAMEOBJECTEXTRA, "DELETE FROM gameobject_extra WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_DEL_CREATUREEXTRA, "DELETE FROM creature_extra WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(FREEDOM_DEL_CHAR_EXTRA, "DELETE FROM character_extra WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(FREEDOM_DEL_CHAR_MORPHS, "DELETE FROM morphs WHERE guid = ?", CONNECTION_ASYNC);
 
     // UPDATES
     PrepareStatement(FREEDOM_UPD_ITEMTEMPLATEEXTRA, "UPDATE item_template_extra SET hidden = ? WHERE entry_id = ?", CONNECTION_ASYNC);

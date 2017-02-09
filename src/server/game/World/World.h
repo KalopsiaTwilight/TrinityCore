@@ -794,6 +794,12 @@ class TC_GAME_API World
 
         void RemoveOldCorpses();
 
+        //Custom
+        void CastAll(uint32 spell, bool triggered);
+        void AddItemAll(uint32 itemId, int32 count);
+        void MassUnaura(uint32 spellId);
+        void MassUnauraAll();
+
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters

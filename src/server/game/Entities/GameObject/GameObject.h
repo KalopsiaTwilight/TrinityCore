@@ -935,6 +935,8 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         bool IsTransport() const;
         bool IsDynTransport() const;
         bool IsDestructibleBuilding() const;
+        bool IsStaticMO() const;
+        bool IsGenericGO() const;
 
         ObjectGuid::LowType GetSpawnId() const { return m_spawnId; }
 

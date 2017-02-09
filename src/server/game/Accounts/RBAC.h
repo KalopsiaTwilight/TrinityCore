@@ -747,6 +747,13 @@ enum RBACPermissions
     // .goto permissions 1100-1199
     RBAC_FPERM_COMMAND_GOTO                                  = 1100,
 
+    // Kret port permissions 1200-1299
+    RBAC_FPERM_COMMAND_CAST_PLAYER                           = 1200,
+    RBAC_FPERM_COMMAND_CAST_ALL                              = 1201,
+    RBAC_FPERM_COMMAND_PLAYLOCAL                             = 1202,
+    RBAC_FPERM_COMMAND_ADDITEMALL                            = 1203,
+    RBAC_FPERM_COMMAND_UNAURAALL                             = 1204,
+
     // custom .reload permissions 9000-9099
     RBAC_FPERM_COMMAND_RELOAD_PLAYERCREATEINFO_SPELL_CUSTOM  = 9000,
     RBAC_FPERM_COMMAND_RELOAD_PLAYERCREATEINFO_SKILL_CUSTOM  = 9001,
