@@ -41,6 +41,13 @@ enum PetStableinfo
 typedef std::unordered_map<uint32, PetSpell> PetSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
+struct PetAddon
+{
+    float scale;
+};
+
+typedef std::unordered_map<uint32, PetAddon> PetAddonContainer;
+
 class Player;
 
 class TC_GAME_API Pet : public Guardian
@@ -73,6 +80,11 @@ class TC_GAME_API Pet : public Guardian
 
         void setDeathState(DeathState s) override;                   // overwrite virtual Creature::setDeathState and Unit::setDeathState
         void Update(uint32 diff) override;                           // overwrite virtual Creature::Update and Unit::Update
+
+        // Custom, for persistent pet scaling
+        PetAddon const* GetPetAddon();
+        PetAddon const* GetPetAddonDB(uint32 GUIDlow);
+        void SetPetAddon(Player* owner, float Scale);
 
         uint8 GetPetAutoSpellSize() const override { return uint8(m_autospells.size()); }
         uint32 GetPetAutoSpellOnPos(uint8 pos) const override
@@ -168,5 +180,7 @@ class TC_GAME_API Pet : public Guardian
         {
             ABORT();
         }
+
+        PetAddonContainer _petAddonStore;
 };
 #endif

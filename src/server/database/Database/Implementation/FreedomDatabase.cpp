@@ -33,6 +33,7 @@ void FreedomDatabaseConnection::DoPrepareStatements()
     PrepareStatement(FREEDOM_SEL_CREATUREEXTRA, "SELECT guid, scale, id_creator_bnet, id_creator_player, id_modifier_bnet, id_modifier_player, UNIX_TIMESTAMP(created), UNIX_TIMESTAMP(modified), phaseMask, displayLock, displayId, nativeDisplayId, genderLock, gender, swim, gravity, fly FROM creature_extra", CONNECTION_SYNCH);
     PrepareStatement(FREEDOM_SEL_CREATUREEXTRA_TEMPLATE, "SELECT id_entry, disabled FROM gameobject_template_extra", CONNECTION_SYNCH);
     PrepareStatement(FREEDOM_SEL_ITEMTEMPLATEEXTRA_LOOKUP, "SELECT entry_id, name, hidden FROM item_template_extra WHERE INSTR(name, ?) > 0 AND IF (?, entry_id >= 200000 AND entry_id < 900000, entry_id < 200000 OR entry_id >= 900000) AND IF (?, class = 4, true) AND IF (?, class = 2, true) LIMIT ?", CONNECTION_SYNCH);
+    PrepareStatement(FREEDOM_SEL_CHAR_PET_EXTRA_BY_ID, "SELECT id, owner, scale FROM pet_extra WHERE id = ? AND owner = ?", CONNECTION_SYNCH);
 
     // INSERTS
     PrepareStatement(FREEDOM_INS_PUBLIC_TELE, "INSERT INTO public_tele (name, position_x, position_y, position_z, orientation, map, id_bnet_gm) VALUES (?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
@@ -49,11 +50,15 @@ void FreedomDatabaseConnection::DoPrepareStatements()
     PrepareStatement(FREEDOM_DEL_CREATUREEXTRA, "DELETE FROM creature_extra WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_DEL_CHAR_EXTRA, "DELETE FROM character_extra WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_DEL_CHAR_MORPHS, "DELETE FROM morphs WHERE guid = ?", CONNECTION_ASYNC);
+    PrepareStatement(FREEDOM_DEL_CHAR_PET_BY_OWNER, "DELETE FROM pet_extra WHERE owner = ?", CONNECTION_ASYNC);
+    PrepareStatement(FREEDOM_DEL_CHAR_PET_BY_ID, "DELETE FROM pet_extra WHERE id = ?", CONNECTION_ASYNC);
+
 
     // UPDATES
     PrepareStatement(FREEDOM_UPD_ITEMTEMPLATEEXTRA, "UPDATE item_template_extra SET hidden = ? WHERE entry_id = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_UPD_GAMEOBJECTEXTRA_TEMPLATE, "UPDATE gameobject_template_extra SET disabled = ? WHERE id_entry = ?", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_UPD_CREATUREEXTRA_TEMPLATE, "UPDATE creature_template_extra SET disabled = ? WHERE id_entry = ?", CONNECTION_ASYNC);
+    PrepareStatement(FREEDOM_UPD_CHAR_PET_EXTRA, "UPDATE pet_extra SET scale = ? WHERE id = ?", CONNECTION_ASYNC);
 
     // REPLACES
     PrepareStatement(FREEDOM_REP_GAMEOBJECTEXTRA, "REPLACE INTO gameobject_extra (guid, scale, id_creator_bnet, id_creator_player, id_modifier_bnet, id_modifier_player, created, modified, phaseMask, uses_quat, roll, pitch, yaw) VALUES (?, ?, ?, ?, ?, ?, from_unixtime(?), from_unixtime(?), ?, ?, ?, ?, ?)", CONNECTION_ASYNC);

@@ -140,6 +140,7 @@ public:
             { "title",          rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, NULL,                                    "", freedomTitleCommandTable },
             { "recall",         rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomRecallCommand,             "" },
             { "guild",          rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, NULL,                                    "", freedomGuildCommandTable },
+            { "petscale",       rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomPetScaleCommand,           "" },
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -1461,9 +1462,6 @@ public:
             return true;
         }
 
-
-
-
         source->SetObjectScale(scale);
         return true;
     }
@@ -1601,6 +1599,69 @@ public:
 
         source->SetAtLoginFlag(AT_LOGIN_CHANGE_FACTION);
         handler->PSendSysMessage(FREEDOM_CMDI_FLAG_FOR_FACTIONCHANGE);
+        return true;
+    }
+
+    static bool HandleFreedomPetScaleCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        Pet* pet;
+
+        const float PET_SCALE_MAX = sConfigMgr->GetFloatDefault("Freedom.Modify.MaxScale", 10.0f);
+        const float PET_SCALE_MIN = sConfigMgr->GetFloatDefault("Freedom.Modify.MinScale", 0.01f);
+
+        Player* source = handler->GetSession()->GetPlayer();
+        pet = source->GetPet();
+        /*
+        if (AccountMgr::IsModeratorAccount(handler->GetSession()->GetSecurity()) && handler->getSelectedPlayer())
+            pet = handler->getSelectedPlayer()->GetPet();
+        else
+            pet = handler->GetSession()->GetPlayer()->GetPet();
+        
+        if (AccountMgr::IsModeratorAccount(handler->GetSession()->GetSecurity()) && !pet)
+        {
+            handler->PSendSysMessage("You/your target has no pet.");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+        else*/ if (!pet)
+        {
+            handler->PSendSysMessage("You have no pet.");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (pet->isTemporarySummoned())
+        {
+            handler->PSendSysMessage("You cannot save the scale of temporary pets!");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string param = (char*)args;
+
+        if (param == "reset")
+        {
+            pet->SetPetAddon(source, 0);
+            pet->SetObjectScale(1);
+            return true;
+        }
+        else
+        {
+            float Scale = (float)atof((char*)args);
+            if (Scale > PET_SCALE_MAX || Scale < PET_SCALE_MIN)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_VALUE_OUT_OF_RANGE, PET_SCALE_MAX, PET_SCALE_MIN);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+            pet->SetPetAddon(source, Scale);
+            pet->SetObjectScale(Scale);
+            return true;
+        }
+
         return true;
     }
 #pragma endregion

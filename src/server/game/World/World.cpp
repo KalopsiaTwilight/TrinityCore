@@ -1277,6 +1277,10 @@ void World::LoadConfigSettings(bool reload)
        m_int_configs[CONFIG_NO_GRAY_AGGRO_BELOW] = m_int_configs[CONFIG_NO_GRAY_AGGRO_ABOVE];
     }
 
+    // Visibility AlwaysVisible
+    m_bool_configs[CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO] = sConfigMgr->GetBoolDefault("Visibility.AlwaysVisible.Gameobject.WMO", false);
+    m_bool_configs[CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_GENERIC] = sConfigMgr->GetBoolDefault("Visibility.AlwaysVisible.Gameobject.Generic", false);
+
     ///- Read the "Data" directory from the config file
     std::string dataPath = sConfigMgr->GetStringDefault("DataDir", "./");
     if (dataPath.empty() || (dataPath.at(dataPath.length()-1) != '/' && dataPath.at(dataPath.length()-1) != '\\'))

@@ -1064,7 +1064,7 @@ bool GameObject::IsStaticMO() const
 
 bool GameObject::IsGenericGO() const
 {
-    // If something is marked as a generic object, don't transmit an out of range packet for it. (Custom, testing)
+    // If something is marked as a generic object, don't transmit an out of range packet for it.
     GameObjectTemplate const* gInfo = GetGOInfo();
     if (!gInfo)
         return false;
@@ -1101,13 +1101,13 @@ bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
 
     if (IsTransport() || IsDestructibleBuilding())
         return true;
-
-    if (IsStaticMO()) // Custom
+    
+    if (IsStaticMO() && sWorld->getBoolConfig(CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO)) // CUSTOM
         return true;
-
-    if (IsGenericGO()) // CUSTOM
+    
+    if (IsGenericGO() && sWorld->getBoolConfig(CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_GENERIC)) // CUSTOM
         return true;
-
+    
     if (!seer)
         return false;
 

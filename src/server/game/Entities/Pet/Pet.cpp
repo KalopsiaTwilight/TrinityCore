@@ -368,6 +368,23 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
         owner->ToPlayer()->SetLastPetNumber(petId);
 
     m_loading = false;
+    
+    stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_CHAR_PET_EXTRA_BY_ID);
+    stmt->setUInt32(0, petId);
+    stmt->setUInt64(1, owner->GetGUID().GetCounter());
+    result = FreedomDatabase.Query(stmt);
+    fields = result->Fetch();
+    //QueryResult result2 = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE id='%u'", petId);
+
+    // update for case of current pet "slot = 0"
+    if (result)
+    {
+        PetAddon& petAddon = _petAddonStore[petId];
+        //petAddon.scale = (*result)[0].GetFloat();
+        petAddon.scale = fields[2].GetFloat();
+        if (petAddon.scale && petAddon.scale > 0.1)
+            SetObjectScale(petAddon.scale);
+    }
 
     return true;
 }
@@ -401,6 +418,11 @@ void Pet::SavePetToDB(PetSaveMode mode)
 
     uint32 curhealth = GetHealth();
     uint32 curmana = GetPower(POWER_MANA);
+
+    float curscale = 0;
+    PetAddon const* painfo = GetPetAddon();
+    if (painfo && painfo->scale >= 0.1)
+        curscale = painfo->scale;
 
     SQLTransaction trans = CharacterDatabase.BeginTransaction();
     // save auras before possibly removing them
@@ -469,6 +491,17 @@ void Pet::SavePetToDB(PetSaveMode mode)
         trans->Append(stmt);
 
         CharacterDatabase.CommitTransaction(trans);
+        /*
+        if (curscale > 0)
+        {
+            SQLTransaction trans2 = FreedomDatabase.BeginTransaction();
+            stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_UPD_CHAR_PET_EXTRA);
+            stmt->setFloat(0, curscale);
+            stmt->setUInt32(1, m_charmInfo->GetPetNumber());
+            trans2->Append(stmt);
+
+            FreedomDatabase.CommitTransaction(trans2);
+        }*/
     }
     // delete
     else
@@ -511,6 +544,14 @@ void Pet::DeleteFromDB(uint32 guidlow)
     trans->Append(stmt);
 
     CharacterDatabase.CommitTransaction(trans);
+
+    trans = FreedomDatabase.BeginTransaction();
+
+    stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_PET_BY_ID);
+    stmt->setUInt32(0, guidlow);
+    trans->Append(stmt);
+
+    FreedomDatabase.CommitTransaction(trans);
 }
 
 void Pet::setDeathState(DeathState s)                       // overwrite virtual Creature::setDeathState and Unit::setDeathState
@@ -1882,4 +1923,44 @@ std::string Pet::GenerateActionBarData() const
     }
 
     return ss.str();
+}
+
+PetAddon const* Pet::GetPetAddonDB(uint32 GUIDlow)
+{
+    PetAddonContainer::const_iterator itr = _petAddonStore.find(GUIDlow);
+    if (itr != _petAddonStore.end())
+        return &(itr->second);
+
+    return NULL;
+    }
+
+PetAddon const* Pet::GetPetAddon()
+{
+    if (m_charmInfo->GetPetNumber())
+    {
+        if (PetAddon const* petAddon = Pet::GetPetAddonDB(m_charmInfo->GetPetNumber()))
+            return petAddon;
+    }
+    
+    return NULL;
+}
+
+void Pet::SetPetAddon(Player* owner, float Scale)
+{
+    uint32 petId = m_charmInfo->GetPetNumber();
+    uint64 ownerId = owner->GetGUID().GetCounter();
+    if (petId && ownerId)
+    {
+        if (Scale == 0)
+        {
+            FreedomDatabase.PExecute("DELETE FROM pet_extra WHERE owner='%u' AND id='%u'", ownerId, petId);
+            return;
+        }
+
+        QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE owner='%u' AND id='%u'", ownerId, petId);
+        if (result)
+            FreedomDatabase.PExecute("UPDATE pet_extra SET scale='%f' WHERE owner='%u' AND id='%u'", Scale, ownerId, petId);
+        else
+            FreedomDatabase.PExecute("INSERT INTO pet_extra(id,owner,scale) VALUES ('%u','%u','%f')", petId, ownerId, Scale);
+    }
 }

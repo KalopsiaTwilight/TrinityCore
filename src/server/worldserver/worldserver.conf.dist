@@ -3163,6 +3163,20 @@ NoGrayAggro.Above = 0
 NoGrayAggro.Below = 0
 
 #
+#     Visibility.AlwaysVisible
+#         Description: Toggles whether the specified entity is always visible, regardless of distance (prevents the fading out and
+#                      fading in of entities based on config visibility options)
+#         Example:     Setting WMO to true will allow players to always see the object, useful for building objects and the like
+#                      WMOs - Type 14
+#                      Generic - Type 5
+#
+#         Default:     false  -  (acts as normal, obeys config values for visibility distances)
+#
+
+Visibility.AlwaysVisible.Gameobject.WMO = false
+Visibility.AlwaysVisible.Gameobject.Generic = false
+
+#
 ###################################################################################################
 
 ###################################################################################################

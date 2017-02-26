@@ -26110,6 +26110,10 @@ Pet* Player::SummonPet(uint32 entry, float x, float y, float z, float ang, PetTy
     pet->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
     pet->InitStatsForLevel(getLevel());
 
+    PetAddon const* painfo = pet->GetPetAddon();
+    if (painfo && painfo->scale >= 0.1)
+        SetObjectScale(painfo->scale);
+
     SetMinion(pet, true);
 
     switch (petType)
