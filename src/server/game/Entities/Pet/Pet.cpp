@@ -369,19 +369,18 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
 
     m_loading = false;
     
-    stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_CHAR_PET_EXTRA_BY_ID);
-    stmt->setUInt32(0, petId);
-    stmt->setUInt64(1, owner->GetGUID().GetCounter());
-    result = FreedomDatabase.Query(stmt);
-    fields = result->Fetch();
-    //QueryResult result2 = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE id='%u'", petId);
+    //stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_CHAR_PET_EXTRA_BY_ID);
+    //stmt->setUInt32(0, petId);
+    //result = FreedomDatabase.Query(stmt);
+    //fields = result->Fetch();
+    QueryResult result2 = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE id='%u'", petId);
 
     // update for case of current pet "slot = 0"
-    if (result)
+    if (result2)
     {
         PetAddon& petAddon = _petAddonStore[petId];
-        //petAddon.scale = (*result)[0].GetFloat();
-        petAddon.scale = fields[2].GetFloat();
+        petAddon.scale = (*result2)[0].GetFloat();
+        //petAddon.scale = fields[2].GetFloat();
         if (petAddon.scale && petAddon.scale > 0.1)
             SetObjectScale(petAddon.scale);
     }
