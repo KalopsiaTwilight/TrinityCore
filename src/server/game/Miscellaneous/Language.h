@@ -1573,5 +1573,6 @@ enum TrinityStrings
     FREEDOM_CMDI_ADDITEM_ALL                        = 100350,
     FREEDOM_CMDI_REMOVEITEM_ALL                     = 100351,
     FREEDOM_CMDI_PLAYED_LOCALLY                     = 100352,
+    FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C = 100353,
 };
 #endif

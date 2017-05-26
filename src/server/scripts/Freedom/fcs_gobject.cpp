@@ -800,8 +800,8 @@ public:
 
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY, objectId, objectInfo->displayId);
-            return true;
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C, objectId, objectInfo->displayId);
+            //return true; -- CUSTOM, testing force-spawning with allegedly invalid display IDs
         }
 
         Player* source = handler->GetSession()->GetPlayer();
