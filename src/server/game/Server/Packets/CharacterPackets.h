@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,8 +19,16 @@
 #define CharacterPackets_h__
 
 #include "Packet.h"
-#include "Player.h"
+#include "ObjectGuid.h"
+#include "Optional.h"
 #include "PacketUtilities.h"
+#include "Position.h"
+#include "SharedDefines.h"
+#include "UnitDefines.h"
+#include <array>
+#include <memory>
+
+class Field;
 
 namespace WorldPackets
 {
@@ -29,10 +37,7 @@ namespace WorldPackets
         class EnumCharacters final : public ClientPacket
         {
         public:
-            EnumCharacters(WorldPacket&& packet) : ClientPacket(std::move(packet))
-            {
-                ASSERT(GetOpcode() == CMSG_ENUM_CHARACTERS || GetOpcode() == CMSG_ENUM_CHARACTERS_DELETED_BY_CLIENT);
-            }
+            EnumCharacters(WorldPacket&& packet);
 
             void Read() override { }
         };
@@ -48,6 +53,7 @@ namespace WorldPackets
             uint8 HairStyle       = 0;
             uint8 HairColor       = 0;
             uint8 FacialHairStyle = 0;
+            std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
             uint8 OutfitId        = 0;
             Optional<int32> TemplateSet;
             std::string Name;
@@ -72,20 +78,22 @@ namespace WorldPackets
             uint8 HairColorID       = 0;
             uint8 FacialHairStyleID = 0;
             uint8 SkinID            = 0;
+            std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
         };
 
         struct CharRaceOrFactionChangeInfo
         {
-            Optional<uint8> HairColorID;
+            uint8 HairColorID       = 0;
             uint8 RaceID            = RACE_NONE;
             uint8 SexID             = GENDER_NONE;
-            Optional<uint8> SkinID;
-            Optional<uint8> FacialHairStyleID;
+            uint8 SkinID            = 0;
+            uint8 FacialHairStyleID = 0;
             ObjectGuid Guid;
             bool FactionChange      = false;
             std::string Name;
-            Optional<uint8> FaceID;
-            Optional<uint8> HairStyleID;
+            uint8 FaceID            = 0;
+            uint8 HairStyleID       = 0;
+            std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
         };
 
         struct CharacterUndeleteInfo
@@ -123,17 +131,21 @@ namespace WorldPackets
                 uint8 HairStyle          = 0;
                 uint8 HairColor          = 0;
                 uint8 FacialHair         = 0;
+                std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
                 uint8 Level              = 0;
                 int32 ZoneId             = 0;
                 int32 MapId              = 0;
-                G3D::Vector3 PreLoadPosition;
+                TaggedPosition<Position::XYZ> PreLoadPosition;
                 ObjectGuid GuildGuid;
                 uint32 Flags             = 0; ///< Character flag @see enum CharacterFlags
                 uint32 CustomizationFlag = 0; ///< Character customization flags @see enum CharacterCustomizeFlags
                 uint32 Flags3            = 0; ///< Character flags 3 @todo research
+                uint32 Flags4            = 0;
                 bool FirstLogin      = false;
                 uint8 unkWod61x          = 0;
                 uint32 LastPlayedTime    = 0;
+                uint16 SpecID            = 0;
+                uint32 Unknown703        = 0;
 
                 struct PetInfo
                 {
@@ -152,7 +164,7 @@ namespace WorldPackets
                     uint8 InventoryType     = 0;
                 };
 
-                VisualItemInfo VisualItems[INVENTORY_SLOT_BAG_END];
+                std::array<VisualItemInfo, 23> VisualItems;
             };
 
             struct RestrictedFactionChangeRuleInfo
@@ -170,9 +182,15 @@ namespace WorldPackets
 
             bool Success                = false; ///<
             bool IsDeletedCharacters    = false; ///< used for character undelete list
+            bool IsDemonHunterCreationAllowed = false; ///< used for demon hunter early access
+            bool HasDemonHunterOnRealm  = false;
+            bool HasLevel70OnRealm      = false;
+            bool Unknown7x              = false;
 
-            std::list<CharacterInfo> Characters; ///< all characters on the list
-            std::list<RestrictedFactionChangeRuleInfo> FactionChangeRestrictions; ///< @todo: research
+            Optional<uint32> DisabledClassesMask;
+
+            std::vector<CharacterInfo> Characters; ///< all characters on the list
+            std::vector<RestrictedFactionChangeRuleInfo> FactionChangeRestrictions; ///< @todo: research
         };
 
         class CreateCharacter final : public ClientPacket
@@ -311,6 +329,7 @@ namespace WorldPackets
                 uint8 FacialHairStyleID = 0;
                 uint8 FaceID            = 0;
                 uint8 RaceID            = RACE_NONE;
+                std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
             };
 
             CharFactionChangeResult() : ServerPacket(SMSG_CHAR_FACTION_CHANGE_RESULT, 20 + sizeof(CharFactionChangeDisplayInfo)) { }
@@ -357,7 +376,7 @@ namespace WorldPackets
 
             void Read() override;
 
-            Array<ReorderInfo> Entries;
+            Array<ReorderInfo, MAX_CHARACTERS_PER_REALM> Entries;
         };
 
         class UndeleteCharacter final : public ClientPacket
@@ -428,7 +447,7 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             int32 MapID = -1;
-            Position Pos;
+            TaggedPosition<Position::XYZO> Pos;
             uint32 Reason = 0;
         };
 
@@ -463,7 +482,9 @@ namespace WorldPackets
         public:
             LogoutRequest(WorldPacket&& packet) : ClientPacket(CMSG_LOGOUT_REQUEST, std::move(packet)) { }
 
-            void Read() override { }
+            void Read() override;
+
+            bool IdleLogout = false;
         };
 
         class LogoutResponse final : public ServerPacket
@@ -480,11 +501,9 @@ namespace WorldPackets
         class LogoutComplete final : public ServerPacket
         {
         public:
-            LogoutComplete() : ServerPacket(SMSG_LOGOUT_COMPLETE, 2) { }
+            LogoutComplete() : ServerPacket(SMSG_LOGOUT_COMPLETE, 0) { }
 
-            WorldPacket const* Write() override;
-
-            ObjectGuid SwitchToCharacter;
+            WorldPacket const* Write() override { return &_worldPacket; }
         };
 
         class LogoutCancel final : public ClientPacket
@@ -523,8 +542,6 @@ namespace WorldPackets
 
             uint8 ServerExpansionTier = 0;
             uint8 ServerExpansionLevel = 0;
-            time_t RaidOrigin = time_t(1135753200); // 28/12/2005 07:00:00
-            int32 ServerRegionID = 3;   // Cfg_Regions.dbc, EU
         };
 
         class SetActionBarToggles final : public ClientPacket
@@ -559,26 +576,6 @@ namespace WorldPackets
             bool TriggerEvent = false;
         };
 
-        class ShowingCloak final : public ClientPacket
-        {
-        public:
-            ShowingCloak(WorldPacket&& packet) : ClientPacket(CMSG_SHOWING_CLOAK, std::move(packet)) { }
-
-            void Read() override;
-
-            bool ShowCloak = false;
-        };
-
-        class ShowingHelm final : public ClientPacket
-        {
-        public:
-            ShowingHelm(WorldPacket&& packet) : ClientPacket(CMSG_SHOWING_HELM, std::move(packet)) { }
-
-            void Read() override;
-
-            bool ShowHelm = false;
-        };
-
         class SetTitle final : public ClientPacket
         {
         public:
@@ -601,16 +598,25 @@ namespace WorldPackets
             uint32 NewFacialHair = 0;
             uint32 NewSkinColor = 0;
             uint32 NewFace = 0;
+            std::array<uint32, PLAYER_CUSTOM_DISPLAY_SIZE> NewCustomDisplay;
         };
 
-        class BarberShopResultServer final : public ServerPacket
+        class BarberShopResult final : public ServerPacket
         {
         public:
-            BarberShopResultServer() : ServerPacket(SMSG_BARBER_SHOP_RESULT, 4) { }
+            enum class ResultEnum : uint8
+            {
+                Success = 0,
+                NoMoney = 1,
+                NotOnChair = 2,
+                NoMoney2 = 3
+            };
+
+            BarberShopResult(ResultEnum result) : ServerPacket(SMSG_BARBER_SHOP_RESULT, 4), Result(result) { }
 
             WorldPacket const* Write() override;
 
-            BarberShopResult Result = BARBER_SHOP_RESULT_SUCCESS;
+            ResultEnum Result = ResultEnum::Success;
         };
 
         class LogXPGain final : public ServerPacket
@@ -705,6 +711,7 @@ namespace WorldPackets
             uint8 HairStyleID = 0;
             uint8 FacialHairStyleID = 0;
             uint8 FaceID = 0;
+            std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> CustomDisplay;
         };
 
         class CharCustomizeFailed final : public ServerPacket

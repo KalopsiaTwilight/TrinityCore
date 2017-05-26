@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -256,6 +256,9 @@ class boss_lord_marrowgar : public CreatureScript
                             Talk(SAY_BERSERK);
                             break;
                     }
+
+                    if (me->HasUnitState(UNIT_STATE_CASTING))
+                        return;
                 }
 
                 // We should not melee attack when storming
@@ -582,7 +585,7 @@ class spell_marrowgar_coldflame_damage : public SpellScriptLoader
                 if (target->HasAura(SPELL_IMPALED))
                     return false;
 
-                if (target->GetExactDist2d(GetOwner()) > GetSpellInfo()->GetEffect(target, EFFECT_0)->CalcRadius())
+                if (target->GetExactDist2d(GetOwner()) > GetSpellInfo()->GetEffect(target->GetMap()->GetDifficultyID(), EFFECT_0)->CalcRadius())
                     return false;
 
                 if (Aura* aur = target->GetAura(GetId()))

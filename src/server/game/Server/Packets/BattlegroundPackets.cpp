@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -67,12 +67,13 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Battleground::PVPLogData:
     data << uint32(playerData.HealingDone);
     data << uint32(playerData.Stats.size());
     data << int32(playerData.PrimaryTalentTree);
-    data << uint32(playerData.PrimaryTalentTreeNameIndex);
-    data << uint32(playerData.Race);
+    data << int32(playerData.PrimaryTalentTreeNameIndex);
+    data << int32(playerData.Race);
+    data << uint32(playerData.Prestige);
     if (!playerData.Stats.empty())
         data.append(playerData.Stats.data(), playerData.Stats.size());
 
-    data.WriteBit(playerData.Faction);
+    data.WriteBit(playerData.Faction != 0);
     data.WriteBit(playerData.IsInWorld);
     data.WriteBit(playerData.Honor.is_initialized());
     data.WriteBit(playerData.PreMatchRating.is_initialized());
@@ -131,6 +132,7 @@ void WorldPackets::Battleground::BattlemasterJoin::Read()
 void WorldPackets::Battleground::BattlemasterJoinArena::Read()
 {
     _worldPacket >> TeamSizeIndex;
+    _worldPacket >> Roles;
 }
 
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Battleground::BattlefieldStatusHeader const& header)
@@ -168,7 +170,7 @@ WorldPacket const* WorldPackets::Battleground::BattlefieldStatusActive::Write()
     _worldPacket << uint32(Mapid);
     _worldPacket << uint32(ShutdownTimer);
     _worldPacket << uint32(StartTimer);
-    _worldPacket.WriteBit(ArenaFaction);
+    _worldPacket.WriteBit(ArenaFaction != 0);
     _worldPacket.WriteBit(LeftEarly);
     _worldPacket.FlushBits();
     return &_worldPacket;
@@ -217,9 +219,7 @@ WorldPacket const* WorldPackets::Battleground::BattlefieldList::Write()
         _worldPacket.append(Battlefields.data(), Battlefields.size());
 
     _worldPacket.WriteBit(PvpAnywhere);
-    _worldPacket.WriteBit(HasHolidayWinToday);
     _worldPacket.WriteBit(HasRandomWinToday);
-    _worldPacket.WriteBit(IsRandomBG);
     _worldPacket.FlushBits();
     return &_worldPacket;
 }

@@ -1,20 +1,32 @@
-**Changes proposed**:
+<!--- (**********************************)
+      (** Fill in the following fields **)
+      (**********************************) --->
 
-- 
-- 
-- 
+**Changes proposed:**
 
-**Target branch(es)**: 335/6x
+-  
+-  
+-  
 
-**Issues addressed**: Closes #
+**Target branch(es):** 3.3.5/master
 
-**Tests performed**: (Does it build, tested in-game, etc)
+- [ ] 3.3.5
+- [ ] master
 
-**Known issues and TODO list**:
+**Issues addressed:** Closes #  (insert issue tracker number)
+
+
+**Tests performed:** (Does it build, tested in-game, etc.)
+
+
+**Known issues and TODO list:** (add/remove lines as needed)
 
 - [ ] 
 - [ ] 
 
-**NOTE** If your Pull Request is SQL only create a ticket instead
 
-**SUGESTION** If your Pull Request contains SQL give it one imposible date, for example 9999_99_99_99_database.sql on that way it will be free on merge.
+<!--- Notes
+- Enable the setting "[√] Allow edits from maintainers." when creating your pull request.
+- If this PR only contains SQL files, open a new issue instead and post or link the SQL in the issue.
+- When adding new SQL files, name them 9999_99_99_99_db_name.sql to reduce the chance of possible merge conflicts.
+--->

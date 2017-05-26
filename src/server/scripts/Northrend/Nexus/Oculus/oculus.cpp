@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,15 +16,19 @@
  */
 
 #include "ScriptMgr.h"
+#include "CombatAI.h"
+#include "InstanceScript.h"
+#include "ObjectAccessor.h"
+#include "oculus.h"
+#include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "SpellScript.h"
+#include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellInfo.h"
-#include "CombatAI.h"
-#include "Player.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
 #include "Vehicle.h"
-#include "oculus.h"
 
 enum GossipNPCs
 {

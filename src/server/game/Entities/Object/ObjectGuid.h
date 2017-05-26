@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,10 +19,14 @@
 #ifndef ObjectGuid_h__
 #define ObjectGuid_h__
 
-#include "Common.h"
-#include "ByteBuffer.h"
-#include <type_traits>
+#include "Define.h"
+#include <deque>
 #include <functional>
+#include <list>
+#include <set>
+#include <type_traits>
+#include <vector>
+#include <unordered_set>
 
 enum TypeID
 {
@@ -106,6 +110,7 @@ enum class HighGuid
     BattlePet        = 44,
     CommerceObj      = 45,
     ClientSession    = 46,
+    Cast             = 47,
 
     Count,
 };
@@ -179,6 +184,7 @@ GUID_TRAIT_MAP_SPECIFIC(HighGuid::CallForHelp)
 GUID_TRAIT_MAP_SPECIFIC(HighGuid::AIResource)
 GUID_TRAIT_MAP_SPECIFIC(HighGuid::AILock)
 GUID_TRAIT_MAP_SPECIFIC(HighGuid::AILockTicket)
+GUID_TRAIT_MAP_SPECIFIC(HighGuid::Cast)
 
 // Special case
 // Global transports are loaded from `transports` table, RealmSpecific part is used for them.
@@ -193,8 +199,7 @@ struct ObjectGuidTraits<HighGuid::Transport>
     static bool const MapSpecific = true;
 };
 
-class ObjectGuid;
-class PackedGuid;
+class ByteBuffer;
 
 #pragma pack(push, 1)
 
@@ -219,6 +224,9 @@ class TC_GAME_API ObjectGuid
         template<HighGuid type>
         static typename std::enable_if<ObjectGuidTraits<type>::MapSpecific && type != HighGuid::Transport, ObjectGuid>::type Create(uint16 mapId, uint32 entry, LowType counter) { return MapSpecific(type, 0, mapId, 0, entry, counter); }
 
+        template<HighGuid type>
+        static typename std::enable_if<ObjectGuidTraits<type>::MapSpecific, ObjectGuid>::type Create(uint8 subType, uint16 mapId, uint32 entry, LowType counter) { return MapSpecific(type, subType, mapId, 0, entry, counter); }
+
         ObjectGuid() : _low(0), _high(0) { }
 
         std::vector<uint8> GetRawValue() const;
@@ -239,17 +247,8 @@ class TC_GAME_API ObjectGuid
 
         LowType GetMaxCounter() const { return GetMaxCounter(GetHigh()); }
 
-        uint8& operator[](uint32 index)
-        {
-            ASSERT(index < sizeof(uint64) * 2);
-            return ((uint8*)&_low)[index];
-        }
-
-        uint8 const& operator[](uint32 index) const
-        {
-            ASSERT(index < sizeof(uint64) * 2);
-            return ((uint8 const*)&_low)[index];
-        }
+        uint8& operator[](uint32 index);
+        uint8 const& operator[](uint32 index) const;
 
         bool IsEmpty()             const { return _low == 0 && _high == 0; }
         bool IsCreature()          const { return GetHigh() == HighGuid::Creature; }
@@ -271,6 +270,7 @@ class TC_GAME_API ObjectGuid
         bool IsGuild()             const { return GetHigh() == HighGuid::Guild; }
         bool IsSceneObject()       const { return GetHigh() == HighGuid::SceneObject; }
         bool IsConversation()      const { return GetHigh() == HighGuid::Conversation; }
+        bool IsCast()              const { return GetHigh() == HighGuid::Cast; }
 
         static TypeID GetTypeId(HighGuid high)
         {
@@ -310,6 +310,7 @@ class TC_GAME_API ObjectGuid
         static char const* GetTypeName(HighGuid high);
         char const* GetTypeName() const { return !IsEmpty() ? GetTypeName(GetHigh()) : "None"; }
         std::string ToString() const;
+        std::size_t GetHash() const;
 
     private:
         static bool HasEntry(HighGuid high)
@@ -347,25 +348,6 @@ typedef std::deque<ObjectGuid> GuidDeque;
 typedef std::vector<ObjectGuid> GuidVector;
 typedef std::unordered_set<ObjectGuid> GuidUnorderedSet;
 
-// maximum buffer size for packed guid is 18 bytes
-#define PACKED_GUID_MIN_BUFFER_SIZE 18
-
-class TC_GAME_API PackedGuid
-{
-        friend TC_GAME_API ByteBuffer& operator<<(ByteBuffer& buf, PackedGuid const& guid);
-
-    public:
-        explicit PackedGuid() : _packedGuid(PACKED_GUID_MIN_BUFFER_SIZE) { _packedGuid << uint16(0); }
-        explicit PackedGuid(ObjectGuid const& guid) : _packedGuid(PACKED_GUID_MIN_BUFFER_SIZE) { Set(guid); }
-
-        void Set(ObjectGuid const& guid);
-
-        size_t size() const { return _packedGuid.size(); }
-
-    private:
-        ByteBuffer _packedGuid;
-};
-
 class TC_GAME_API ObjectGuidGeneratorBase
 {
 public:
@@ -397,8 +379,6 @@ public:
 TC_GAME_API ByteBuffer& operator<<(ByteBuffer& buf, ObjectGuid const& guid);
 TC_GAME_API ByteBuffer& operator>>(ByteBuffer& buf, ObjectGuid&       guid);
 
-TC_GAME_API ByteBuffer& operator<<(ByteBuffer& buf, PackedGuid const& guid);
-
 TC_GAME_API std::ostream& operator<<(std::ostream& stream, ObjectGuid const& guid);
 
 namespace std
@@ -409,7 +389,7 @@ namespace std
     public:
         size_t operator()(ObjectGuid const& key) const
         {
-            return boost::hash_range(reinterpret_cast<uint64 const*>(&key), reinterpret_cast<uint64 const*>(&key) + 2);
+            return key.GetHash();
         }
     };
 }

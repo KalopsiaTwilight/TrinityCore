@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,13 +15,15 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ScriptMgr.h"
 #include "Chat.h"
+#include "DatabaseEnv.h"
+#include "GroupMgr.h"
 #include "Language.h"
 #include "LFG.h"
-#include "Player.h"
 #include "ObjectMgr.h"
-#include "GroupMgr.h"
-#include "ScriptMgr.h"
+#include "Player.h"
+#include "RBAC.h"
 
 class group_commandscript : public CommandScript
 {
@@ -352,7 +354,7 @@ public:
                 {
                     AreaTableEntry const* zone = sAreaTableStore.LookupEntry(area->ParentAreaID);
                     if (zone)
-                        zoneName = zone->AreaName_lang;
+                        zoneName = zone->AreaName->Str[handler->GetSessionDbcLocale()];
                 }
             }
             else

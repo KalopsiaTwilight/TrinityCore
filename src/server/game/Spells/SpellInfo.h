@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,9 +19,8 @@
 #define _SPELLINFO_H
 
 #include "SharedDefines.h"
-#include "Util.h"
-#include "DBCStructure.h"
 #include "DB2Structure.h"
+#include "Util.h"
 #include "Object.h"
 #include "SpellAuraDefines.h"
 
@@ -33,16 +32,11 @@ class SpellInfo;
 class WorldObject;
 class AuraEffect;
 struct SpellChainNode;
-struct SpellTargetPosition;
-struct SpellDurationEntry;
 struct SpellModifier;
-struct SpellRangeEntry;
-struct SpellRadiusEntry;
-struct SpellEntry;
-struct SpellCastTimesEntry;
+struct SpellTargetPosition;
 struct Condition;
 
-enum SpellCastTargetFlags
+enum SpellCastTargetFlags : uint32
 {
     TARGET_FLAG_NONE            = 0x00000000,
     TARGET_FLAG_UNUSED_1        = 0x00000001,               // not used
@@ -99,7 +93,7 @@ enum SpellTargetReferenceTypes
     TARGET_REFERENCE_TYPE_DEST
 };
 
-enum SpellTargetObjectTypes
+enum SpellTargetObjectTypes : uint8
 {
     TARGET_OBJECT_TYPE_NONE = 0,
     TARGET_OBJECT_TYPE_SRC,
@@ -115,7 +109,7 @@ enum SpellTargetObjectTypes
     TARGET_OBJECT_TYPE_CORPSE_ALLY
 };
 
-enum SpellTargetCheckTypes
+enum SpellTargetCheckTypes : uint8
 {
     TARGET_CHECK_DEFAULT,
     TARGET_CHECK_ENTRY,
@@ -277,7 +271,7 @@ public:
                         RealPointsPerLevel(0), BasePoints(0), PointsPerResource(0), Amplitude(0), ChainAmplitude(0),
                         BonusCoefficient(0), MiscValue(0), MiscValueB(0), Mechanic(MECHANIC_NONE), PositionFacing(0),
                         RadiusEntry(NULL), ChainTargets(0), ItemType(0), TriggerSpell(0), BonusCoefficientFromAP(0.0f), ImplicitTargetConditions(NULL) { }
-    SpellEffectInfo(SpellEntry const* spellEntry, SpellInfo const* spellInfo, uint8 effIndex, SpellEffectEntry const* effect);
+    SpellEffectInfo(SpellEffectScalingEntry const* spellEffectScaling, SpellInfo const* spellInfo, uint8 effIndex, SpellEffectEntry const* effect);
 
     bool IsEffect() const;
     bool IsEffect(SpellEffectName effectName) const;
@@ -324,11 +318,19 @@ typedef std::unordered_map<uint32, SpellVisualVector> SpellVisualMap;
 
 typedef std::vector<AuraEffect*> AuraEffectVector;
 
+struct SpellInfoLoadHelper;
+
+struct SpellPowerCost
+{
+    Powers Power;
+    int32 Amount;
+};
+
 class TC_GAME_API SpellInfo
 {
 public:
     uint32 Id;
-    SpellCategoryEntry const* CategoryEntry;
+    uint32 CategoryId;
     uint32 Dispel;
     uint32 Mechanic;
     uint32 Attributes;
@@ -379,21 +381,20 @@ public:
     uint32 SpellLevel;
     SpellDurationEntry const* DurationEntry;
     std::vector<SpellPowerEntry const*> PowerCosts;
-    uint32 RuneCostID;
+    uint32 RangeIndex;
     SpellRangeEntry const* RangeEntry;
     float  Speed;
     uint32 StackAmount;
-    uint32 Totem[2];
+    uint32 Totem[MAX_SPELL_TOTEMS];
     int32  Reagent[MAX_SPELL_REAGENTS];
     uint32 ReagentCount[MAX_SPELL_REAGENTS];
     int32  EquippedItemClass;
     int32  EquippedItemSubClassMask;
     int32  EquippedItemInventoryTypeMask;
-    uint32 TotemCategory[2];
-    uint32 SpellVisual[2];
-    uint32 SpellIconID;
-    uint32 ActiveIconID;
-    char* SpellName;
+    uint32 TotemCategory[MAX_SPELL_TOTEMS];
+    uint32 IconFileDataId;
+    uint32 ActiveIconFileDataId;
+    LocalizedString const* SpellName;
     uint32 MaxTargetLevel;
     uint32 MaxAffectedTargets;
     uint32 SpellFamilyName;
@@ -402,32 +403,12 @@ public:
     uint32 PreventionType;
     int32  RequiredAreasID;
     uint32 SchoolMask;
-    SpellCategoryEntry const* ChargeCategoryEntry;
-    uint32 SpellDifficultyId;
-    uint32 SpellScalingId;
-    uint32 SpellAuraOptionsId;
-    uint32 SpellAuraRestrictionsId;
-    uint32 SpellCastingRequirementsId;
-    uint32 SpellCategoriesId;
-    uint32 SpellClassOptionsId;
-    uint32 SpellCooldownsId;
-    uint32 SpellEquippedItemsId;
-    uint32 SpellInterruptsId;
-    uint32 SpellLevelsId;
-    uint32 SpellReagentsId;
-    uint32 SpellShapeshiftId;
-    uint32 SpellTargetRestrictionsId;
-    uint32 SpellTotemsId;
-    uint32 SpellMiscId;
+    uint32 ChargeCategoryId;
     // SpellScalingEntry
     struct ScalingInfo
     {
-        int32 CastTimeMin;
-        int32 CastTimeMax;
-        uint32 CastTimeMaxLevel;
         int32 Class;
-        float NerfFactor;
-        uint32 NerfMaxLevel;
+        uint32 MinScalingLevel;
         uint32 MaxScalingLevel;
         uint32 ScalesFromItemLevel;
     } Scaling;
@@ -435,24 +416,8 @@ public:
     uint32 ExplicitTargetMask;
     SpellChainNode const* ChainEntry;
 
-    // struct access functions
-    SpellTargetRestrictionsEntry const* GetSpellTargetRestrictions() const;
-    SpellAuraOptionsEntry const* GetSpellAuraOptions() const;
-    SpellAuraRestrictionsEntry const* GetSpellAuraRestrictions() const;
-    SpellCastingRequirementsEntry const* GetSpellCastingRequirements() const;
-    SpellCategoriesEntry const* GetSpellCategories() const;
-    SpellClassOptionsEntry const* GetSpellClassOptions() const;
-    SpellCooldownsEntry const* GetSpellCooldowns() const;
-    SpellEquippedItemsEntry const* GetSpellEquippedItems() const;
-    SpellInterruptsEntry const* GetSpellInterrupts() const;
-    SpellLevelsEntry const* GetSpellLevels() const;
-    SpellReagentsEntry const* GetSpellReagents() const;
-    SpellScalingEntry const* GetSpellScaling() const;
-    SpellShapeshiftEntry const* GetSpellShapeshift() const;
-    SpellTotemsEntry const* GetSpellTotems() const;
-    SpellMiscEntry const* GetSpellMisc() const;
-
-    SpellInfo(SpellEntry const* spellEntry, SpellEffectEntryMap const& effectsMap, SpellVisualMap&& visuals);
+    SpellInfo(SpellInfoLoadHelper const& data, SpellEffectEntryMap const& effectsMap, SpellVisualMap&& visuals,
+        std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling);
     ~SpellInfo();
 
     uint32 GetCategory() const;
@@ -501,6 +466,7 @@ public:
     bool IsDeathPersistent() const;
     bool IsRequiringDeadTarget() const;
     bool IsAllowingDeadTarget() const;
+    bool IsGroupBuff() const;
     bool CanBeUsedInCombat() const;
     bool IsPositive() const;
     bool IsPositiveEffect(uint8 effIndex) const;
@@ -544,6 +510,7 @@ public:
     float GetMinRange(bool positive = false) const;
     float GetMaxRange(bool positive = false, Unit* caster = NULL, Spell* spell = NULL) const;
 
+    int32 CalcDuration(Unit* caster = nullptr) const;
     int32 GetDuration() const;
     int32 GetMaxDuration() const;
 
@@ -552,13 +519,7 @@ public:
     uint32 CalcCastTime(uint8 level = 0, Spell* spell = NULL) const;
     uint32 GetRecoveryTime() const;
 
-    struct CostData
-    {
-        Powers Power;
-        int32 Amount;
-    };
-
-    std::vector<CostData> CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) const;
+    std::vector<SpellPowerCost> CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) const;
 
     float CalcProcPPM(Unit* caster, int32 itemLevel) const;
 
@@ -589,7 +550,6 @@ public:
     SpellEffectInfoVector GetEffectsForDifficulty(uint32 difficulty) const;
     SpellEffectInfo const* GetEffect(uint32 difficulty, uint32 index) const;
     SpellEffectInfo const* GetEffect(uint32 index) const { return GetEffect(DIFFICULTY_NONE, index); }
-    SpellEffectInfo const* GetEffect(WorldObject const* obj, uint32 index) const { return GetEffect(obj->GetMap()->GetDifficultyID(), index); }
 
     SpellEffectInfoMap _effects;
     SpellVisualMap _visuals;

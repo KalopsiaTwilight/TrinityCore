@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,23 +16,3 @@
  */
 
 #include "LFGPackets.h"
-
-ByteBuffer& operator>>(ByteBuffer& data, WorldPackets::LFG::RideTicket& ticket)
-{
-    data >> ticket.RequesterGuid;
-    data >> ticket.Id;
-    data >> ticket.Type;
-    data >> ticket.Time;
-
-    return data;
-}
-
-ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::LFG::RideTicket const& ticket)
-{
-    data << ticket.RequesterGuid;
-    data << int32(ticket.Id);
-    data << int32(ticket.Type);
-    data << uint32(ticket.Time);
-
-    return data;
-}

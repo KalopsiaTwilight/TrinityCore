@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,27 +20,38 @@
 #define __BATTLEGROUND_H
 
 #include "ArenaScore.h"
-#include "Common.h"
-#include "SharedDefines.h"
 #include "DBCEnums.h"
-#include "WorldPacket.h"
-#include "Object.h"
-#include "GameObject.h"
-#include "Packets/WorldStatePackets.h"
-#include "Packets/BattlegroundPackets.h"
-#include "EventMap.h"
+#include "ObjectGuid.h"
+#include "Position.h"
+#include "SharedDefines.h"
+#include <map>
 
+class BattlegroundMap;
 class Creature;
 class GameObject;
 class Group;
 class Player;
+class Transport;
 class Unit;
 class WorldObject;
 class WorldPacket;
-class BattlegroundMap;
-
-struct PvPDifficultyEntry;
+struct BattlegroundScore;
+struct PvpDifficultyEntry;
 struct WorldSafeLocsEntry;
+
+namespace WorldPackets
+{
+    namespace Battleground
+    {
+        class PVPLogData;
+        struct BattlegroundPlayerPosition;
+    }
+
+    namespace WorldState
+    {
+        class InitWorldStates;
+    }
+}
 
 enum BattlegroundCriteriaId
 {
@@ -290,7 +301,7 @@ class TC_GAME_API Battleground
         void SetTypeID(BattlegroundTypeId TypeID) { m_TypeID = TypeID; }
         void SetRandomTypeID(BattlegroundTypeId TypeID) { m_RandomTypeID = TypeID; }
         //here we can count minlevel and maxlevel for players
-        void SetBracket(PvPDifficultyEntry const* bracketEntry);
+        void SetBracket(PvpDifficultyEntry const* bracketEntry);
         void SetInstanceID(uint32 InstanceID) { m_InstanceID = InstanceID; }
         void SetStatus(BattlegroundStatus Status) { m_Status = Status; }
         void SetClientInstanceID(uint32 InstanceID) { m_ClientInstanceID = InstanceID; }

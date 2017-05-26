@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,23 +18,14 @@
 #ifndef LFGPackets_h__
 #define LFGPackets_h__
 
-#include "ObjectGuid.h"
+#include "Packet.h"
+#include "LFGPacketsCommon.h"
 
 namespace WorldPackets
 {
     namespace LFG
     {
-        struct RideTicket
-        {
-            ObjectGuid RequesterGuid;
-            int32 Id = 0;
-            int32 Type = 0;
-            uint32 Time = 0;
-        };
     }
 }
-
-ByteBuffer& operator>>(ByteBuffer& data, WorldPackets::LFG::RideTicket& ticket);
-ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::LFG::RideTicket const& ticket);
 
 #endif // LFGPackets_h__

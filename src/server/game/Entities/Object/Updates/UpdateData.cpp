@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,10 +16,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Common.h"
-#include "ByteBuffer.h"
-#include "WorldPacket.h"
 #include "UpdateData.h"
+#include "Errors.h"
+#include "WorldPacket.h"
 #include "Opcodes.h"
 
 UpdateData::UpdateData(uint32 map) : m_map(map), m_blockCount(0) { }
@@ -50,7 +49,7 @@ bool UpdateData::BuildPacket(WorldPacket* packet)
 
     if (packet->WriteBit(!m_outOfRangeGUIDs.empty()))
     {
-        *packet << uint16(0);
+        *packet << uint16(0);   // object limit to instantly destroy - objects before this index on m_outOfRangeGUIDs list get "smoothly phased out"
         *packet << uint32(m_outOfRangeGUIDs.size());
 
         for (GuidSet::const_iterator i = m_outOfRangeGUIDs.begin(); i != m_outOfRangeGUIDs.end(); ++i)

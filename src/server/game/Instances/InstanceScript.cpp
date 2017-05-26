@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,22 +16,25 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "InstanceScript.h"
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "DatabaseEnv.h"
 #include "GameObject.h"
 #include "Group.h"
-#include "InstanceScript.h"
 #include "InstancePackets.h"
+#include "InstanceScenario.h"
 #include "LFGMgr.h"
 #include "Log.h"
 #include "Map.h"
-#include "Player.h"
-#include "Pet.h"
-#include "WorldSession.h"
 #include "Opcodes.h"
-#include "ScriptReloadMgr.h"
+#include "Pet.h"
+#include "Player.h"
+#include "RBAC.h"
 #include "ScriptMgr.h"
+#include "ScriptReloadMgr.h"
+#include "WorldSession.h"
+#include <sstream>
 
 BossBoundaryData::~BossBoundaryData()
 {
@@ -54,6 +57,9 @@ _entranceId(0), _temporaryEntranceId(0), _combatResurrectionTimer(0), _combatRes
 
 void InstanceScript::SaveToDB()
 {
+    if (InstanceScenario* scenario = instance->ToInstanceMap()->GetInstanceScenario())
+        scenario->SaveToDB();
+
     std::string data = GetSaveData();
     if (data.empty())
         return;
@@ -394,7 +400,7 @@ void InstanceScript::ReadSaveDataBossStates(std::istringstream& data)
     {
         uint32 buff;
         data >> buff;
-        if (buff == IN_PROGRESS || buff == SPECIAL)
+        if (buff == IN_PROGRESS || buff == FAIL || buff == SPECIAL)
             buff = NOT_STARTED;
 
         if (buff < TO_BE_DECIDED)
@@ -693,11 +699,12 @@ void InstanceScript::UpdateEncounterState(EncounterCreditType type, uint32 credi
         DungeonEncounter const* encounter = *itr;
         if (encounter->creditType == type && encounter->creditEntry == creditEntry)
         {
-            completedEncounters |= 1 << encounter->dbcEntry->OrderIndex;
+            completedEncounters |= 1 << encounter->dbcEntry->Bit;
             if (encounter->lastEncounterDungeon)
             {
                 dungeonId = encounter->lastEncounterDungeon;
-                TC_LOG_DEBUG("lfg", "UpdateEncounterState: Instance %s (instanceId %u) completed encounter %s. Credit Dungeon: %u", instance->GetMapName(), instance->GetInstanceId(), encounter->dbcEntry->Name_lang, dungeonId);
+                TC_LOG_DEBUG("lfg", "UpdateEncounterState: Instance %s (instanceId %u) completed encounter %s. Credit Dungeon: %u",
+                    instance->GetMapName(), instance->GetInstanceId(), encounter->dbcEntry->Name->Str[sWorld->GetDefaultDbcLocale()], dungeonId);
                 break;
             }
         }

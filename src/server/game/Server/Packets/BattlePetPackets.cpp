@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +16,6 @@
  */
 
 #include "BattlePetPackets.h"
-#include "World.h"
 
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::BattlePet::BattlePetSlot const& slot)
 {
@@ -45,18 +44,18 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::BattlePet::BattlePet cons
     data << uint32(pet.Speed);
     data << uint8(pet.Quality);
     data.WriteBits(pet.Name.size(), 7);
-    data.WriteBit(!pet.Owner.IsEmpty()); // HasOwnerInfo
+    data.WriteBit(pet.OwnerInfo.is_initialized());
     data.WriteBit(pet.Name.empty()); // NoRename
     data.FlushBits();
 
-    if (!pet.Owner.IsEmpty())
-    {
-        data << pet.Owner;
-        data << uint32(GetVirtualRealmAddress()); // Virtual
-        data << uint32(GetVirtualRealmAddress()); // Native
-    }
-
     data.WriteString(pet.Name);
+
+    if (pet.OwnerInfo)
+    {
+        data << pet.OwnerInfo->Guid;
+        data << uint32(pet.OwnerInfo->PlayerVirtualRealm);
+        data << uint32(pet.OwnerInfo->PlayerNativeRealm);
+    }
 
     return data;
 }
@@ -66,15 +65,15 @@ WorldPacket const* WorldPackets::BattlePet::BattlePetJournal::Write()
     _worldPacket << uint16(Trap);
     _worldPacket << uint32(Slots.size());
     _worldPacket << uint32(Pets.size());
+    _worldPacket << int32(MaxPets);
+    _worldPacket.WriteBit(HasJournalLock);
+    _worldPacket.FlushBits();
 
     for (auto const& slot : Slots)
         _worldPacket << slot;
 
     for (auto const& pet : Pets)
         _worldPacket << pet;
-
-    _worldPacket.WriteBit(HasJournalLock);
-    _worldPacket.FlushBits();
 
     return &_worldPacket;
 }
@@ -82,27 +81,24 @@ WorldPacket const* WorldPackets::BattlePet::BattlePetJournal::Write()
 WorldPacket const* WorldPackets::BattlePet::BattlePetUpdates::Write()
 {
     _worldPacket << uint32(Pets.size());
+    _worldPacket.WriteBit(PetAdded);
+    _worldPacket.FlushBits();
 
     for (auto const& pet : Pets)
         _worldPacket << pet;
 
-    _worldPacket.WriteBit(PetAdded);
-    _worldPacket.FlushBits();
-
     return &_worldPacket;
 }
-
 
 WorldPacket const* WorldPackets::BattlePet::PetBattleSlotUpdates::Write()
 {
     _worldPacket << uint32(Slots.size());
-
-    for (auto const& slot : Slots)
-        _worldPacket << slot;
-
     _worldPacket.WriteBit(NewSlot);
     _worldPacket.WriteBit(AutoSlotted);
     _worldPacket.FlushBits();
+
+    for (auto const& slot : Slots)
+        _worldPacket << slot;
 
     return &_worldPacket;
 }
@@ -118,7 +114,6 @@ void WorldPackets::BattlePet::BattlePetModifyName::Read()
     _worldPacket >> PetGuid;
     uint32 nameLength = _worldPacket.ReadBits(7);
     bool hasDeclinedNames = _worldPacket.ReadBit();
-    Name = _worldPacket.ReadString(nameLength);
 
     if (hasDeclinedNames)
     {
@@ -130,6 +125,8 @@ void WorldPackets::BattlePet::BattlePetModifyName::Read()
         for (uint8 i = 0; i < 5; ++i)
             Declined.name[i] = _worldPacket.ReadString(declinedNameLengths[i]);
     }
+
+    Name = _worldPacket.ReadString(nameLength);
 }
 
 void WorldPackets::BattlePet::BattlePetDeletePet::Read()
@@ -158,8 +155,7 @@ WorldPacket const* WorldPackets::BattlePet::BattlePetDeleted::Write()
 
 WorldPacket const* WorldPackets::BattlePet::BattlePetError::Write()
 {
-    _worldPacket.WriteBits(Result, 4);
-    _worldPacket.FlushBits();
+    _worldPacket.WriteBits(Result, 3);
     _worldPacket << uint32(CreatureID);
 
     return &_worldPacket;

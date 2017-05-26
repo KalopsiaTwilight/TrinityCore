@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,10 +18,9 @@
 #ifndef _LOGINDATABASE_H
 #define _LOGINDATABASE_H
 
-#include "DatabaseWorkerPool.h"
 #include "MySQLConnection.h"
 
-enum LoginDatabaseStatements
+enum LoginDatabaseStatements : uint32
 {
     /*  Naming standard for defines:
         {DB}_{SEL/INS/UPD/DEL/REP}_{Summary of data changed}
@@ -109,6 +108,7 @@ enum LoginDatabaseStatements
 
     LOGIN_INS_ACCOUNT_MUTE,
     LOGIN_SEL_ACCOUNT_MUTE_INFO,
+    LOGIN_DEL_ACCOUNT_MUTED,
 
     LOGIN_SEL_BNET_ACCOUNT_INFO,
     LOGIN_UPD_BNET_LAST_LOGIN_INFO,
@@ -128,6 +128,12 @@ enum LoginDatabaseStatements
     LOGIN_SEL_BNET_ACCOUNT_ID_BY_GAME_ACCOUNT,
     LOGIN_UPD_BNET_GAME_ACCOUNT_LINK,
     LOGIN_SEL_BNET_MAX_ACCOUNT_INDEX,
+    LOGIN_SEL_BNET_GAME_ACCOUNT_LIST,
+
+    LOGIN_UPD_BNET_FAILED_LOGINS,
+    LOGIN_INS_BNET_ACCOUNT_AUTO_BANNED,
+    LOGIN_DEL_BNET_EXPIRED_ACCOUNT_BANNED,
+    LOGIN_UPD_BNET_RESET_FAILED_LOGINS,
 
     LOGIN_SEL_LAST_CHAR_UNDELETE,
     LOGIN_UPD_LAST_CHAR_UNDELETE,
@@ -146,6 +152,15 @@ enum LoginDatabaseStatements
     LOGIN_SEL_ACCOUNT_HEIRLOOMS,
     LOGIN_REP_ACCOUNT_HEIRLOOMS,
 
+    LOGIN_SEL_ACCOUNT_MOUNTS,
+    LOGIN_REP_ACCOUNT_MOUNTS,
+
+    LOGIN_SEL_BNET_ITEM_APPEARANCES,
+    LOGIN_INS_BNET_ITEM_APPEARANCES,
+    LOGIN_SEL_BNET_ITEM_FAVORITE_APPEARANCES,
+    LOGIN_INS_BNET_ITEM_FAVORITE_APPEARANCE,
+    LOGIN_DEL_BNET_ITEM_FAVORITE_APPEARANCE,
+
     MAX_LOGINDATABASE_STATEMENTS
 };
 
@@ -155,13 +170,12 @@ public:
     typedef LoginDatabaseStatements Statements;
 
     //- Constructors for sync and async connections
-    LoginDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) { }
-    LoginDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo) { }
+    LoginDatabaseConnection(MySQLConnectionInfo& connInfo);
+    LoginDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo);
+    ~LoginDatabaseConnection();
 
     //- Loads database type specific prepared statements
     void DoPrepareStatements() override;
 };
-
-typedef DatabaseWorkerPool<LoginDatabaseConnection> LoginDatabaseWorkerPool;
 
 #endif

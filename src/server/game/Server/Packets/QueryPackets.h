@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,10 +19,13 @@
 #define QueryPackets_h__
 
 #include "Packet.h"
-#include "Creature.h"
+#include "AuthenticationPackets.h"
 #include "NPCHandler.h"
-#include "G3D/Vector3.h"
-#include "DB2Stores.h"
+#include "ObjectGuid.h"
+#include "Position.h"
+#include "SharedDefines.h"
+#include "UnitDefines.h"
+#include <array>
 
 class Player;
 
@@ -53,12 +56,14 @@ namespace WorldPackets
             bool Leader = false;
             std::vector<int32> QuestItems;
             uint32 CreatureMovementInfoID = 0;
+            int32 HealthScalingExpansion = 0;
             uint32 RequiredExpansion = 0;
-            uint32 Flags[2];
-            uint32 ProxyCreatureID[MAX_KILL_CREDIT];
-            uint32 CreatureDisplayID[MAX_CREATURE_MODELS];
-            std::string Name[MAX_CREATURE_NAMES];
-            std::string NameAlt[MAX_CREATURE_NAMES];
+            uint32 VignetteID = 0;
+            std::array<uint32, 2> Flags;
+            std::array<uint32, 2> ProxyCreatureID;
+            std::array<uint32, 4> CreatureDisplayID;
+            std::array<std::string, 4> Name;
+            std::array<std::string, 4> NameAlt;
         };
 
         class QueryCreatureResponse final : public ServerPacket
@@ -140,12 +145,14 @@ namespace WorldPackets
             {
                 uint32 ID = 0;
                 uint32 NextPageID = 0;
+                int32 PlayerConditionID = 0;
+                uint8 Flags = 0;
                 std::string Text;
             };
 
-            bool Allow = false;
-            PageTextInfo Info;
             uint32 PageTextID = 0;
+            bool Allow = false;
+            std::vector<PageTextInfo> Pages;
         };
 
         class QueryNPCText final : public ClientPacket
@@ -172,47 +179,6 @@ namespace WorldPackets
             uint32 BroadcastTextID[MAX_NPC_TEXT_OPTIONS];
         };
 
-        class DBQueryBulk final : public ClientPacket
-        {
-        public:
-            struct DBQueryRecord
-            {
-                ObjectGuid GUID;
-                uint32 RecordID = 0;
-            };
-
-            DBQueryBulk(WorldPacket&& packet) : ClientPacket(CMSG_DB_QUERY_BULK, std::move(packet)) { }
-
-            void Read() override;
-
-            uint32 TableHash = 0;
-            std::vector<DBQueryRecord> Queries;
-        };
-
-        class DBReply final : public ServerPacket
-        {
-        public:
-            DBReply() : ServerPacket(SMSG_DB_REPLY, 12) { }
-
-            WorldPacket const* Write() override;
-
-            uint32 TableHash = 0;
-            uint32 Timestamp = 0;
-            uint32 RecordID = 0;
-            bool Allow = false;
-            ByteBuffer Data;
-        };
-
-        class HotfixNotifyBlob final : public ServerPacket
-        {
-        public:
-            HotfixNotifyBlob() : ServerPacket(SMSG_HOTFIX_NOTIFY_BLOB, 4) { }
-
-            WorldPacket const* Write() override;
-
-            HotfixData const* Hotfixes = nullptr;
-        };
-
         class QueryGameObject final : public ClientPacket
         {
         public:
@@ -235,13 +201,7 @@ namespace WorldPackets
             uint32 Data[MAX_GAMEOBJECT_DATA];
             float Size = 0.0f;
             std::vector<int32> QuestItems;
-            uint32 Expansion = 0;
-
-            size_t GetDataSize() const
-            {
-                //                                         [1..3] always empty '\0'                     '\0'                          '\0'                     '\0'                                 QuestItems counter
-                return sizeof(Type) + sizeof(DisplayID) + (Name->size() + (4 * 1)) + (IconName.size() + 1) + (CastBarCaption.size() + 1) + (UnkString.size() + 1) + sizeof(Data) + sizeof(Size) + sizeof(uint8) + (QuestItems.size() * sizeof(int32)) + sizeof(Expansion);
-            }
+            uint32 RequiredLevel = 0;
         };
 
         class QueryGameObjectResponse final : public ServerPacket
@@ -261,7 +221,9 @@ namespace WorldPackets
         public:
             QueryCorpseLocationFromClient(WorldPacket&& packet) : ClientPacket(CMSG_QUERY_CORPSE_LOCATION_FROM_CLIENT, std::move(packet)) { }
 
-            void Read() override { }
+            void Read() override;
+
+            ObjectGuid Player;
         };
 
         class CorpseLocation final : public ServerPacket
@@ -271,8 +233,9 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
+            ObjectGuid Player;
             ObjectGuid Transport;
-            G3D::Vector3 Position;
+            TaggedPosition<::Position::XYZ> Position;
             int32 ActualMapID = 0;
             int32 MapID = 0;
             bool Valid = false;
@@ -285,6 +248,7 @@ namespace WorldPackets
 
             void Read() override;
 
+            ObjectGuid Player;
             ObjectGuid Transport;
         };
 
@@ -295,7 +259,8 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
-            G3D::Vector3 Position;
+            ObjectGuid Player;
+            TaggedPosition<::Position::XYZ> Position;
             float Facing = 0.0f;
         };
 
@@ -315,7 +280,6 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             time_t CurrentTime = time_t(0);
-            int32 TimeOutRequest = 0;
         };
 
         class QuestPOIQuery final : public ClientPacket
@@ -445,6 +409,28 @@ namespace WorldPackets
             ObjectGuid Id;
             bool Valid = false;
             ItemTextCache Item;
+        };
+
+        class QueryRealmName final : public ClientPacket
+        {
+        public:
+            QueryRealmName(WorldPacket&& packet) : ClientPacket(CMSG_QUERY_REALM_NAME, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 VirtualRealmAddress = 0;
+        };
+
+        class RealmQueryResponse final : public ServerPacket
+        {
+        public:
+            RealmQueryResponse() : ServerPacket(SMSG_REALM_QUERY_RESPONSE) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 VirtualRealmAddress = 0;
+            uint8 LookupState = 0;
+            WorldPackets::Auth::VirtualRealmNameInfo NameInfo;
         };
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -17,8 +17,12 @@
  */
 
 #include "ObjectGuid.h"
+#include "ByteBuffer.h"
+#include "Errors.h"
+#include "Hash.h"
+#include "Log.h"
+#include "Realm.h"
 #include "World.h"
-
 #include <sstream>
 #include <iomanip>
 
@@ -82,6 +86,7 @@ namespace
         SET_GUID_NAME(BattlePet);
         SET_GUID_NAME(CommerceObj);
         SET_GUID_NAME(ClientSession);
+        SET_GUID_NAME(Cast);
 
 #undef SET_GUID_NAME
     }
@@ -106,6 +111,14 @@ std::string ObjectGuid::ToString() const
 
     str << " Low: " << GetCounter();
     return str.str();
+}
+
+std::size_t ObjectGuid::GetHash() const
+{
+    std::size_t hashVal = 0;
+    Trinity::hash_combine(hashVal, _low);
+    Trinity::hash_combine(hashVal, _high);
+    return hashVal;
 }
 
 ObjectGuid ObjectGuid::Global(HighGuid type, LowType counter)
@@ -137,10 +150,16 @@ void ObjectGuid::SetRawValue(std::vector<uint8> const& guid)
     memcpy(this, guid.data(), sizeof(*this));
 }
 
-void PackedGuid::Set(ObjectGuid const& guid)
+uint8& ObjectGuid::operator[](uint32 index)
 {
-    _packedGuid.clear();
-    _packedGuid << guid;
+    ASSERT(index < sizeof(uint64) * 2);
+    return ((uint8*)&_low)[index];
+}
+
+uint8 const& ObjectGuid::operator[](uint32 index) const
+{
+    ASSERT(index < sizeof(uint64) * 2);
+    return ((uint8 const*)&_low)[index];
 }
 
 ByteBuffer& operator<<(ByteBuffer& buf, ObjectGuid const& guid)
@@ -170,12 +189,6 @@ ByteBuffer& operator>>(ByteBuffer& buf, ObjectGuid& guid)
     buf >> lowMask >> highMask;
     buf.ReadPackedUInt64(lowMask, guid._low);
     buf.ReadPackedUInt64(highMask, guid._high);
-    return buf;
-}
-
-ByteBuffer& operator<<(ByteBuffer& buf, PackedGuid const& guid)
-{
-    buf.append(guid._packedGuid);
     return buf;
 }
 
@@ -221,3 +234,4 @@ GUID_TRAIT_INSTANTIATE_GUID(HighGuid::CallForHelp)
 GUID_TRAIT_INSTANTIATE_GUID(HighGuid::AIResource)
 GUID_TRAIT_INSTANTIATE_GUID(HighGuid::AILock)
 GUID_TRAIT_INSTANTIATE_GUID(HighGuid::AILockTicket)
+GUID_TRAIT_INSTANTIATE_GUID(HighGuid::Cast)

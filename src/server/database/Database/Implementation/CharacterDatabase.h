@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,10 +18,9 @@
 #ifndef _CHARACTERDATABASE_H
 #define _CHARACTERDATABASE_H
 
-#include "DatabaseWorkerPool.h"
 #include "MySQLConnection.h"
 
-enum CharacterDatabaseStatements
+enum CharacterDatabaseStatements : uint32
 {
     /*  Naming standard for defines:
         {DB}_{SEL/INS/UPD/DEL/REP}_{Summary of data changed}
@@ -58,8 +57,6 @@ enum CharacterDatabaseStatements
     CHAR_SEL_CHAR_ZONE,
     CHAR_SEL_CHAR_POSITION_XYZ,
     CHAR_SEL_CHAR_POSITION,
-    CHAR_SEL_CHARACTER_TEMPLATES,
-    CHAR_SEL_CHARACTER_TEMPLATE_CLASSES,
 
     CHAR_DEL_BATTLEGROUND_RANDOM_ALL,
     CHAR_DEL_BATTLEGROUND_RANDOM,
@@ -109,6 +106,7 @@ enum CharacterDatabaseStatements
     CHAR_SEL_CHARACTER_ACHIEVEMENTS,
     CHAR_SEL_CHARACTER_CRITERIAPROGRESS,
     CHAR_SEL_CHARACTER_EQUIPMENTSETS,
+    CHAR_SEL_CHARACTER_TRANSMOG_OUTFITS,
     CHAR_SEL_CHARACTER_BGDATA,
     CHAR_SEL_CHARACTER_GLYPHS,
     CHAR_SEL_CHARACTER_TALENTS,
@@ -144,6 +142,22 @@ enum CharacterDatabaseStatements
     CHAR_UPD_ITEM_INSTANCE_ON_LOAD,
     CHAR_DEL_ITEM_INSTANCE,
     CHAR_DEL_ITEM_INSTANCE_BY_OWNER,
+    CHAR_INS_ITEM_INSTANCE_GEMS,
+    CHAR_DEL_ITEM_INSTANCE_GEMS,
+    CHAR_DEL_ITEM_INSTANCE_GEMS_BY_OWNER,
+    CHAR_INS_ITEM_INSTANCE_TRANSMOG,
+    CHAR_DEL_ITEM_INSTANCE_TRANSMOG,
+    CHAR_DEL_ITEM_INSTANCE_TRANSMOG_BY_OWNER,
+    CHAR_SEL_ITEM_INSTANCE_ARTIFACT,
+    CHAR_INS_ITEM_INSTANCE_ARTIFACT,
+    CHAR_DEL_ITEM_INSTANCE_ARTIFACT,
+    CHAR_DEL_ITEM_INSTANCE_ARTIFACT_BY_OWNER,
+    CHAR_INS_ITEM_INSTANCE_ARTIFACT_POWERS,
+    CHAR_DEL_ITEM_INSTANCE_ARTIFACT_POWERS,
+    CHAR_DEL_ITEM_INSTANCE_ARTIFACT_POWERS_BY_OWNER,
+    CHAR_INS_ITEM_INSTANCE_MODIFIERS,
+    CHAR_DEL_ITEM_INSTANCE_MODIFIERS,
+    CHAR_DEL_ITEM_INSTANCE_MODIFIERS_BY_OWNER,
     CHAR_UPD_GIFT_OWNER,
     CHAR_DEL_GIFT,
     CHAR_SEL_CHARACTER_GIFT_BY_ITEM,
@@ -153,7 +167,6 @@ enum CharacterDatabaseStatements
     CHAR_SEL_MATCH_MAKER_RATING,
     CHAR_SEL_CHARACTER_COUNT,
     CHAR_UPD_NAME_BY_GUID,
-    CHAR_SEL_CHARACTER_DATA_BY_GUID,
 
     CHAR_INS_GUILD,
     CHAR_DEL_GUILD,
@@ -216,6 +229,10 @@ enum CharacterDatabaseStatements
     CHAR_UPD_EQUIP_SET,
     CHAR_INS_EQUIP_SET,
     CHAR_DEL_EQUIP_SET,
+
+    CHAR_UPD_TRANSMOG_OUTFIT,
+    CHAR_INS_TRANSMOG_OUTFIT,
+    CHAR_DEL_TRANSMOG_OUTFIT,
 
     CHAR_INS_AURA,
     CHAR_INS_AURA_EFFECT,
@@ -338,7 +355,6 @@ enum CharacterDatabaseStatements
     CHAR_UPD_GROUP_RAID_DIFFICULTY,
     CHAR_UPD_GROUP_LEGACY_RAID_DIFFICULTY,
     CHAR_DEL_INVALID_SPELL_SPELLS,
-    CHAR_DEL_INVALID_SPELL_TALENTS,
     CHAR_UPD_DELETE_INFO,
     CHAR_UPD_RESTORE_DELETE_INFO,
     CHAR_UPD_ZONE,
@@ -346,7 +362,6 @@ enum CharacterDatabaseStatements
     CHAR_DEL_INVALID_ACHIEV_PROGRESS_CRITERIA,
     CHAR_DEL_INVALID_ACHIEV_PROGRESS_CRITERIA_GUILD,
     CHAR_DEL_INVALID_ACHIEVMENT,
-    CHAR_INS_ADDON,
     CHAR_DEL_INVALID_PET_SPELL,
     CHAR_DEL_GROUP_INSTANCE_BY_INSTANCE,
     CHAR_DEL_GROUP_INSTANCE_BY_GUID,
@@ -465,6 +480,7 @@ enum CharacterDatabaseStatements
     CHAR_DEL_MAIL_ITEMS,
     CHAR_DEL_CHAR_ACHIEVEMENTS,
     CHAR_DEL_CHAR_EQUIPMENTSETS,
+    CHAR_DEL_CHAR_TRANSMOG_OUTFITS,
     CHAR_DEL_GUILD_EVENTLOG_BY_PLAYER,
     CHAR_DEL_GUILD_BANK_EVENTLOG_BY_PLAYER,
     CHAR_DEL_CHAR_GLYPHS,
@@ -495,10 +511,10 @@ enum CharacterDatabaseStatements
     CHAR_DEL_PETITION_BY_OWNER,
     CHAR_DEL_PETITION_SIGNATURE_BY_OWNER,
     CHAR_INS_CHAR_GLYPHS,
-    CHAR_DEL_CHAR_TALENT_BY_SPELL_SPEC,
     CHAR_INS_CHAR_TALENT,
-    CHAR_DEL_CHAR_ACTION_EXCEPT_SPEC,
     CHAR_UPD_CHAR_LIST_SLOT,
+    CHAR_INS_CHAR_FISHINGSTEPS,
+    CHAR_DEL_CHAR_FISHINGSTEPS,
 
     CHAR_SEL_CHAR_VOID_STORAGE,
     CHAR_REP_CHAR_VOID_STORAGE_ITEM,
@@ -602,6 +618,11 @@ enum CharacterDatabaseStatements
     CHAR_UPD_BLACKMARKET_AUCTIONS,
     CHAR_INS_BLACKMARKET_AUCTIONS,
 
+    CHAR_SEL_SCENARIO_INSTANCE_CRITERIA_FOR_INSTANCE,
+    CHAR_DEL_SCENARIO_INSTANCE_CRITERIA,
+    CHAR_INS_SCENARIO_INSTANCE_CRITERIA,
+    CHAR_DEL_SCENARIO_INSTANCE_CRITERIA_FOR_INSTANCE,
+
     MAX_CHARACTERDATABASE_STATEMENTS
 };
 
@@ -611,13 +632,12 @@ public:
     typedef CharacterDatabaseStatements Statements;
 
     //- Constructors for sync and async connections
-    CharacterDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) { }
-    CharacterDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo) { }
+    CharacterDatabaseConnection(MySQLConnectionInfo& connInfo);
+    CharacterDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo);
+    ~CharacterDatabaseConnection();
 
     //- Loads database type specific prepared statements
     void DoPrepareStatements() override;
 };
-
-typedef DatabaseWorkerPool<CharacterDatabaseConnection> CharacterDatabaseWorkerPool;
 
 #endif

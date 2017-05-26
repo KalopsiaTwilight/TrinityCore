@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -21,12 +21,13 @@
 */
 
 #include "WeatherMgr.h"
-#include "Weather.h"
+#include "DatabaseEnv.h"
 #include "Log.h"
+#include "MiscPackets.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "Weather.h"
 #include "WorldSession.h"
-#include "MiscPackets.h"
 
 namespace WeatherMgr
 {

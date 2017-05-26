@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,10 +19,11 @@
 #define PetPackets_h__
 
 #include "Packet.h"
-#include "PacketUtilities.h"
+#include "Position.h"
 #include "ObjectGuid.h"
-#include "Unit.h"
-#include "WorldSession.h"
+#include "Optional.h"
+#include "UnitDefines.h"
+#include <array>
 
 namespace WorldPackets
 {
@@ -83,13 +84,15 @@ namespace WorldPackets
             int32 SpellID = 0;
             int32 Duration = 0;
             int32 CategoryDuration = 0;
-            int Category = 0;
+            float ModRate = 1.0f;
+            uint16 Category = 0;
         };
 
         struct PetSpellHistory
         {
             int32 CategoryID = 0;
             int32 RecoveryTime = 0;
+            float ChargeModRate = 1.0f;
             int8 ConsumedCharges = 0;
         };
 
@@ -106,7 +109,7 @@ namespace WorldPackets
             uint32 TimeLimit = 0;
             uint8 ReactState = 0;
             uint8 CommandState = 0;
-            uint16 Flag = 0;
+            uint8 Flag = 0;
 
             std::array<int, 10> ActionButtons;
 
@@ -157,7 +160,6 @@ namespace WorldPackets
             std::vector<uint32> Spells;
         };
 
-
         struct PetRenameData
         {
             ObjectGuid PetGUID;
@@ -198,7 +200,7 @@ namespace WorldPackets
             ObjectGuid PetGUID;
             uint32 Action = 0;
             ObjectGuid TargetGUID;
-            G3D::Vector3 ActionPosition;
+            TaggedPosition<Position::XYZ> ActionPosition;
         };
 
         class PetSetAction final : public ClientPacket
@@ -223,17 +225,6 @@ namespace WorldPackets
 
             ObjectGuid PetGUID;
             int32 SpellID = 0;
-        };
-
-        class LearnPetSpecializationGroup final : public ClientPacket
-        {
-        public:
-            LearnPetSpecializationGroup(WorldPacket&& packet) : ClientPacket(CMSG_LEARN_PET_SPECIALIZATION_GROUP, std::move(packet)) { }
-
-            void Read() override;
-
-            ObjectGuid PetGUID;
-            uint32 SpecGroupIndex = 0;
         };
 
         class SetPetSpecialization final : public ServerPacket

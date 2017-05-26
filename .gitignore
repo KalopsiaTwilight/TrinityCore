@@ -19,3 +19,6 @@ CMakeLists.txt.user
 nbproject/*
 *.aps
 .idea/*
+.browse.VC*
+.vscode
+cmake-build-*/

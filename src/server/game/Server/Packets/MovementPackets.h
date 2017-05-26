@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,8 +20,7 @@
 
 #include "Packet.h"
 #include "Object.h"
-
-#include <G3D/Vector3.h>
+#include "Optional.h"
 
 namespace Movement
 {
@@ -54,8 +53,8 @@ namespace WorldPackets
 
         struct MonsterSplineFilterKey
         {
-            int16 Idx   = 0;
-            int16 Speed = 0;
+            int16 Idx    = 0;
+            uint16 Speed = 0;
         };
 
         struct MonsterSplineFilter
@@ -68,33 +67,43 @@ namespace WorldPackets
             int16 AddedToStart          = 0;
         };
 
+        struct MonsterSplineSpellEffectExtraData
+        {
+            ObjectGuid TargetGUID;
+            uint32 SpellVisualID = 0;
+            uint32 ProgressCurveID = 0;
+            uint32 ParabolicCurveID = 0;
+        };
+
         struct MovementSpline
         {
             uint32 Flags                = 0;    // Spline flags
             uint8 Face                  = 0;    // Movement direction (see MonsterMoveType enum)
             uint8 AnimTier              = 0;
             uint32 TierTransStartTime   = 0;
-            uint32 Elapsed              = 0;
+            int32 Elapsed               = 0;
             uint32 MoveTime             = 0;
             float JumpGravity           = 0.0f;
             uint32 SpecialTime          = 0;
-            std::vector<G3D::Vector3> Points;   // Spline path
+            std::vector<TaggedPosition<Position::XYZ>> Points;   // Spline path
             uint8 Mode                  = 0;    // Spline mode - actually always 0 in this packet - Catmullrom mode appears only in SMSG_UPDATE_OBJECT. In this packet it is determined by flags
             uint8 VehicleExitVoluntary  = 0;
             ObjectGuid TransportGUID;
-            uint8 VehicleSeat           = 255;
-            std::vector<G3D::Vector3> PackedDeltas;
+            int8 VehicleSeat            = -1;
+            std::vector<TaggedPosition<Position::PackedXYZ>> PackedDeltas;
             Optional<MonsterSplineFilter> SplineFilter;
+            Optional<MonsterSplineSpellEffectExtraData> SpellEffectExtraData;
             float FaceDirection         = 0.0f;
             ObjectGuid FaceGUID;
-            G3D::Vector3 FaceSpot;
+            TaggedPosition<Position::XYZ> FaceSpot;
         };
 
         struct MovementMonsterSpline
         {
             uint32 ID = 0;
-            G3D::Vector3 Destination;
+            TaggedPosition<Position::XYZ> Destination;
             bool CrzTeleport = false;
+            uint8 StopDistanceTolerance = 0;    // Determines how far from spline destination the mover is allowed to stop in place 0, 0, 3.0, 2.76, numeric_limits<float>::max, 1.1, float(INT_MAX); default before this field existed was distance 3.0 (index 2)
             MovementSpline Move;
         };
 
@@ -115,7 +124,7 @@ namespace WorldPackets
 
             MovementMonsterSpline SplineData;
             ObjectGuid MoverGUID;
-            G3D::Vector3 Pos;
+            TaggedPosition<Position::XYZ> Pos;
         };
 
         class MoveSplineSetSpeed : public ServerPacket
@@ -194,25 +203,27 @@ namespace WorldPackets
         class TransferAborted final : public ServerPacket
         {
         public:
-            TransferAborted() : ServerPacket(SMSG_TRANSFER_ABORTED, 4 + 1 + 4) { }
+            TransferAborted() : ServerPacket(SMSG_TRANSFER_ABORTED, 4 + 1 + 4 + 1) { }
 
             WorldPacket const* Write() override;
 
-            uint32 TransfertAbort = 0;
-            uint8 Arg = 0;
             uint32 MapID = 0;
+            uint8 Arg = 0;
+            int32 MapDifficultyXConditionID = 0;
+            uint32 TransfertAbort = 0;
         };
 
         class NewWorld final : public ServerPacket
         {
         public:
-            NewWorld() : ServerPacket(SMSG_NEW_WORLD, 24) { }
+            NewWorld() : ServerPacket(SMSG_NEW_WORLD, 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4 + 4) { }
 
             WorldPacket const* Write() override;
 
             int32 MapID = 0;
             uint32 Reason = 0;
-            Position Pos;
+            TaggedPosition<Position::XYZO> Pos;
+            TaggedPosition<Position::XYZ> MovementOffset;    // Adjusts all pending movement events by this offset
         };
 
         class WorldPortResponse final : public ClientPacket
@@ -237,19 +248,20 @@ namespace WorldPackets
 
             WorldPacket const* Write() override;
 
-            Position Pos;
+            TaggedPosition<Position::XYZ> Pos;
             Optional<VehicleTeleport> Vehicle;
             uint32 SequenceIndex = 0;
             ObjectGuid MoverGUID;
             Optional<ObjectGuid> TransportGUID;
             float Facing = 0.0f;
+            uint8 PreloadWorld = 0;
         };
 
         struct MovementForce
         {
             ObjectGuid ID;
-            G3D::Vector3 Direction;
-            G3D::Vector3 TransportPosition;
+            TaggedPosition<Position::XYZ> Origin;
+            TaggedPosition<Position::XYZ> Direction;
             uint32 TransportID  = 0;
             float Magnitude     = 0;
             uint8 Type          = 0;
@@ -273,6 +285,28 @@ namespace WorldPackets
             Optional<float> FlightBackSpeed;
             Optional<float> RunBackSpeed;
             Optional<float> PitchRate;
+        };
+
+        class MoveUpdateApplyMovementForce final : public ServerPacket
+        {
+        public:
+            MoveUpdateApplyMovementForce() : ServerPacket(SMSG_MOVE_UPDATE_APPLY_MOVEMENT_FORCE) { }
+
+            WorldPacket const* Write() override;
+
+            MovementInfo* movementInfo = nullptr;
+            MovementForce Force;
+        };
+
+        class MoveUpdateRemoveMovementForce final : public ServerPacket
+        {
+        public:
+            MoveUpdateRemoveMovementForce() : ServerPacket(SMSG_MOVE_UPDATE_REMOVE_MOVEMENT_FORCE) { }
+
+            WorldPacket const* Write() override;
+
+            MovementInfo* movementInfo = nullptr;
+            ObjectGuid TriggerGUID;
         };
 
         class MoveTeleportAck final : public ClientPacket
@@ -334,6 +368,12 @@ namespace WorldPackets
             ObjectGuid MoverGUID;
         };
 
+        struct MoveKnockBackSpeeds
+        {
+            float HorzSpeed = 0.0f;
+            float VertSpeed = 0.0f;
+        };
+
         class MoveKnockBack final : public ServerPacket
         {
         public:
@@ -342,10 +382,9 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             ObjectGuid MoverGUID;
-            G3D::Vector2 Direction;
-            float HorzSpeed = 0.0f;
+            TaggedPosition<Position::XY> Direction;
+            MoveKnockBackSpeeds Speeds;
             uint32 SequenceIndex = 0;
-            float VertSpeed = 0.0f;
         };
 
         class MoveUpdateKnockBack final : public ServerPacket
@@ -356,6 +395,17 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             MovementInfo* movementInfo = nullptr;
+        };
+
+        class MoveKnockBackAck final : public ClientPacket
+        {
+        public:
+            MoveKnockBackAck(WorldPacket&& packet) : ClientPacket(CMSG_MOVE_KNOCK_BACK_ACK, std::move(packet)) { }
+
+            void Read() override;
+
+            MovementAck Ack;
+            Optional<MoveKnockBackSpeeds> Speeds;
         };
 
         enum UpdateCollisionHeightReason : uint8
@@ -377,6 +427,7 @@ namespace WorldPackets
             uint32 MountDisplayID = 0;
             UpdateCollisionHeightReason Reason = UPDATE_COLLISION_HEIGHT_MOUNT;
             uint32 SequenceIndex = 0;
+            int32 ScaleDuration = 0;
             float Height = 1.0f;
         };
 
@@ -452,6 +503,12 @@ namespace WorldPackets
         class SummonRequest final : public ServerPacket
         {
         public:
+            enum SummonReason : uint8
+            {
+                SPELL = 0,
+                SCENARIO = 1
+            };
+
             SummonRequest() : ServerPacket(SMSG_SUMMON_REQUEST, 16 + 4 + 4 + 1) { }
 
             WorldPacket const* Write() override;
@@ -459,6 +516,7 @@ namespace WorldPackets
             ObjectGuid SummonerGUID;
             uint32 SummonerVirtualRealmAddress = 0;
             int32 AreaID = 0;
+            SummonReason Reason = SPELL;
             bool SkipStartingArea = false;
         };
 
@@ -493,6 +551,45 @@ namespace WorldPackets
             uint32 SequenceIndex = 1;
             uint32 Reason = 1;
         };
+
+        class MoveSetCompoundState final : public ServerPacket
+        {
+        public:
+            struct CollisionHeightInfo
+            {
+                float Height = 0.0f;
+                float Scale = 0.0f;
+                UpdateCollisionHeightReason Reason;
+            };
+
+            struct KnockBackInfo
+            {
+                float HorzSpeed = 0.0f;
+                TaggedPosition<Position::XY> Direction;
+                float InitVertSpeed = 0.0f;
+            };
+
+            struct MoveStateChange
+            {
+                MoveStateChange(OpcodeServer messageId, uint32 sequenceIndex) : MessageID(messageId), SequenceIndex(sequenceIndex) { }
+
+                uint16 MessageID = 0;
+                uint32 SequenceIndex = 0;
+                Optional<float> Speed;
+                Optional<KnockBackInfo> KnockBack;
+                Optional<int32> VehicleRecID;
+                Optional<CollisionHeightInfo> CollisionHeight;
+                Optional<MovementForce> MovementForce_;
+                Optional<ObjectGuid> Unknown;
+            };
+
+            MoveSetCompoundState() : ServerPacket(SMSG_MOVE_SET_COMPOUND_STATE, 4 + 1) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid MoverGUID;
+            std::vector<MoveStateChange> StateChanges;
+        };
     }
 
     ByteBuffer& operator<<(ByteBuffer& data, Movement::MonsterSplineFilterKey const& monsterSplineFilterKey);
@@ -502,7 +599,7 @@ namespace WorldPackets
 }
 
 ByteBuffer& operator>>(ByteBuffer& data, MovementInfo& movementInfo);
-ByteBuffer& operator<<(ByteBuffer& data, MovementInfo& movementInfo);
+ByteBuffer& operator<<(ByteBuffer& data, MovementInfo const& movementInfo);
 
 ByteBuffer& operator>>(ByteBuffer& data, MovementInfo::TransportInfo& transportInfo);
 ByteBuffer& operator<<(ByteBuffer& data, MovementInfo::TransportInfo const& transportInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,12 +17,14 @@
 
 #include "ScriptMgr.h"
 #include "Chat.h"
+#include "DatabaseEnv.h"
+#include "Group.h"
+#include "GroupMgr.h"
 #include "Language.h"
 #include "LFGMgr.h"
 #include "ObjectMgr.h"
-#include "Group.h"
-#include "GroupMgr.h"
 #include "Player.h"
+#include "RBAC.h"
 
 void GetPlayerInfo(ChatHandler* handler, Player* player)
 {

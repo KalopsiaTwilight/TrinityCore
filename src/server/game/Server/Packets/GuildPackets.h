@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,9 +19,9 @@
 #define GuildPackets_h__
 
 #include "Packet.h"
-#include "ObjectGuid.h"
+#include "ItemPacketsCommon.h"
 #include "Guild.h"
-#include "ItemPackets.h"
+#include "ObjectGuid.h"
 
 namespace WorldPackets
 {
@@ -212,7 +212,7 @@ namespace WorldPackets
 
             ObjectGuid GuildGUID;
             ObjectGuid OldGuildGUID;
-            int32 Level = 0;
+            int32 AchievementPoints = 0;
             uint32 EmblemColor = 0;
             uint32 EmblemStyle = 0;
             uint32 BorderStyle = 0;
@@ -780,12 +780,6 @@ namespace WorldPackets
 
         struct GuildBankItemInfo
         {
-            struct GuildBankSocketEnchant
-            {
-                int32 SocketIndex = 0;
-                int32 SocketEnchantID = 0;
-            };
-
             WorldPackets::Item::ItemInstance Item;
             int32 Slot = 0;
             int32 Count = 0;
@@ -794,7 +788,7 @@ namespace WorldPackets
             int32 OnUseEnchantmentID = 0;
             int32 Flags = 0;
             bool Locked = false;
-            std::vector<GuildBankSocketEnchant> SocketEnchant;
+            std::vector<Item::ItemGemData> SocketEnchant;
         };
 
         struct GuildBankTabInfo
@@ -972,7 +966,7 @@ namespace WorldPackets
         class GuildChallengeUpdate final : public ServerPacket
         {
         public:
-            GuildChallengeUpdate() : ServerPacket(SMSG_GUILD_CHALLENGE_UPDATE, 120) { }
+            GuildChallengeUpdate() : ServerPacket(SMSG_GUILD_CHALLENGE_UPDATE, 96) { }
 
             WorldPacket const* Write() override;
 
@@ -1015,6 +1009,17 @@ namespace WorldPackets
             void Read() override;
 
             std::set<uint32> AchievementIDs;
+        };
+
+        class GuildNameChanged final : ServerPacket
+        {
+        public:
+            GuildNameChanged() : ServerPacket(SMSG_GUILD_NAME_CHANGED, 40) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid GuildGUID;
+            std::string GuildName;
         };
     }
 }

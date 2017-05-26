@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,17 @@
 #include "Containers.h"
 #include "EventMap.h"
 #include <list>
+
+#define CAST_AI(a, b)   (dynamic_cast<a*>(b))
+#define ENSURE_AI(a,b)  (EnsureAI<a>(b))
+
+template<class T, class U>
+inline T* EnsureAI(U* ai)
+{
+    T* cast_ai = dynamic_cast<T*>(ai);
+    ASSERT(cast_ai);
+    return cast_ai;
+};
 
 class Player;
 class Quest;
@@ -53,39 +64,7 @@ struct TC_GAME_API DefaultTargetSelector : public std::unary_function<Unit*, boo
     // aura: if 0: ignored, if > 0: the target shall have the aura, if < 0, the target shall NOT have the aura
     DefaultTargetSelector(Unit const* unit, float dist, bool playerOnly, int32 aura) : me(unit), m_dist(dist), m_playerOnly(playerOnly), m_aura(aura) { }
 
-    bool operator()(Unit const* target) const
-    {
-        if (!me)
-            return false;
-
-        if (!target)
-            return false;
-
-        if (m_playerOnly && (target->GetTypeId() != TYPEID_PLAYER))
-            return false;
-
-        if (m_dist > 0.0f && !me->IsWithinCombatRange(target, m_dist))
-            return false;
-
-        if (m_dist < 0.0f && me->IsWithinCombatRange(target, -m_dist))
-            return false;
-
-        if (m_aura)
-        {
-            if (m_aura > 0)
-            {
-                if (!target->HasAura(m_aura))
-                    return false;
-            }
-            else
-            {
-                if (target->HasAura(-m_aura))
-                    return false;
-            }
-        }
-
-        return true;
-    }
+    bool operator()(Unit const* target) const;
 };
 
 // Target selector for spell casts checking range, auras and attributes
@@ -148,15 +127,29 @@ class TC_GAME_API UnitAI
         {
             ThreatContainer::StorageType const& threatlist = me->getThreatManager().getThreatList();
             if (position >= threatlist.size())
-                return NULL;
+                return nullptr;
 
             std::list<Unit*> targetList;
+            Unit* currentVictim = nullptr;
+            if (auto currentVictimReference = me->getThreatManager().getCurrentVictim())
+            {
+                currentVictim = currentVictimReference->getTarget();
+
+                // Current victim always goes first
+                if (currentVictim && predicate(currentVictim))
+                    targetList.push_back(currentVictim);
+            }
+
             for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
-                if (predicate((*itr)->getTarget()))
+            {
+                if (currentVictim != nullptr && (*itr)->getTarget() != currentVictim && predicate((*itr)->getTarget()))
                     targetList.push_back((*itr)->getTarget());
+                else if (currentVictim == nullptr && predicate((*itr)->getTarget()))
+                    targetList.push_back((*itr)->getTarget());
+            }
 
             if (position >= targetList.size())
-                return NULL;
+                return nullptr;
 
             if (targetType == SELECT_TARGET_NEAREST || targetType == SELECT_TARGET_FARTHEST)
                 targetList.sort(Trinity::ObjectDistanceOrderPred(me));
@@ -187,7 +180,7 @@ class TC_GAME_API UnitAI
                     break;
             }
 
-            return NULL;
+            return nullptr;
         }
 
         void SelectTargetList(std::list<Unit*>& targetList, uint32 num, SelectAggroTarget targetType, float dist = 0.0f, bool playerOnly = false, int32 aura = 0);
@@ -214,7 +207,7 @@ class TC_GAME_API UnitAI
                 targetList.reverse();
 
             if (targetType == SELECT_TARGET_RANDOM)
-                Trinity::Containers::RandomResizeList(targetList, maxTargets);
+                Trinity::Containers::RandomResize(targetList, maxTargets);
             else
                 targetList.resize(maxTargets);
         }
@@ -241,6 +234,7 @@ class TC_GAME_API UnitAI
 
         void DoCast(uint32 spellId);
         void DoCast(Unit* victim, uint32 spellId, bool triggered = false);
+        void DoCastSelf(uint32 spellId, bool triggered = false) { DoCast(me, spellId, triggered); }
         void DoCastVictim(uint32 spellId, bool triggered = false);
         void DoCastAOE(uint32 spellId, bool triggered = false);
 

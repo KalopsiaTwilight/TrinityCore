@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,12 +16,17 @@
  */
 
 #include "ScriptMgr.h"
+#include "InstanceScript.h"
+#include "MoveSplineInit.h"
+#include "ObjectAccessor.h"
+#include "Player.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
+#include "Spell.h"
+#include "SpellInfo.h"
 #include "SpellScript.h"
+#include "TemporarySummon.h"
 #include "Transport.h"
-#include "Player.h"
-#include "MoveSplineInit.h"
 #include "halls_of_reflection.h"
 
 enum Text
@@ -349,7 +354,7 @@ class npc_jaina_or_sylvanas_intro_hor : public CreatureScript
             if (InstanceScript* instance = creature->GetInstanceScript())
                 if (instance->GetData(DATA_QUEL_DELAR_EVENT) == IN_PROGRESS || instance->GetData(DATA_QUEL_DELAR_EVENT) == SPECIAL)
                 {
-                    player->PlayerTalkClass->ClearMenus();
+                    ClearGossipMenuFor(player);
                     return true;
                 }
 
@@ -366,17 +371,17 @@ class npc_jaina_or_sylvanas_intro_hor : public CreatureScript
 
             void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
             {
-                player->PlayerTalkClass->ClearMenus();
+                ClearGossipMenuFor(player);
 
                 switch (gossipListId)
                 {
                     case 0:
-                        player->PlayerTalkClass->SendCloseGossip();
+                        CloseGossipMenuFor(player);
                         _events.ScheduleEvent(EVENT_START_INTRO, 1000);
                         me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER);
                         break;
                     case 1:
-                        player->PlayerTalkClass->SendCloseGossip();
+                        CloseGossipMenuFor(player);
                         _events.ScheduleEvent(EVENT_SKIP_INTRO, 1000);
                         me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP | UNIT_NPC_FLAG_QUESTGIVER);
                         break;
@@ -860,12 +865,12 @@ class npc_jaina_or_sylvanas_escape_hor : public CreatureScript
 
             void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
             {
-                player->PlayerTalkClass->ClearMenus();
+                ClearGossipMenuFor(player);
 
                 switch (gossipListId)
                 {
                     case 0:
-                        player->PlayerTalkClass->SendCloseGossip();
+                        CloseGossipMenuFor(player);
                         me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         _events.ScheduleEvent(EVENT_ESCAPE_6, 0);
                         break;
@@ -1921,6 +1926,7 @@ class npc_frostsworn_general : public CreatureScript
                 {
                     if (Creature* reflection = me->SummonCreature(NPC_REFLECTION, *target, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 3000))
                     {
+                        reflection->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                         target->CastSpell(reflection, SPELL_CLONE, true);
                         target->CastSpell(reflection, SPELL_GHOST_VISUAL, true);
                         reflection->AI()->AttackStart(target);
@@ -2155,6 +2161,7 @@ struct npc_escape_event_trash : public ScriptedAI
         DoZoneInCombat(me, 0.0f);
         if (Creature* leader = ObjectAccessor::GetCreature(*me, _instance->GetGuidData(DATA_ESCAPE_LEADER)))
         {
+            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
             me->SetInCombatWith(leader);
             leader->SetInCombatWith(me);
             me->AddThreat(leader, 0.0f);
