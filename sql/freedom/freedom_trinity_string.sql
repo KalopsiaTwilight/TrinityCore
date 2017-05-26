@@ -369,7 +369,7 @@ INSERT INTO wod_world.trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDI_ADDITEM_ALL                                 */ (100350, CONCAT(@T_CMD_INFO, 'Mass-added itemID = %i, amount = %i')),
 /* FREEDOM_CMDI_REMOVEITEM_ALL                              */ (100351, CONCAT(@T_CMD_INFO, 'Mass-removed itemID = %i, amount = %i')),
 /* FREEDOM_CMDI_PLAYED_LOCALLY                              */ (100352, CONCAT(@T_CMD_INFO, 'Sound %u played to nearby (in sight) players.')),
-/* FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C          */ (100086, CONCAT(@T_CMD_ERROR, 'Encountered error when trying to spawn gameobject with entry %u (Invalid display: cannot find display with id %u), but still attempting to spawn! Contact developers about this!')),
+/* FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C          */ (100353, CONCAT(@T_CMD_ERROR, 'Encountered error when trying to spawn gameobject with entry %u (Invalid display: cannot find display with id %u), but still attempting to spawn! Contact developers about this!')),
 
 
 
