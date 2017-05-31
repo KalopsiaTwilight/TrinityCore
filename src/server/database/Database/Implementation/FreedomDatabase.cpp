@@ -16,6 +16,7 @@
  */
 
 #include "FreedomDatabase.h"
+#include "PreparedStatement.h"
 
 void FreedomDatabaseConnection::DoPrepareStatements()
 {
@@ -63,4 +64,16 @@ void FreedomDatabaseConnection::DoPrepareStatements()
     // REPLACES
     PrepareStatement(FREEDOM_REP_GAMEOBJECTEXTRA, "REPLACE INTO gameobject_extra (guid, scale, id_creator_bnet, id_creator_player, id_modifier_bnet, id_modifier_player, created, modified, phaseMask, uses_quat, roll, pitch, yaw) VALUES (?, ?, ?, ?, ?, ?, from_unixtime(?), from_unixtime(?), ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
     PrepareStatement(FREEDOM_REP_CREATUREEXTRA, "REPLACE INTO creature_extra (guid, scale, id_creator_bnet, id_creator_player, id_modifier_bnet, id_modifier_player, created, modified, phaseMask, displayLock, displayId, nativeDisplayId, genderLock, gender, swim, gravity, fly) VALUES (?, ?, ?, ?, ?, ?, from_unixtime(?), from_unixtime(?), ?, ?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
+}
+
+FreedomDatabaseConnection::FreedomDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
+{
+}
+
+FreedomDatabaseConnection::FreedomDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo)
+{
+}
+
+FreedomDatabaseConnection::~FreedomDatabaseConnection()
+{
 }

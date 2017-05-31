@@ -440,9 +440,9 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
     SetUInt32Value(UNIT_FIELD_FLAGS, unitFlags);
     //SetUInt32Value(UNIT_FIELD_FLAGS_2, unitFlags2);
     if (GetOutfit() < 0 && GetDisplayId())
-        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unitFlags2 | UNIT_FLAG2_MIRROR_IMAGE);
+        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unit_flags2 | UNIT_FLAG2_MIRROR_IMAGE);
     else
-        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unitFlags2);
+        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unit_flags2);
     SetUInt32Value(UNIT_FIELD_FLAGS_3, unitFlags3);
 
     SetUInt32Value(OBJECT_DYNAMIC_FLAGS, dynamicFlags);

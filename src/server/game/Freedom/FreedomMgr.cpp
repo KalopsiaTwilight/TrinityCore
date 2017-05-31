@@ -9,6 +9,9 @@
 #include "Creature.h"
 #include "Config.h"
 #include "Transport.h"
+#include "DatabaseEnv.h"
+#include "Log.h"
+#include "World.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/tokenizer.hpp>
@@ -589,7 +592,7 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
 
         Creature* creature = trans->CreateNPCPassenger(guid, &data);
 
-        creature->SaveToDB(trans->GetGOInfo()->moTransport.mapID, 1 << map->GetSpawnMode(), creator->GetPhaseMask());
+        creature->SaveToDB(trans->GetGOInfo()->moTransport.SpawnMap, 1 << map->GetSpawnMode(), creator->GetPhaseMask());
 
         sObjectMgr->AddCreatureToGrid(guid, &data);
         return creature;
@@ -672,7 +675,7 @@ void FreedomMgr::CreatureRefresh(Creature* creature)
     auto newObjectGuid = ObjectGuid::Create<HighGuid::Creature>(map->GetId(), creature->GetEntry(), newGuidLow);
 
     creature->SetGuidValue(OBJECT_FIELD_GUID, newObjectGuid);
-    creature->SetPackGUID(newObjectGuid);
+    //creature->SetPackGUID(newObjectGuid);
     map->GetObjectsStore().Insert(newObjectGuid, creature);
 }
 
@@ -941,7 +944,7 @@ void FreedomMgr::GameObjectMove(GameObject* go, float x, float y, float z, float
     }
     else
     {
-        go->UpdateRotationFields();
+        go->SetWorldRotationAngles(z, y, x);
     }
 }
 
@@ -963,7 +966,7 @@ void FreedomMgr::GameObjectRotate(GameObject* go, float deg_x, float deg_y, floa
     if (addDeg)
     {
         float roll, pitch, yaw;
-        auto quat = go->GetRotationQuat();
+        auto quat = go->GetWorldRotation();
         quat.toRotationMatrix().toEulerAnglesZYX(yaw, pitch, roll);
 
         if (firstTimeQuat)
@@ -1118,13 +1121,16 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
         return nullptr;
     }
 
-    float x, y, z, o;
-    creator->GetPosition(x, y, z, o);
+    //float x, y, z, o;
+    //creator->GetPosition(x, y, z, o);
+    Player* player = creator->GetSession()->GetPlayer();
     Map* map = creator->GetMap();
 
-    GameObject* object = new GameObject;
+    G3D::Quat rot = G3D::Matrix3::fromEulerAnglesZYX(creator->GetOrientation(), 0.f, 0.f);
 
-    if (!object->Create(gobTemplate->entry, map, 0, x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
+    GameObject* object = new GameObject;
+    //if (!object->Create(gobTemplate->entry, map, 0, x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
+    if (!object->Create(gobTemplate->entry, map, 0, *player, rot, 255, GO_STATE_READY))
     {
         delete object;
         return nullptr;
@@ -1312,7 +1318,7 @@ std::string FreedomMgr::GetMapName(uint32 mapId)
     const MapEntry* map = sMapStore.LookupEntry(mapId);
 
     if (map)
-        return map->MapName_lang;
+        return map->MapName->Str[sWorld->GetDefaultDbcLocale()];
     else
         return "Unknown";
 }

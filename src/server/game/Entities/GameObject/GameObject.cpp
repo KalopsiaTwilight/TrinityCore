@@ -249,24 +249,12 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position
     SetParentRotation(parentRotation);
     if (extraData)
     {
-        if (extraData->usesQuat)
-        {
-            UpdateRotationFieldsQuat(rotation0, rotation1, rotation2, rotation3);
-        }
-        else
-        {
-            UpdateRotationFields(rotation0, rotation1, rotation2, rotation3);
-        }
-
-
-
         float scale = extraData->scale;
         SetObjectScale(scale < 0 ? goinfo->size : scale);
     }
     else
     {
         SetObjectScale(goinfo->size);
-        UpdateRotationFields(rotation0, rotation1, rotation2, rotation3);
     }
 
     if (m_goTemplateAddon)
@@ -2077,28 +2065,6 @@ std::string const & GameObject::GetNameForLocaleIdx(LocaleConstant loc_idx) cons
     return GetName();
 }
 
-void GameObject::UpdateRotationFieldsQuat(float qx /* = 0.0f */, float qy /* = 0.0f */, float qz /* = 0.0f */, float qw /* = 0.0f */)
-{
-    static double const atan_pow = atan(pow(2.0f, -20.0f));
-
-    Quat quat(qx, qy, qz, qw);
-    // Temporary solution for gameobjects that has no rotation data in DB:
-    if (qz == 0 && qw == 0)
-        quat = Quat::fromAxisAngleRotation(G3D::Vector3::unitZ(), GetOrientation());
-
-    quat.unitize();
-    m_rotation = QuaternionCompressed(quat).m_raw;
-    m_quatX = quat.x;
-    m_quatY = quat.y;
-    m_quatZ = quat.z;
-    m_quatW = quat.w;
-
-    SetFloatValue(GAMEOBJECT_PARENTROTATION + 0, m_quatX);
-    SetFloatValue(GAMEOBJECT_PARENTROTATION + 1, m_quatY);
-    SetFloatValue(GAMEOBJECT_PARENTROTATION + 2, m_quatZ);
-    SetFloatValue(GAMEOBJECT_PARENTROTATION + 3, m_quatW);
-}
-
 void GameObject::UpdatePackedRotation()
 {
     static const int32 PACK_YZ = 1 << 20;
@@ -2114,9 +2080,14 @@ void GameObject::UpdatePackedRotation()
     m_packedRotation = z | (y << 21) | (x << 42);
 }
 
-void GameObject::SetWorldRotation(G3D::Quat const& rot)
+void GameObject::SetWorldRotation(float qx, float qy, float qz, float qw)
 {
-    m_worldRotation = rot.toUnit();
+    G3D::Quat rotation(qx, qy, qz, qw);
+    rotation.unitize();
+    m_worldRotation.x = rotation.x;
+    m_worldRotation.y = rotation.y;
+    m_worldRotation.z = rotation.z;
+    m_worldRotation.w = rotation.w;
     UpdatePackedRotation();
 }
 
@@ -2130,15 +2101,8 @@ void GameObject::SetParentRotation(G3D::Quat const& rotation)
 
 void GameObject::SetWorldRotationAngles(float z_rot, float y_rot, float x_rot)
 {
-    SetWorldRotation(G3D::Quat(G3D::Matrix3::fromEulerAnglesZYX(z_rot, y_rot, x_rot)));
-}
-
-void GameObject::ModifyHealth(int32 change, Unit* attackerOrHealer /*= nullptr*/, uint32 spellId /*= 0*/)
-
-void GameObject::SetWorldRotationAngles(float z_rot, float y_rot, float x_rot)
-{
-    Quat quat(G3D::Matrix3::fromEulerAnglesZYX(z_rot, y_rot, x_rot));
-    UpdateRotationFieldsQuat(quat.x, quat.y, quat.z, quat.w);
+    G3D::Quat quat(G3D::Matrix3::fromEulerAnglesZYX(z_rot, y_rot, x_rot));
+    SetWorldRotation(quat.x, quat.y, quat.z, quat.w);
 }
 
 void GameObject::ModifyHealth(int32 change, Unit* attackerOrHealer /*= NULL*/, uint32 spellId /*= 0*/)

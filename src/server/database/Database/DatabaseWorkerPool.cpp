@@ -23,6 +23,7 @@
 #include "Implementation/WorldDatabase.h"
 #include "Implementation/CharacterDatabase.h"
 #include "Implementation/HotfixDatabase.h"
+#include "Implementation/FreedomDatabase.h"
 #include "Log.h"
 #include "PreparedStatement.h"
 #include "ProducerConsumerQueue.h"

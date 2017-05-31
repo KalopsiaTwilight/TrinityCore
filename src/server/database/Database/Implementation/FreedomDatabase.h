@@ -18,7 +18,6 @@
 #ifndef _FREEDOMDATABASE_H
 #define _FREEDOMDATABASE_H
 
-#include "DatabaseWorkerPool.h"
 #include "MySQLConnection.h"
 
 enum FreedomDatabaseStatements
@@ -72,19 +71,18 @@ enum FreedomDatabaseStatements
     MAX_FREEDOMDATABASE_STATEMENTS
 };
 
-class FreedomDatabaseConnection : public MySQLConnection
+class TC_DATABASE_API FreedomDatabaseConnection : public MySQLConnection
 {
 public:
     typedef FreedomDatabaseStatements Statements;
 
     //- Constructors for sync and async connections
-	FreedomDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) { }
-	FreedomDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo) { }
+    FreedomDatabaseConnection(MySQLConnectionInfo& connInfo);
+    FreedomDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo);
+    ~FreedomDatabaseConnection();
 
     //- Loads database type specific prepared statements
     void DoPrepareStatements() override;
 };
-
-typedef DatabaseWorkerPool<FreedomDatabaseConnection> FreedomDatabaseWorkerPool;
 
 #endif
