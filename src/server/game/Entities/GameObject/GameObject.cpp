@@ -39,6 +39,7 @@
 #include "Transport.h"
 #include "UpdateFieldFlags.h"
 #include "World.h"
+#include <G3D/Quat.h>
 
 GameObject::GameObject() : WorldObject(false), MapObject(),
     m_model(nullptr), m_goValue(), m_AI(nullptr), _animKitId(0)
@@ -183,7 +184,7 @@ void GameObject::RemoveFromWorld()
     }
 }
 
-bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position const& pos, G3D::Quat const& rotation, uint32 animprogress, GOState go_state, uint32 artKit /*= 0*/)
+bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position const& pos, QuaternionData const& rotation, uint32 animprogress, GOState go_state, uint32 artKit /*= 0*/)
 {
     ASSERT(map);
     SetMap(map);
@@ -237,12 +238,12 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position
         return false;
     }
 
-    SetWorldRotation(rotation);
+    SetWorldRotation(rotation.x, rotation.y, rotation.z, rotation.w);
     GameObjectAddon const* gameObjectAddon = sObjectMgr->GetGameObjectAddon(GetSpawnId());
     GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(GetSpawnId());
 
     // For most of gameobjects is (0, 0, 0, 1) quaternion, there are only some transports with not standard rotation
-    G3D::Quat parentRotation;
+    QuaternionData parentRotation;
     if (gameObjectAddon)
         parentRotation = gameObjectAddon->ParentRotation;
 
@@ -2091,7 +2092,7 @@ void GameObject::SetWorldRotation(float qx, float qy, float qz, float qw)
     UpdatePackedRotation();
 }
 
-void GameObject::SetParentRotation(G3D::Quat const& rotation)
+void GameObject::SetParentRotation(QuaternionData const& rotation)
 {
     SetFloatValue(GAMEOBJECT_PARENTROTATION + 0, rotation.x);
     SetFloatValue(GAMEOBJECT_PARENTROTATION + 1, rotation.y);
