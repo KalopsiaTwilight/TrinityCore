@@ -811,7 +811,7 @@ class TC_GAME_API World
 
         //Custom
         void CastAll(uint32 spell, bool triggered);
-        void AddItemAll(uint32 itemId, int32 count);
+        void AddItemAll(uint32 itemId, int32 count, std::vector<int32> bonusListIDs);
         void MassUnaura(uint32 spellId);
         void MassUnauraAll();
 

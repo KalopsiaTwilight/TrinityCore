@@ -24,6 +24,7 @@ EndScriptData */
 
 #include "AccountMgr.h"
 #include "Chat.h"
+#include "DatabaseEnv.h"
 #include "GameEventMgr.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -31,6 +32,8 @@ EndScriptData */
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
 #include "SpellInfo.h"
+#include "World.h"
+#include "RBAC.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
@@ -105,7 +108,8 @@ public:
             AreaTableEntry const* areaEntry = sAreaTableStore.LookupEntry(i);
             if (areaEntry)
             {
-                std::string name = areaEntry->AreaName_lang;
+                int32 locale = handler->GetSessionDbcLocale();
+                std::string name = areaEntry->AreaName->Str[locale];
                 if (name.empty())
                     continue;
 
@@ -298,7 +302,8 @@ public:
             {
                 FactionState const* factionState = target ? target->GetReputationMgr().GetState(factionEntry) : NULL;
 
-                std::string name = factionEntry->Name_lang;
+                int locale = handler->GetSessionDbcLocale();
+                std::string name = factionEntry->Name->Str[locale];
                 if (name.empty())
                     continue;
 
@@ -455,7 +460,8 @@ public:
             ItemSetEntry const* set = sItemSetStore.LookupEntry(id);
             if (set)
             {
-                std::string name = set->Name_lang;
+                int32 locale = handler->GetSessionDbcLocale();
+                std::string name = set->Name->Str[locale];
                 if (name.empty())
                     continue;
 
@@ -718,7 +724,8 @@ public:
             SkillLineEntry const* skillInfo = sSkillLineStore.LookupEntry(id);
             if (skillInfo)
             {
-                std::string name = skillInfo->DisplayName_lang;
+                int locale = handler->GetSessionDbcLocale();
+                std::string name = skillInfo->DisplayName->Str[locale];
                 if (name.empty())
                     continue;
 
@@ -788,7 +795,8 @@ public:
             SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id);
             if (spellInfo)
             {
-                std::string name = spellInfo->SpellName;
+                int locale = handler->GetSessionDbcLocale();
+                std::string name = spellInfo->SpellName->Str[locale];
                 if (name.empty())
                     continue;
 
@@ -866,7 +874,7 @@ public:
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(id))
         {
             int locale = handler->GetSessionDbcLocale();
-            std::string name = spellInfo->SpellName;
+            std::string name = spellInfo->SpellName->Str[locale];
             if (name.empty())
             {
                 handler->SendSysMessage(LANG_COMMAND_NOSPELLFOUND);
@@ -1067,7 +1075,8 @@ public:
                     if (target && target->getGender() != gender)
                         continue;
 
-                    std::string name = gender == GENDER_MALE ? titleInfo->NameMale_lang : titleInfo->NameFemale_lang;
+                    int32 locale = handler->GetSessionDbcLocale();
+                    std::string name = (gender == GENDER_MALE ? titleInfo->NameMale : titleInfo->NameFemale)->Str[locale];
 
                     if (name.empty())
                         continue;
@@ -1128,7 +1137,8 @@ public:
         {
             if (MapEntry const* mapInfo = sMapStore.LookupEntry(id))
             {
-                std::string name = mapInfo->MapName_lang;
+                int32 locale = handler->GetSessionDbcLocale();
+                std::string name = mapInfo->MapName->Str[locale];
                 if (name.empty())
                     continue;
 

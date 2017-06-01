@@ -3665,7 +3665,7 @@ void TC_GAME_API World::CastAll(uint32 spell, bool triggered)
         }
     }
 
-void TC_GAME_API World::AddItemAll(uint32 itemId, int32 count)
+void TC_GAME_API World::AddItemAll(uint32 itemId, int32 count, std::vector<int32> bonusListIDs)
 {
     for (SessionMap::iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
     {
@@ -3694,7 +3694,7 @@ void TC_GAME_API World::AddItemAll(uint32 itemId, int32 count)
                 if (count == 0 || dest.empty())                         // can't add any
                     break;
 
-                Item* item = target->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
+                Item* item = target->StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIDs);
 
                 if (count > 0 && item)
                 {

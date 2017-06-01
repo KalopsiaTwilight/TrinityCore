@@ -15,6 +15,9 @@
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "FreedomMgr.h"
+#include "RBAC.h"
+#include "DatabaseEnv.h"
+#include "World.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include "Utilities/ArgumentTokenizer.h"
 
@@ -739,13 +742,15 @@ public:
 
         // Create teleport
         PublicSpellData newSpellData;
-        newSpellData.name = spellEntry->Name_lang;
+        int locale = handler->GetSessionDbcLocale();
+        newSpellData.name = spellEntry->Name->Str[locale];
         newSpellData.targetOthers = targetOthers;
         newSpellData.gmBnetAccId = source->GetSession()->GetBattlenetAccountId();
 
         sFreedomMgr->AddPublicSpell(spellId, newSpellData);
 
-        handler->PSendSysMessage(FREEDOM_CMDI_PUBLIC_SPELL_ADD, sFreedomMgr->ToChatLink("Hspell", spellId, spellEntry->Name_lang), spellId);
+        int locale = handler->GetSessionDbcLocale();
+        handler->PSendSysMessage(FREEDOM_CMDI_PUBLIC_SPELL_ADD, sFreedomMgr->ToChatLink("Hspell", spellId, spellEntry->Name->Str[locale]), spellId);
         return true;
     }
 
@@ -1051,8 +1056,9 @@ public:
         uint32 count = 0;
 
         for (auto titleEntry : sCharTitlesStore)
-        {            
-            std::string titleName = gender == GENDER_FEMALE ? titleEntry->NameFemale_lang : titleEntry->NameMale_lang;
+        {
+            int32 locale = handler->GetSessionDbcLocale();
+            std::string titleName = (gender == GENDER_MALE ? titleEntry->NameMale : titleEntry->NameFemale)->Str[locale];
 
             if (boost::icontains(titleName, namePart))
             {
@@ -1118,7 +1124,8 @@ public:
         source->SaveToDB();
 
         Gender gender = (Gender)source->getGender();
-        std::string titleName = gender == GENDER_FEMALE ? titleEntry->NameFemale_lang : titleEntry->NameMale_lang;
+        int32 locale = handler->GetSessionDbcLocale();
+        std::string titleName = (gender == GENDER_MALE ? titleEntry->NameMale : titleEntry->NameFemale)->Str[locale];
 
         handler->PSendSysMessage(FREEDOM_CMDI_FREEDOM_TITLE_SET, 
             titleEntry->ID, 
@@ -1242,7 +1249,7 @@ public:
 
         Player* source = handler->GetSession()->GetPlayer();
         ObjectGuid targetGuid = sObjectMgr->GetPlayerGUIDByName(args);
-        Player* target = sObjectMgr->GetPlayerByLowGUID(targetGuid.GetCounter());
+        Player* target = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(targetGuid.GetCounter()));
 
         if (!target || target->IsLoading() || target->IsBeingTeleported())
         {

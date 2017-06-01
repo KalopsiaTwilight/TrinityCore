@@ -1,12 +1,17 @@
-#include "ScriptMgr.h"
-#include "ObjectMgr.h"
-#include "Chat.h"
 #include "AccountMgr.h"
+#include "Chat.h"
+#include "DatabaseEnv.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "Player.h"
+#include "Realm.h"
+#include "RBAC.h"
+#include "ScriptMgr.h"
 #include "Language.h"
 #include "World.h"
-#include "Player.h"
-#include "Opcodes.h"
 #include "FreedomMgr.h"
+#include <boost/thread/shared_mutex.hpp>
+#include <boost/thread/locks.hpp>
 
 class fgm_commandscript : public CommandScript
 {

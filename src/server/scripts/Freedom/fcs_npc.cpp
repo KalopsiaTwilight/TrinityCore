@@ -1,17 +1,20 @@
 #include "ScriptMgr.h"
-#include "ObjectMgr.h"
-#include "Chat.h"
-#include "Transport.h"
-#include "CreatureGroups.h"
-#include "Language.h"
-#include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
-#include "CreatureAI.h"
-#include "Player.h"
-#include "Pet.h"
-#include "Config.h"
 #include "BattlenetAccountMgr.h"
-#include "Utilities/ArgumentTokenizer.h"
+#include "Config.h"
+#include "Chat.h"
+#include "CreatureAI.h"
+#include "CreatureGroups.h"
+#include "DatabaseEnv.h"
+#include "Language.h"
+#include "ObjectMgr.h"
+#include "Pet.h"
+#include "Player.h"
+#include "RBAC.h"
+#include "Transport.h"
+#include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
+#include "World.h"
 #include "FreedomMgr.h"
+#include "Utilities/ArgumentTokenizer.h"
 
 template<typename E, typename T = char const*>
 struct EnumName
@@ -94,7 +97,7 @@ EnumName<UnitFlags> const unitFlags[MAX_UNIT_FLAGS] =
 {
     CREATE_NAMED_ENUM(UNIT_FLAG_SERVER_CONTROLLED),
     CREATE_NAMED_ENUM(UNIT_FLAG_NON_ATTACKABLE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_DISABLE_MOVE),
+    CREATE_NAMED_ENUM(UNIT_FLAG_REMOVE_CLIENT_CONTROL),
     CREATE_NAMED_ENUM(UNIT_FLAG_PVP_ATTACKABLE),
     CREATE_NAMED_ENUM(UNIT_FLAG_RENAME),
     CREATE_NAMED_ENUM(UNIT_FLAG_PREPARATION),
@@ -106,7 +109,7 @@ EnumName<UnitFlags> const unitFlags[MAX_UNIT_FLAGS] =
     CREATE_NAMED_ENUM(UNIT_FLAG_PET_IN_COMBAT),
     CREATE_NAMED_ENUM(UNIT_FLAG_PVP),
     CREATE_NAMED_ENUM(UNIT_FLAG_SILENCED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_14),
+    CREATE_NAMED_ENUM(UNIT_FLAG_CANNOT_SWIM),
     CREATE_NAMED_ENUM(UNIT_FLAG_UNK_15),
     CREATE_NAMED_ENUM(UNIT_FLAG_UNK_16),
     CREATE_NAMED_ENUM(UNIT_FLAG_PACIFIED),

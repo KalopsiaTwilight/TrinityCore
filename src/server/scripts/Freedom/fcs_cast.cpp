@@ -28,6 +28,8 @@ EndScriptData */
 #include "Language.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
+#include "World.h"
+#include "RBAC.h"
 
 class fcast_commandscript : public CommandScript
 {

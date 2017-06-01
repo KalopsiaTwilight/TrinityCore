@@ -9,6 +9,9 @@
 #include "Opcodes.h"
 #include "Config.h"
 #include "BattlenetAccountMgr.h"
+#include "RBAC.h"
+#include "World.h"
+#include "DatabaseEnv.h"
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
 
@@ -785,7 +788,7 @@ public:
             return true;
         }
 
-        char* spawnTimeSecsToken = strtok(NULL, " ");
+        char* spawnTimeSecsToken = strtok(nullptr, " ");
         uint32 spawnTimeSecs = 0;
         if (spawnTimeSecsToken)
             spawnTimeSecs = atoul(spawnTimeSecsToken);
@@ -856,16 +859,9 @@ public:
         uint32 spawntm = 300;
 
         if (spawntime)
-            spawntm = atoi((char*)spawntime);
+            spawntm = atoul(spawntime);
 
-        float x = player->GetPositionX();
-        float y = player->GetPositionY();
-        float z = player->GetPositionZ();
-        float ang = player->GetOrientation();
-
-        float rot2 = std::sin(ang / 2);
-        float rot3 = std::cos(ang / 2);
-
+        G3D::Quat rotation = G3D::Matrix3::fromEulerAnglesZYX(player->GetOrientation(), 0.f, 0.f);
         uint32 objectId = atoi(id);
 
         if (!sObjectMgr->GetGameObjectTemplate(objectId))
@@ -883,7 +879,7 @@ public:
             }
         }
 
-        player->SummonGameObject(objectId, x, y, z, ang, 0, 0, rot2, rot3, spawntm);
+        player->SummonGameObject(objectId, *player, QuaternionData(rotation.x, rotation.y, rotation.z, rotation.w), spawntm);
 
         return true;
     }
@@ -1182,7 +1178,7 @@ public:
         if (objectType < 0)
         {
             if (objectType == -1)
-                object->SendObjectDeSpawnAnim(object->GetGUID());
+                object->SendGameObjectDespawn();
             else if (objectType == -2)
                 handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SET_STATE);
             return true;

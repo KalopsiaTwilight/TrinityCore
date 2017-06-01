@@ -3697,6 +3697,147 @@ void ObjectMgr::LoadPlayerInfo()
     }
 }
 
+void ObjectMgr::LoadPlayerCustomSkills()
+{
+    uint32 oldMSTime = getMSTime();
+    
+        // Clear custom spell container in case of reload
+        for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+        {
+            for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+            {
+                if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
+                {
+                    info->customSkills.clear();
+                }
+            }
+        }
+
+        QueryResult result = WorldDatabase.PQuery("SELECT race_mask, class_mask, id_skill, rank FROM playercreateinfo_skill_custom");
+    
+        if (!result)
+        {
+            TC_LOG_ERROR("server.loading", ">> Loaded 0 player create custom skills. DB table `playercreateinfo_skill_custom` is empty.");
+        }
+        else
+        {
+            uint32 count = 0;
+        
+            do
+            {
+                Field* fields = result->Fetch();
+                uint32 raceMask = fields[0].GetUInt32();
+                uint32 classMask = fields[1].GetUInt32();
+                uint16 skillId = fields[2].GetUInt16();
+                uint16 rank = fields[3].GetUInt16();
+            
+                if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_skill_custom` table, ignoring.", raceMask);
+                    continue;
+                }
+            
+                if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+                {
+                    TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_skill_custom` table, ignoring.", classMask);
+                    continue;
+                }
+            
+                for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+                {
+                    if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                    {
+                        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                        {
+                        if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                            {
+                            if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
+                                {
+                                    info->customSkills.push_back(PlayerCreateInfoCustomSkill(raceMask, classMask, skillId, rank));
+                                    ++count;
+                                }
+                            }
+                        }
+                    }
+                }
+            } while (result->NextRow());
+            
+            TC_LOG_INFO("server.loading", ">> Loaded %u custom player create skills in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+            }
+    }
+
+void ObjectMgr::LoadPlayerCustomSpells()
+{
+    uint32 oldMSTime = getMSTime();
+    
+    // Clear custom spell container in case of reload
+    for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+    {
+        for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+        {
+            if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
+            {
+                info->customSpells.clear();
+            }
+        }
+    }
+
+    QueryResult result = WorldDatabase.PQuery("SELECT racemask, classmask, Spell FROM playercreateinfo_spell_custom");
+    
+    if (!result)
+    {
+        TC_LOG_ERROR("server.loading", ">> Loaded 0 player create custom spells. DB table `playercreateinfo_spell_custom` is empty.");
+    }
+    else
+    {
+        uint32 count = 0;
+        
+        do
+        {
+            Field* fields = result->Fetch();
+            uint32 raceMask = fields[0].GetUInt32();
+            uint32 classMask = fields[1].GetUInt32();
+            uint32 spellId = fields[2].GetUInt32();
+            
+            if (raceMask != 0 && !(raceMask & RACEMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong race mask %u in `playercreateinfo_spell_custom` table, ignoring.", raceMask);
+                continue;
+            }
+            
+            if (classMask != 0 && !(classMask & CLASSMASK_ALL_PLAYABLE))
+            {
+                TC_LOG_ERROR("sql.sql", "Wrong class mask %u in `playercreateinfo_spell_custom` table, ignoring.", classMask);
+                continue;
+            }
+            
+            for (uint32 raceIndex = RACE_HUMAN; raceIndex < MAX_RACES; ++raceIndex)
+            {
+                if (raceMask == 0 || ((1 << (raceIndex - 1)) & raceMask))
+                {
+                    for (uint32 classIndex = CLASS_WARRIOR; classIndex < MAX_CLASSES; ++classIndex)
+                    {
+                        if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
+                        {
+                            if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
+                            {
+                                info->customSpells.push_back(spellId);
+                                ++count;
+                            }
+                            // We need something better here, the check is not accounting for spells used by multiple races/classes but not all of them.
+                            // Either split the masks per class, or per race, which kind of kills the point yet.
+                            // else if (raceMask != 0 && classMask != 0)
+                            //     TC_LOG_ERROR("sql.sql", "Racemask/classmask (%u/%u) combination was found containing an invalid race/class combination (%u/%u) in `%s` (Spell %u), ignoring.", raceMask, classMask, raceIndex, classIndex, tableName.c_str(), spellId);
+                        }
+                    }
+                }
+            }
+        } while (result->NextRow());
+            
+        TC_LOG_INFO("server.loading", ">> Loaded %u custom player create spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    }
+}
+
 void ObjectMgr::GetPlayerClassLevelInfo(uint32 class_, uint8 level, uint32& baseMana) const
 {
     if (level < 1 || class_ >= MAX_CLASSES)

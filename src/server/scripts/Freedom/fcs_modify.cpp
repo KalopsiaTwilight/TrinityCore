@@ -22,13 +22,14 @@ Comment: All modify related commands
 Category: commandscripts
 EndScriptData */
 
+#include "ScriptMgr.h"
 #include "Chat.h"
+#include "Log.h"
 #include "ObjectMgr.h"
-#include "Opcodes.h"
 #include "Pet.h"
 #include "Player.h"
+#include "RBAC.h"
 #include "ReputationMgr.h"
-#include "ScriptMgr.h"
 #include "SpellPackets.h"
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
@@ -739,14 +740,14 @@ public:
         target->Mount(mId);
 
         WorldPacket data(SMSG_MOVE_SET_RUN_SPEED, (8 + 4 + 1 + 4));
-        data << target->GetPackGUID();
+        data << target->GetGUID();
         data << (uint32)0;
         data << (uint8)0;                                       //new 2.1.0
         data << float(speed);
         target->SendMessageToSet(&data, true);
 
         data.Initialize(SMSG_MOVE_SET_SWIM_SPEED, (8 + 4 + 4));
-        data << target->GetPackGUID();
+        data << target->GetGUID();
         data << (uint32)0;
         data << float(speed);
         target->SendMessageToSet(&data, true);
@@ -896,9 +897,10 @@ public:
 
         int32 amount = (uint32)atoi(args);
 
-        target->ModifyCurrency(CURRENCY_TYPE_HONOR_POINTS, amount, true, true);
+        //target->ModifyCurrency(CURRENCY_TYPE_HONOR_POINTS, amount, true, true);
+        handler->PSendSysMessage("NOT IMPLEMENTED: %d honor NOT added.", amount);
 
-        handler->PSendSysMessage(LANG_COMMAND_MODIFY_HONOR, handler->GetNameLink(target).c_str(), target->GetCurrency(CURRENCY_TYPE_HONOR_POINTS));
+        //handler->PSendSysMessage(LANG_COMMAND_MODIFY_HONOR, handler->GetNameLink(target).c_str(), target->GetCurrency(CURRENCY_TYPE_HONOR_POINTS));
 
         return true;
     }
@@ -1006,14 +1008,14 @@ public:
 
         if (factionEntry->ReputationIndex < 0)
         {
-            handler->PSendSysMessage(LANG_COMMAND_FACTION_NOREP_ERROR, factionEntry->Name_lang, factionId);
+            handler->PSendSysMessage(LANG_COMMAND_FACTION_NOREP_ERROR, factionEntry->Name->Str[handler->GetSessionDbcLocale()], factionId);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
         target->GetReputationMgr().SetOneFactionReputation(factionEntry, amount, false);
         target->GetReputationMgr().SendState(target->GetReputationMgr().GetState(factionEntry));
-        handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->Name_lang, factionId,
+        handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->Name->Str[handler->GetSessionDbcLocale()], factionId,
             handler->GetNameLink(target).c_str(), target->GetReputationMgr().GetReputation(factionEntry));
         return true;
     }

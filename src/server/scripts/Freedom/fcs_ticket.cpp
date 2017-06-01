@@ -6,6 +6,7 @@
 #include "Language.h"
 #include "Player.h"
 #include "Transport.h"
+#include "RBAC.h"
 #include "Utilities/ArgumentTokenizer.h"
 
 class fticket_commandscript : public CommandScript

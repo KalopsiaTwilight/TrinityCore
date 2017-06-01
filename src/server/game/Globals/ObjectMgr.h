@@ -543,9 +543,22 @@ struct PlayerCreateInfoAction
     uint32 action;
 };
 
+struct PlayerCreateInfoCustomSkill
+{
+    PlayerCreateInfoCustomSkill() : raceMask(0), classMask(0), skillId(0), rank(0) { }
+    PlayerCreateInfoCustomSkill(uint32 _raceMask, uint32 _classMask, uint16 _skillId, uint16 _rank) : raceMask(_raceMask), classMask(_classMask), skillId(_skillId), rank(_rank) { }
+    
+    uint32 raceMask;
+    uint32 classMask;
+    uint16 skillId;
+    uint16 rank;
+};
+
 typedef std::list<PlayerCreateInfoAction> PlayerCreateInfoActions;
 
 typedef std::list<SkillRaceClassInfoEntry const*> PlayerCreateInfoSkills;
+
+typedef std::list<PlayerCreateInfoCustomSkill> PlayerCreateInfoCustomSkills;
 
 struct PlayerInfo
 {
@@ -565,6 +578,7 @@ struct PlayerInfo
     PlayerCreateInfoSpells castSpells;
     PlayerCreateInfoActions action;
     PlayerCreateInfoSkills skills;
+    PlayerCreateInfoCustomSkills customSkills;
 
     PlayerLevelInfo* levelInfo;                             //[level-1] 0..MaxPlayerLevel-1
 };
