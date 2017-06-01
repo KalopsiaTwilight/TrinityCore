@@ -2106,6 +2106,14 @@ void GameObject::SetWorldRotationAngles(float z_rot, float y_rot, float x_rot)
     SetWorldRotation(quat.x, quat.y, quat.z, quat.w);
 }
 
+Quat GameObject::GetRotationQuat()
+{
+    if (m_quatZ == 0 && m_quatW == 0)
+        return Quat::fromAxisAngleRotation(G3D::Vector3::unitZ(), GetOrientation());
+    else
+        return Quat(m_quatX, m_quatY, m_quatZ, m_quatW);
+}
+
 void GameObject::ModifyHealth(int32 change, Unit* attackerOrHealer /*= NULL*/, uint32 spellId /*= 0*/)
 {
     if (!m_goValue.Building.MaxHealth || !change)

@@ -1004,6 +1004,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         void SetWorldRotation(float qx, float qy, float qz, float qw);
         void SetParentRotation(QuaternionData const& rotation);      // transforms(rotates) transport's path
         int64 GetPackedWorldRotation() const { return m_packedRotation; }
+        Quat GetRotationQuat();
 
 
         // overwrite WorldObject function for proper name localization

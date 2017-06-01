@@ -749,7 +749,6 @@ public:
 
         sFreedomMgr->AddPublicSpell(spellId, newSpellData);
 
-        int locale = handler->GetSessionDbcLocale();
         handler->PSendSysMessage(FREEDOM_CMDI_PUBLIC_SPELL_ADD, sFreedomMgr->ToChatLink("Hspell", spellId, spellEntry->Name->Str[locale]), spellId);
         return true;
     }

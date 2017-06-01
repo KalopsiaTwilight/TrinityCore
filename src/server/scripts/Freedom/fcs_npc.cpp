@@ -6,6 +6,7 @@
 #include "CreatureGroups.h"
 #include "DatabaseEnv.h"
 #include "Language.h"
+#include "Log.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
 #include "Player.h"

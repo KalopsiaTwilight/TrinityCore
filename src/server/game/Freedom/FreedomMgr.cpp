@@ -966,7 +966,7 @@ void FreedomMgr::GameObjectRotate(GameObject* go, float deg_x, float deg_y, floa
     if (addDeg)
     {
         float roll, pitch, yaw;
-        auto quat = go->GetWorldRotation();
+        auto quat = go->GetRotationQuat();
         quat.toRotationMatrix().toEulerAnglesZYX(yaw, pitch, roll);
 
         if (firstTimeQuat)
@@ -1130,11 +1130,13 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
 
     GameObject* object = new GameObject;
     //if (!object->Create(gobTemplate->entry, map, 0, x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
-    if (!object->Create(gobTemplate->entry, map, 0, *player, rot, 255, GO_STATE_READY))
+    if (!object->Create(gobTemplate->entry, map, 0, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY))
     {
         delete object;
         return nullptr;
     }
+
+    object->CopyPhaseFrom(player);
 
     if (spawnTimeSecs)
     {
@@ -1143,8 +1145,8 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
 
     // fill the gameobject data and save to the db
     object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), creator->GetPhaseMask());
-    
     ObjectGuid::LowType spawnId = object->GetSpawnId();
+
     sFreedomMgr->GameObjectPhase(object, creator->GetPhaseMask());
     sFreedomMgr->GameObjectScale(object, object->GetObjectScale());
 
