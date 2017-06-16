@@ -29,7 +29,6 @@
 #include "G3D/units.h"
 #include "G3D/FileSystem.h"
 #include <time.h>
-#include <intrin.h>
 
 #include <cstring>
 #include <cstdio>
@@ -46,6 +45,7 @@
 #   include <sys/timeb.h>
 #   include "G3D/RegistryUtil.h"
 #include <Ole2.h>
+#include <intrin.h>
 
 #elif defined(G3D_LINUX) 
 
