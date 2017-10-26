@@ -161,6 +161,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 445), -- lookup event
 (@MODERATOR, 446), -- lookup faction
 (@MODERATOR, 449), -- lookup object
+(@MODERATOR, 450), -- lookup quest
 (@MODERATOR, 455), -- lookup skill
 (@MODERATOR, 456), -- lookup spell
 (@MODERATOR, 457), -- lookup spell id
@@ -351,6 +352,11 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@GM, 575), -- npc add temp
 (@GM, 577), -- npc del item
 (@GM, 582), -- npc set entry
+(@GM, 602), -- quest
+(@GM, 603), -- quest add
+(@GM, 604), -- quest complete
+(@GM, 605), -- quest remove
+(@GM, 606), -- quest reward
 (@GM, 607), -- reload
 (@GM, 741), -- tele group
 (@GM, 742), -- ticket
