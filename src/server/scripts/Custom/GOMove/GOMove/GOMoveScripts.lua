@@ -222,7 +222,7 @@ function LEFT:OnClick()
     GOMove:Move("LEFT", ROTHEI:GetNumber())
 end
 
-local AXIAL = GOMove:CreateInput(MainFrame, "AXIAL", 40, 25, 0, -450, 4, 0)
+local AXIAL = GOMove:CreateInput(MainFrame, "AXIAL", 40, 25, 0, -450, 4)
 local ROLL_POS = GOMove:CreateButton(MainFrame, "Roll+", 45, 25, -50, -475)
 function ROLL_POS:OnClick()
     GOMove:Move("ROLL_POS", AXIAL:GetNumber())
