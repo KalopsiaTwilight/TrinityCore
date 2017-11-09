@@ -200,7 +200,7 @@ TID("SPAWNSPELL"        ,   false   ,   true    )
 
 local tem = SendChatMessage
 local function SendChatMessage(...)
-    print(...)
+    --print(...) --Disabled print for now
     tem(...)
 end
 function GOMove:Move(ID, input)
