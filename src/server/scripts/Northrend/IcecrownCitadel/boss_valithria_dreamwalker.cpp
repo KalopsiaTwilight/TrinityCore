@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "SpellAuraEffects.h"
@@ -166,7 +167,7 @@ struct ManaVoidSelector : public std::unary_function<Unit*, bool>
 
         bool operator()(Unit* unit) const
         {
-            return unit->getPowerType() == POWER_MANA && _source->GetDistance(unit) > 15.0f;
+            return unit->GetPowerType() == POWER_MANA && _source->GetDistance(unit) > 15.0f;
         }
 
         WorldObject const* _source;

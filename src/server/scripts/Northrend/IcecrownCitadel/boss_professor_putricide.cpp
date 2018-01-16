@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@
 #include "Group.h"
 #include "InstanceScript.h"
 #include "Map.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "Spell.h"
@@ -1117,7 +1118,7 @@ class spell_putricide_ooze_tank_protection : public SpellScriptLoader
                 PreventDefaultAction();
 
                 Unit* actionTarget = eventInfo.GetActionTarget();
-                actionTarget->CastSpell((Unit*)nullptr, aurEff->GetSpellEffectInfo()->TriggerSpell, true);
+                actionTarget->CastSpell((Unit*)nullptr, aurEff->GetSpellEffectInfo()->TriggerSpell, true, nullptr, aurEff);
             }
 
             void Register() override

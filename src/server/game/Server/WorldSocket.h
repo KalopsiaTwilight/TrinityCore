@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ class EncryptablePacket;
 class WorldPacket;
 class WorldSession;
 enum ConnectionType : int8;
-enum OpcodeClient : uint32;
+enum OpcodeClient : uint16;
 
 namespace WorldPackets
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "AreaBoundary.h"
 #include "GameObject.h"
 #include "InstanceScript.h"
+#include "Item.h"
 #include "Map.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
@@ -73,7 +74,7 @@ MinionData const minionData[] =
     { NPC_STEELBREAKER,   BOSS_ASSEMBLY_OF_IRON },
     { NPC_MOLGEIM,        BOSS_ASSEMBLY_OF_IRON },
     { NPC_BRUNDIR,        BOSS_ASSEMBLY_OF_IRON },
-    { 0,                  0,                    }
+    { 0,                  0                     } // END
 };
 
 ObjectData const creatureData[] =

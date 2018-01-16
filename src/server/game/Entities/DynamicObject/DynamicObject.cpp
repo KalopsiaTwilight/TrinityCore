@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,13 +16,19 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "DynamicObject.h"
 #include "Common.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 #include "Log.h"
+#include "Map.h"
 #include "ObjectAccessor.h"
+#include "Player.h"
 #include "ScriptMgr.h"
+#include "SpellAuras.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "Transport.h"
+#include "Unit.h"
+#include "UpdateData.h"
 #include "World.h"
 
 DynamicObject::DynamicObject(bool isWorldObject) : WorldObject(isWorldObject),
@@ -90,7 +96,6 @@ bool DynamicObject::CreateDynamicObject(ObjectGuid::LowType guidlow, Unit* caste
     }
 
     WorldObject::_Create(ObjectGuid::Create<HighGuid::DynamicObject>(GetMapId(), spell->Id, guidlow));
-    SetPhaseMask(caster->GetPhaseMask(), false);
 
     SetEntry(spell->Id);
     SetObjectScale(1.0f);
@@ -235,4 +240,9 @@ void DynamicObject::UnbindFromCaster()
     ASSERT(_caster);
     _caster->_UnregisterDynObject(this);
     _caster = NULL;
+}
+
+SpellInfo const* DynamicObject::GetSpellInfo() const
+{
+    return sSpellMgr->GetSpellInfo(GetSpellId());
 }

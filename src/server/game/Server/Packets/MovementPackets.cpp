@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -181,7 +181,7 @@ ByteBuffer& operator<<(ByteBuffer& data, MovementInfo::TransportInfo const& tran
 
 void WorldPackets::Movement::ClientPlayerMovement::Read()
 {
-    _worldPacket >> movementInfo;
+    _worldPacket >> Status;
 }
 
 ByteBuffer& WorldPackets::operator<<(ByteBuffer& data, Movement::MonsterSplineFilterKey const& monsterSplineFilterKey)
@@ -347,7 +347,7 @@ void WorldPackets::Movement::CommonMovement::WriteCreateObjectSplineDataBlock(::
         if (HasSpecialTime)
             data << uint32(moveSpline.effect_start_time);                       // SpecialTime
 
-        data.append<G3D::Vector3>(&moveSpline.getPath()[0], moveSpline.getPath().size());
+        data.append(moveSpline.getPath().data(), moveSpline.getPath().size());
 
         if (moveSpline.spell_effect_extra)
         {
@@ -357,6 +357,12 @@ void WorldPackets::Movement::CommonMovement::WriteCreateObjectSplineDataBlock(::
             data << uint32(moveSpline.spell_effect_extra->ParabolicCurveId);
         }
     }
+}
+
+void WorldPackets::Movement::CommonMovement::WriteCreateObjectAreaTriggerSpline(::Movement::Spline<int32> const& spline, ByteBuffer& data)
+{
+    data.WriteBits(spline.getPoints().size(), 16);
+    data.append<G3D::Vector3>(spline.getPoints().data(), spline.getPoints().size());
 }
 
 void WorldPackets::Movement::MonsterMove::InitializeSplineData(::Movement::MoveSpline const& moveSpline)
@@ -463,7 +469,7 @@ WorldPacket const* WorldPackets::Movement::MoveSetSpeed::Write()
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateSpeed::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
     _worldPacket << Speed;
     return &_worldPacket;
 }
@@ -483,7 +489,7 @@ WorldPacket const* WorldPackets::Movement::MoveSetFlag::Write()
 
 WorldPacket const* WorldPackets::Movement::MoveUpdate::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
 
     return &_worldPacket;
 }
@@ -491,6 +497,7 @@ WorldPacket const* WorldPackets::Movement::MoveUpdate::Write()
 WorldPacket const* WorldPackets::Movement::TransferPending::Write()
 {
     _worldPacket << int32(MapID);
+    _worldPacket << OldMapPosition;
     _worldPacket.WriteBit(Ship.is_initialized());
     _worldPacket.WriteBit(TransferSpellID.is_initialized());
     if (Ship)
@@ -567,7 +574,7 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Movement::MovementForce c
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateTeleport::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
 
     _worldPacket << uint32(MovementForces.size());
     _worldPacket.WriteBit(WalkSpeed.is_initialized());
@@ -623,7 +630,7 @@ void WorldPackets::Movement::MoveTeleportAck::Read()
 
 ByteBuffer& operator>>(ByteBuffer& data, WorldPackets::Movement::MovementAck& ack)
 {
-    data >> ack.movementInfo;
+    data >> ack.Status;
     data >> ack.AckIndex;
     return data;
 }
@@ -679,7 +686,7 @@ WorldPacket const* WorldPackets::Movement::MoveKnockBack::Write()
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateKnockBack::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
 
     return &_worldPacket;
 }
@@ -711,7 +718,7 @@ WorldPacket const* WorldPackets::Movement::MoveSetCollisionHeight::Write()
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateCollisionHeight::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
     _worldPacket << float(Height);
     _worldPacket << float(Scale);
 
@@ -720,7 +727,7 @@ WorldPacket const* WorldPackets::Movement::MoveUpdateCollisionHeight::Write()
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateRemoveMovementForce::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
     _worldPacket << TriggerGUID;
 
     return &_worldPacket;
@@ -728,7 +735,7 @@ WorldPacket const* WorldPackets::Movement::MoveUpdateRemoveMovementForce::Write(
 
 WorldPacket const* WorldPackets::Movement::MoveUpdateApplyMovementForce::Write()
 {
-    _worldPacket << *movementInfo;
+    _worldPacket << *Status;
     _worldPacket << Force;
 
     return &_worldPacket;
@@ -765,7 +772,7 @@ WorldPacket const* WorldPackets::Movement::ControlUpdate::Write()
 
 void WorldPackets::Movement::MoveSplineDone::Read()
 {
-    _worldPacket >> movementInfo;
+    _worldPacket >> Status;
     _worldPacket >> SplineID;
 }
 

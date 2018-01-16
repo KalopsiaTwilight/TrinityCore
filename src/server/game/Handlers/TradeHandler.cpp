@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -27,10 +27,10 @@
 #include "Player.h"
 #include "SocialMgr.h"
 #include "Spell.h"
+#include "SpellMgr.h"
 #include "TradeData.h"
 #include "TradePackets.h"
 #include "World.h"
-#include "WorldPacket.h"
 
 void WorldSession::SendTradeStatus(WorldPackets::Trade::TradeStatus& info)
 {
@@ -285,7 +285,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPackets::Trade::AcceptTrade& acc
         return;
     }
 
-    if (_player->GetMoney() >= uint64(MAX_MONEY_AMOUNT) - his_trade->GetMoney())
+    if (_player->GetMoney() > MAX_MONEY_AMOUNT - his_trade->GetMoney())
     {
         info.Status = TRADE_STATUS_FAILED;
         info.BagResult = EQUIP_ERR_TOO_MUCH_GOLD;
@@ -294,7 +294,7 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPackets::Trade::AcceptTrade& acc
         return;
     }
 
-    if (trader->GetMoney() >= uint64(MAX_MONEY_AMOUNT) - my_trade->GetMoney())
+    if (trader->GetMoney() > MAX_MONEY_AMOUNT - my_trade->GetMoney())
     {
         info.Status = TRADE_STATUS_FAILED;
         info.BagResult = EQUIP_ERR_TOO_MUCH_GOLD;

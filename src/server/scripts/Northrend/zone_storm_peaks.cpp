@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +18,7 @@
 #include "ScriptMgr.h"
 #include "CombatAI.h"
 #include "GameObject.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptedEscortAI.h"
@@ -26,6 +27,7 @@
 #include "SpellScript.h"
 #include "TemporarySummon.h"
 #include "Vehicle.h"
+#include "WorldSession.h"
 
 /////////////////////
 ///npc_injured_goblin
@@ -117,7 +119,8 @@ public:
 enum RoxiRamrocket
 {
     SPELL_MECHANO_HOG               = 60866,
-    SPELL_MEKGINEERS_CHOPPER        = 60867
+    SPELL_MEKGINEERS_CHOPPER        = 60867,
+    TRAINER_ID_ROXI_RAMROCKET       = 102,
 };
 
 class npc_roxi_ramrocket : public CreatureScript
@@ -132,11 +135,11 @@ public:
             player->PrepareQuestMenu(creature->GetGUID());
 
         //Trainer Menu
-        if ( creature->IsTrainer() )
+        if (creature->IsTrainer())
             AddGossipItemFor(player, GOSSIP_ICON_TRAINER, GOSSIP_TEXT_TRAIN, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRAIN);
 
         //Vendor Menu
-        if ( creature->IsVendor() )
+        if (creature->IsVendor())
             if (player->HasSpell(SPELL_MECHANO_HOG) || player->HasSpell(SPELL_MEKGINEERS_CHOPPER))
                 AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_GOODS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
 
@@ -150,7 +153,7 @@ public:
         switch (action)
         {
         case GOSSIP_ACTION_TRAIN:
-            player->GetSession()->SendTrainerList(creature->GetGUID());
+            player->GetSession()->SendTrainerList(creature, TRAINER_ID_ROXI_RAMROCKET);
             break;
         case GOSSIP_ACTION_TRADE:
             player->GetSession()->SendListInventory(creature->GetGUID());

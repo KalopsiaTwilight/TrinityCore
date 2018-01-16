@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "GridNotifiers.h"
 #include "halls_of_origination.h"
 #include "InstanceScript.h"
+#include "Map.h"
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
@@ -286,17 +287,14 @@ class spell_anhuur_shield_of_light : public SpellScriptLoader
 
             void FilterTargets(std::list<WorldObject*>& targets)
             {
-                if (InstanceMap* instance = GetCaster()->GetMap()->ToInstanceMap())
+                if (InstanceScript* const script = GetCaster()->GetInstanceScript())
                 {
-                    if (InstanceScript* const script = instance->GetInstanceScript())
+                    if (GameObject* go = ObjectAccessor::GetGameObject(*GetCaster(), script->GetGuidData(DATA_ANHUUR_DOOR)))
                     {
-                        if (GameObject* go = ObjectAccessor::GetGameObject(*GetCaster(), script->GetGuidData(DATA_ANHUUR_DOOR)))
-                        {
-                            targets.remove_if(Trinity::HeightDifferenceCheck(go, 5.0f, false));
-                            targets.remove(GetCaster());
-                            targets.sort(Trinity::ObjectDistanceOrderPred(GetCaster()));
-                            targets.resize(2);
-                        }
+                        targets.remove_if(Trinity::HeightDifferenceCheck(go, 5.0f, false));
+                        targets.remove(GetCaster());
+                        targets.sort(Trinity::ObjectDistanceOrderPred(GetCaster()));
+                        targets.resize(2);
                     }
                 }
             }
@@ -329,10 +327,9 @@ class spell_anhuur_disable_beacon_beams : public SpellScriptLoader
 
             void Notify(SpellEffIndex /*index*/)
             {
-                if (InstanceMap* instance = GetCaster()->GetMap()->ToInstanceMap())
-                    if (InstanceScript* const script = instance->GetInstanceScript())
-                        if (Creature* anhuur = instance->GetCreature(script->GetGuidData(DATA_ANHUUR_GUID)))
-                            anhuur->AI()->DoAction(ACTION_DISABLE_BEACON);
+                if (InstanceScript* const script = GetCaster()->GetInstanceScript())
+                    if (Creature* anhuur = ObjectAccessor::GetCreature(*GetCaster(), script->GetGuidData(DATA_ANHUUR_GUID)))
+                        anhuur->AI()->DoAction(ACTION_DISABLE_BEACON);
             }
 
             void Register() override
@@ -390,7 +387,7 @@ public:
             {
                 CustomSpellValues values;
                 values.AddSpellMod(SPELLVALUE_BASE_POINT0, aurEff->GetAmount());
-                caster->CastCustomSpell(GetSpellInfo()->GetEffect(caster->GetMap()->GetDifficultyID(), EFFECT_0)->TriggerSpell, values, GetTarget());
+                caster->CastCustomSpell(aurEff->GetSpellEffectInfo()->TriggerSpell, values, GetTarget());
             }
         }
 

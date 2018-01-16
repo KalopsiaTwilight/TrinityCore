@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,12 +20,15 @@
 #include "AchievementMgr.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "GameEventMgr.h"
 #include "GameObject.h"
 #include "Group.h"
 #include "InstanceScript.h"
+#include "Item.h"
 #include "Log.h"
 #include "LootMgr.h"
+#include "Map.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "Pet.h"
@@ -34,6 +37,7 @@
 #include "SpellAuras.h"
 #include "SpellMgr.h"
 #include "World.h"
+#include "WorldSession.h"
 
 char const* const ConditionMgr::StaticSourceTypeData[CONDITION_SOURCE_TYPE_MAX] =
 {
@@ -56,8 +60,8 @@ char const* const ConditionMgr::StaticSourceTypeData[CONDITION_SOURCE_TYPE_MAX] 
     "Creature Vehicle",
     "Spell Expl. Target",
     "Spell Click Event",
-    "Quest Accept",
-    "Quest Show Mark",
+    "Quest Available",
+    "Unused",
     "Vehicle Spell",
     "SmartScript",
     "Npc Vendor",
@@ -420,7 +424,7 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo) const
         }
         case CONDITION_SPAWNMASK:
         {
-            condMeets = ((1 << object->GetMap()->GetSpawnMode()) & ConditionValue1) != 0;
+            condMeets = ((UI64LIT(1) << object->GetMap()->GetSpawnMode()) & ConditionValue1) != 0;
             break;
         }
         case CONDITION_UNIT_STATE:
@@ -1321,9 +1325,9 @@ bool ConditionMgr::addToGossipMenus(Condition* cond) const
     {
         for (GossipMenusContainer::iterator itr = pMenuBounds.first; itr != pMenuBounds.second; ++itr)
         {
-            if ((*itr).second.entry == cond->SourceGroup && (*itr).second.text_id == uint32(cond->SourceEntry))
+            if ((*itr).second.MenuID == cond->SourceGroup && (*itr).second.TextID == uint32(cond->SourceEntry))
             {
-                (*itr).second.conditions.push_back(cond);
+                (*itr).second.Conditions.push_back(cond);
                 return true;
             }
         }
@@ -1340,7 +1344,7 @@ bool ConditionMgr::addToGossipMenuItems(Condition* cond) const
     {
         for (GossipMenuItemsContainer::iterator itr = pMenuItemBounds.first; itr != pMenuItemBounds.second; ++itr)
         {
-            if ((*itr).second.MenuId == cond->SourceGroup && (*itr).second.OptionIndex == uint32(cond->SourceEntry))
+            if ((*itr).second.MenuID == cond->SourceGroup && (*itr).second.OptionID == uint32(cond->SourceEntry))
             {
                 (*itr).second.Conditions.push_back(cond);
                 return true;
@@ -1495,12 +1499,6 @@ bool ConditionMgr::addToPhases(Condition* cond) const
 
 bool ConditionMgr::isSourceTypeValid(Condition* cond) const
 {
-    if (cond->SourceType == CONDITION_SOURCE_TYPE_NONE || cond->SourceType >= CONDITION_SOURCE_TYPE_MAX)
-    {
-        TC_LOG_ERROR("sql.sql", "%s Invalid ConditionSourceType in `condition` table, ignoring.", cond->ToString().c_str());
-        return false;
-    }
-
     switch (cond->SourceType)
     {
         case CONDITION_SOURCE_TYPE_CREATURE_LOOT_TEMPLATE:
@@ -1784,7 +1782,7 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
             }
             break;
         }
-        case CONDITION_SOURCE_TYPE_QUEST_ACCEPT:
+        case CONDITION_SOURCE_TYPE_QUEST_AVAILABLE:
             if (!sObjectMgr->GetQuestTemplate(cond->SourceEntry))
             {
                 TC_LOG_ERROR("sql.sql", "%s SourceEntry specifies non-existing quest, skipped.", cond->ToString().c_str());
@@ -1853,9 +1851,10 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU:
         case CONDITION_SOURCE_TYPE_GOSSIP_MENU_OPTION:
         case CONDITION_SOURCE_TYPE_SMART_EVENT:
-        case CONDITION_SOURCE_TYPE_NONE:
-        default:
             break;
+        default:
+            TC_LOG_ERROR("sql.sql", "%s Invalid ConditionSourceType in `condition` table, ignoring.", cond->ToString().c_str());
+            return false;
     }
 
     return true;
@@ -1863,18 +1862,6 @@ bool ConditionMgr::isSourceTypeValid(Condition* cond) const
 
 bool ConditionMgr::isConditionTypeValid(Condition* cond) const
 {
-    if (cond->ConditionType == CONDITION_NONE || cond->ConditionType >= CONDITION_MAX)
-    {
-        TC_LOG_ERROR("sql.sql", "%s Invalid ConditionType in `condition` table, ignoring.", cond->ToString().c_str());
-        return false;
-    }
-
-    if (cond->ConditionTarget >= cond->GetMaxAvailableConditionTargets())
-    {
-        TC_LOG_ERROR("sql.sql", "%s in `condition` table, has incorrect ConditionTarget set, ignoring.", cond->ToString(true).c_str());
-        return false;
-    }
-
     switch (cond->ConditionType)
     {
         case CONDITION_AURA:
@@ -2273,7 +2260,8 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
         }
         case CONDITION_SPAWNMASK:
         {
-            if (cond->ConditionValue1 > SPAWNMASK_RAID_ALL)
+            /// @todo: ConditionValue need to be extended to uint64
+            if (uint64(cond->ConditionValue1) >= (UI64LIT(1) << MAX_DIFFICULTY))
             {
                 TC_LOG_ERROR("sql.sql", "%s has non existing SpawnMask in value1 (%u), skipped.", cond->ToString(true).c_str(), cond->ConditionValue1);
                 return false;
@@ -2298,10 +2286,6 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
             }
             break;
         }
-        case CONDITION_INSTANCE_INFO:
-        case CONDITION_AREAID:
-        case CONDITION_ALIVE:
-            break;
         case CONDITION_REALM_ACHIEVEMENT:
         {
             AchievementEntry const* achievement = sAchievementStore.LookupEntry(cond->ConditionValue1);
@@ -2351,11 +2335,23 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
                 return false;
             }
             break;
+        case CONDITION_INSTANCE_INFO:
+        case CONDITION_AREAID:
+        case CONDITION_ALIVE:
         case CONDITION_IN_WATER:
+        case CONDITION_TERRAIN_SWAP:
         case CONDITION_CHARMED:
         case CONDITION_TAXI:
-        default:
             break;
+        default:
+            TC_LOG_ERROR("sql.sql", "%s Invalid ConditionType in `condition` table, ignoring.", cond->ToString().c_str());
+            return false;
+    }
+
+    if (cond->ConditionTarget >= cond->GetMaxAvailableConditionTargets())
+    {
+        TC_LOG_ERROR("sql.sql", "%s in `condition` table, has incorrect ConditionTarget set, ignoring.", cond->ToString(true).c_str());
+        return false;
     }
 
     if (cond->ConditionValue1 && !StaticConditionTypeData[cond->ConditionType].HasConditionValue1)

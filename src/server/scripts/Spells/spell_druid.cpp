@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,12 +21,14 @@
  * Scriptnames of files in this file should be prefixed with "spell_dru_".
  */
 
-#include "Player.h"
 #include "ScriptMgr.h"
-#include "SpellScript.h"
+#include "Containers.h"
+#include "Player.h"
+#include "Spell.h"
 #include "SpellAuraEffects.h"
 #include "SpellHistory.h"
-#include "Containers.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
 
 enum DruidSpells
 {
@@ -134,13 +136,14 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_FORMS_TRINKET_BEAR) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FORMS_TRINKET_CAT) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FORMS_TRINKET_MOONKIN) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FORMS_TRINKET_NONE) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FORMS_TRINKET_TREE))
-                return false;
-            return true;
+            return ValidateSpellInfo(
+            {
+                SPELL_DRUID_FORMS_TRINKET_BEAR,
+                SPELL_DRUID_FORMS_TRINKET_CAT,
+                SPELL_DRUID_FORMS_TRINKET_MOONKIN,
+                SPELL_DRUID_FORMS_TRINKET_NONE,
+                SPELL_DRUID_FORMS_TRINKET_TREE
+            });
         }
 
         bool CheckProc(ProcEventInfo& eventInfo)
@@ -285,11 +288,7 @@ public:
 
         bool Validate(SpellInfo const* /*spell*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_LIFEBLOOM_FINAL_HEAL))
-                return false;
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_LIFEBLOOM_ENERGIZE))
-                return false;
-            return true;
+            return ValidateSpellInfo({ SPELL_DRUID_LIFEBLOOM_FINAL_HEAL, SPELL_DRUID_LIFEBLOOM_ENERGIZE });
         }
 
         void AfterRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
@@ -377,9 +376,7 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_LIVING_SEED_PROC))
-                return false;
-            return true;
+            return ValidateSpellInfo({ SPELL_DRUID_LIVING_SEED_PROC });
         }
 
         void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -413,9 +410,7 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_LIVING_SEED_HEAL))
-                return false;
-            return true;
+            return ValidateSpellInfo({ SPELL_DRUID_LIVING_SEED_HEAL });
         }
 
         void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
@@ -552,10 +547,7 @@ class spell_dru_omen_of_clarity : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_BALANCE_T10_BONUS) ||
-                    !sSpellMgr->GetSpellInfo(SPELL_DRUID_BALANCE_T10_BONUS_PROC))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_BALANCE_T10_BONUS, SPELL_DRUID_BALANCE_T10_BONUS_PROC });
             }
 
             void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& /*eventInfo*/)
@@ -608,9 +600,7 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_SAVAGE_ROAR))
-                return false;
-            return true;
+            return ValidateSpellInfo({ SPELL_DRUID_SAVAGE_ROAR });
         }
 
         void AfterApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
@@ -654,13 +644,14 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_STAMPEDE_BAER_RANK_1) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_STAMPEDE_CAT_RANK_1) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_STAMPEDE_CAT_STATE) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FERAL_CHARGE_CAT) ||
-                !sSpellMgr->GetSpellInfo(SPELL_DRUID_FERAL_CHARGE_BEAR))
-                return false;
-            return true;
+            return ValidateSpellInfo(
+            {
+                SPELL_DRUID_STAMPEDE_BAER_RANK_1,
+                SPELL_DRUID_STAMPEDE_CAT_RANK_1,
+                SPELL_DRUID_STAMPEDE_CAT_STATE,
+                SPELL_DRUID_FERAL_CHARGE_CAT,
+                SPELL_DRUID_FERAL_CHARGE_BEAR
+            });
         }
 
         void HandleEffectCatProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -800,9 +791,7 @@ public:
 
         bool Validate(SpellInfo const* /*spell*/) override
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_SURVIVAL_INSTINCTS))
-                return false;
-            return true;
+            return ValidateSpellInfo({ SPELL_DRUID_SURVIVAL_INSTINCTS });
         }
 
         void AfterApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
@@ -881,15 +870,13 @@ class spell_dru_t3_6p_bonus : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_BLESSING_OF_THE_CLAW))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_BLESSING_OF_THE_CLAW });
             }
 
-            void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+            void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
-                eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), SPELL_DRUID_BLESSING_OF_THE_CLAW, true);
+                eventInfo.GetActor()->CastSpell(eventInfo.GetProcTarget(), SPELL_DRUID_BLESSING_OF_THE_CLAW, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -916,26 +903,24 @@ class spell_dru_t3_8p_bonus : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_EXHILARATE))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_EXHILARATE });
             }
 
             void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
-                SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
-                if (!spellInfo)
+                Spell const* spell = eventInfo.GetProcSpell();
+                if (!spell)
                     return;
 
                 Unit* caster = eventInfo.GetActor();
-                std::vector<SpellPowerCost> costs = spellInfo->CalcPowerCost(caster, spellInfo->GetSchoolMask());
+                std::vector<SpellPowerCost> const& costs = spell->GetPowerCost();
                 auto m = std::find_if(costs.begin(), costs.end(), [](SpellPowerCost const& cost) { return cost.Power == POWER_MANA; });
                 if (m == costs.end())
                     return;
 
                 int32 amount = CalculatePct(m->Amount, aurEff->GetAmount());
-                caster->CastCustomSpell(SPELL_DRUID_EXHILARATE, SPELLVALUE_BASE_POINT0, amount, (Unit*)nullptr, true);
+                caster->CastCustomSpell(SPELL_DRUID_EXHILARATE, SPELLVALUE_BASE_POINT0, amount, (Unit*)nullptr, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -963,15 +948,13 @@ class spell_dru_t4_2p_bonus : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_INFUSION))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_INFUSION });
             }
 
-            void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+            void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
-                eventInfo.GetActor()->CastSpell((Unit*)nullptr, SPELL_DRUID_INFUSION, true);
+                eventInfo.GetActor()->CastSpell((Unit*)nullptr, SPELL_DRUID_INFUSION, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -998,14 +981,14 @@ class spell_dru_item_t6_trinket : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_BLESSING_OF_REMULOS) ||
-                    !sSpellMgr->GetSpellInfo(SPELL_DRUID_BLESSING_OF_ELUNE) ||
-                    !sSpellMgr->GetSpellInfo(SPELL_DRUID_BLESSING_OF_CENARIUS))
-                    return false;
-                return true;
+                return ValidateSpellInfo({
+                    SPELL_DRUID_BLESSING_OF_REMULOS,
+                    SPELL_DRUID_BLESSING_OF_ELUNE,
+                    SPELL_DRUID_BLESSING_OF_CENARIUS
+                });
             }
 
-            void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+            void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
                 SpellInfo const* spellInfo = eventInfo.GetSpellInfo();
@@ -1037,7 +1020,7 @@ class spell_dru_item_t6_trinket : public SpellScriptLoader
                     return;
 
                 if (roll_chance_i(chance))
-                    eventInfo.GetActor()->CastSpell((Unit*)nullptr, spellId, true);
+                    eventInfo.GetActor()->CastSpell((Unit*)nullptr, spellId, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -1064,9 +1047,7 @@ class spell_dru_t10_balance_4p_bonus : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_LANGUISH))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_LANGUISH });
             }
 
             void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
@@ -1086,7 +1067,7 @@ class spell_dru_t10_balance_4p_bonus : public SpellScriptLoader
                 // Add remaining ticks to damage done
                 amount += target->GetRemainingPeriodicAmount(caster->GetGUID(), SPELL_DRUID_LANGUISH, SPELL_AURA_PERIODIC_DAMAGE);
 
-                caster->CastCustomSpell(SPELL_DRUID_LANGUISH, SPELLVALUE_BASE_POINT0, amount, target, true);
+                caster->CastCustomSpell(SPELL_DRUID_LANGUISH, SPELLVALUE_BASE_POINT0, amount, target, true, nullptr, aurEff);
             }
 
             void Register() override
@@ -1168,9 +1149,7 @@ class spell_dru_t10_restoration_4p_bonus_dummy : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_REJUVENATION_T10_PROC))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_DRUID_REJUVENATION_T10_PROC });
             }
 
             bool CheckProc(ProcEventInfo& eventInfo)
@@ -1190,12 +1169,12 @@ class spell_dru_t10_restoration_4p_bonus_dummy : public SpellScriptLoader
                 return caster->GetGroup() || caster != eventInfo.GetProcTarget();
             }
 
-            void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+            void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
 
                 int32 amount = static_cast<int32>(eventInfo.GetHealInfo()->GetHeal());
-                eventInfo.GetActor()->CastCustomSpell(SPELL_DRUID_REJUVENATION_T10_PROC, SPELLVALUE_BASE_POINT0, amount, (Unit*)nullptr, true);
+                eventInfo.GetActor()->CastCustomSpell(SPELL_DRUID_REJUVENATION_T10_PROC, SPELLVALUE_BASE_POINT0, amount, (Unit*)nullptr, true, nullptr, aurEff);
             }
 
             void Register() override

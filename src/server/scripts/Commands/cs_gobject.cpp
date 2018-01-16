@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,16 +25,19 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "GameEventMgr.h"
+#include "GameObject.h"
 #include "Language.h"
 #include "Log.h"
 #include "MapManager.h"
+#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Opcodes.h"
 #include "Player.h"
 #include "PoolMgr.h"
 #include "RBAC.h"
-#include <G3D/Quat.h>
+#include "WorldSession.h"
 
 class gobject_commandscript : public CommandScript
 {
@@ -88,7 +91,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -141,8 +144,7 @@ public:
 
         GameObject* object = new GameObject();
 
-        G3D::Quat rot = G3D::Matrix3::fromEulerAnglesZYX(player->GetOrientation(), 0.f, 0.f);
-        if (!object->Create(objectInfo->entry, map, 0, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY))
+        if (!object->Create(objectInfo->entry, map, *player, QuaternionData::fromEulerAnglesZYX(player->GetOrientation(), 0.0f, 0.0f), 255, GO_STATE_READY))
         {
             delete object;
             return false;
@@ -157,7 +159,7 @@ public:
         }
 
         // fill the gameobject data and save to the db
-        object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), player->GetPhaseMask());
+        object->SaveToDB(map->GetId(), UI64LIT(1) << map->GetSpawnMode());
         ObjectGuid::LowType spawnId = object->GetSpawnId();
 
         // delete the old object and do a clean load from DB with a fresh new GameObject instance.
@@ -175,7 +177,7 @@ public:
         /// @todo is it really necessary to add both the real and DB table guid here ?
         sObjectMgr->AddGameobjectToGrid(spawnId, ASSERT_NOTNULL(sObjectMgr->GetGOData(spawnId)));
 
-        handler->PSendSysMessage(LANG_GAMEOBJECT_ADD, objectId, objectInfo->name.c_str(), spawnId, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+        handler->PSendSysMessage(LANG_GAMEOBJECT_ADD, objectId, objectInfo->name.c_str(), std::to_string(spawnId).c_str(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
         return true;
     }
 
@@ -197,7 +199,6 @@ public:
         if (spawntime)
             spawntm = atoul(spawntime);
 
-        G3D::Quat rotation = G3D::Matrix3::fromEulerAnglesZYX(player->GetOrientation(), 0.f, 0.f);
         uint32 objectId = atoul(id);
 
         if (!sObjectMgr->GetGameObjectTemplate(objectId))
@@ -207,7 +208,7 @@ public:
             return false;
         }
 
-        player->SummonGameObject(objectId, *player, QuaternionData(rotation.x, rotation.y, rotation.z, rotation.w), spawntm);
+        player->SummonGameObject(objectId, *player, QuaternionData::fromEulerAnglesZYX(player->GetOrientation(), 0.0f, 0.0f), spawntm);
 
         return true;
     }
@@ -315,7 +316,7 @@ public:
 
         GameObject* target = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
 
-        handler->PSendSysMessage(LANG_GAMEOBJECT_DETAIL, guidLow, objectInfo->name.c_str(), guidLow, id, x, y, z, mapId, o, phaseId, phaseGroup);
+        handler->PSendSysMessage(LANG_GAMEOBJECT_DETAIL, std::to_string(guidLow).c_str(), objectInfo->name.c_str(), std::to_string(guidLow).c_str(), id, x, y, z, mapId, o, phaseId, phaseGroup);
 
         if (target)
         {
@@ -346,7 +347,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -369,7 +370,7 @@ public:
         object->Delete();
         object->DeleteFromDB();
 
-        handler->PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, object->GetGUID().ToString().c_str());
+        handler->PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, std::to_string(guidLow).c_str());
 
         return true;
     }
@@ -389,7 +390,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -424,7 +425,7 @@ public:
 
         object->SaveToDB();
 
-        handler->PSendSysMessage(LANG_COMMAND_TURNOBJMESSAGE, object->GetSpawnId(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str(), object->GetOrientation());
+        handler->PSendSysMessage(LANG_COMMAND_TURNOBJMESSAGE, std::to_string(object->GetSpawnId()).c_str(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str(), object->GetOrientation());
 
         return true;
     }
@@ -444,7 +445,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -482,7 +483,7 @@ public:
 
         object->SaveToDB();
 
-        handler->PSendSysMessage(LANG_COMMAND_MOVEOBJMESSAGE, object->GetSpawnId(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str());
+        handler->PSendSysMessage(LANG_COMMAND_MOVEOBJMESSAGE, std::to_string(object->GetSpawnId()).c_str(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str());
 
         return true;
     }
@@ -502,7 +503,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -556,7 +557,7 @@ public:
                 if (!gameObjectInfo)
                     continue;
 
-                handler->PSendSysMessage(LANG_GO_LIST_CHAT, guid, entry, guid, gameObjectInfo->name.c_str(), x, y, z, mapId);
+                handler->PSendSysMessage(LANG_GO_LIST_CHAT, std::to_string(guid).c_str(), entry, std::to_string(guid).c_str(), gameObjectInfo->name.c_str(), x, y, z, mapId);
 
                 ++count;
             } while (result->NextRow());
@@ -639,7 +640,7 @@ public:
         GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
         if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
             handler->SetSentErrorMessage(true);
             return false;
         }

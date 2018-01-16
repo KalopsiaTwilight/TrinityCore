@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,11 +17,12 @@
 
 #include "GuildFinderMgr.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "Guild.h"
 #include "GuildMgr.h"
 #include "GuildFinderPackets.h"
 #include "Log.h"
-#include "ObjectMgr.h"
+#include "ObjectAccessor.h"
 #include "Player.h"
 #include "World.h"
 

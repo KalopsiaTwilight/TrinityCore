@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,8 +24,10 @@
 #include "GameObjectPackets.h"
 #include "Guild.h"
 #include "GuildMgr.h"
+#include "Item.h"
 #include "Log.h"
 #include "Player.h"
+#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "Spell.h"
@@ -296,7 +298,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPackets::Spells::CastSpell& cast)
     // auto-selection buff level base at target level (in spellInfo)
     if (targets.GetUnitTarget())
     {
-        SpellInfo const* actualSpellInfo = spellInfo->GetAuraRankForLevel(targets.GetUnitTarget()->getLevel());
+        SpellInfo const* actualSpellInfo = spellInfo->GetAuraRankForLevel(targets.GetUnitTarget()->GetLevelForTarget(caster));
 
         // if rank not found then function return NULL but in explicit cast case original spell can be cast and later failed with appropriate error message
         if (actualSpellInfo)
@@ -454,7 +456,7 @@ void WorldSession::HandleTotemDestroyed(WorldPackets::Totem::TotemDestroyed& tot
     if (!_player->m_SummonSlot[slotId])
         return;
 
-    Creature* totem = GetPlayer()->GetMap()->GetCreature(_player->m_SummonSlot[slotId]);
+    Creature* totem = ObjectAccessor::GetCreature(*GetPlayer(), _player->m_SummonSlot[slotId]);
     if (totem && totem->IsTotem() && totem->GetGUID() == totemDestroyed.TotemGUID)
         totem->ToTotem()->UnSummon();
 }

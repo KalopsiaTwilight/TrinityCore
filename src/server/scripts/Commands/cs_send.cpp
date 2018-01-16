@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,11 +18,14 @@
 #include "ScriptMgr.h"
 #include "Chat.h"
 #include "DatabaseEnv.h"
+#include "Item.h"
 #include "Language.h"
+#include "Mail.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
 #include "Player.h"
 #include "RBAC.h"
+#include "WorldSession.h"
 
 class send_commandscript : public CommandScript
 {
@@ -139,7 +142,7 @@ public:
             char const* itemIdStr = strtok(itemStr, ":");
             char const* itemCountStr = strtok(NULL, " ");
 
-            uint32 itemId = atoi(itemIdStr);
+            uint32 itemId = atoul(itemIdStr);
             if (!itemId)
                 return false;
 
@@ -227,7 +230,7 @@ public:
             return false;
 
         char* moneyStr = strtok(NULL, "");
-        int32 money = moneyStr ? atoi(moneyStr) : 0;
+        int64 money = moneyStr ? atoll(moneyStr) : 0;
         if (money <= 0)
             return false;
 

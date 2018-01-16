@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,6 +20,7 @@
 #include "GridNotifiers.h"
 #include "InstanceScript.h"
 #include "ObjectAccessor.h"
+#include "MotionMaster.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
 #include "SpellAuraEffects.h"
@@ -491,11 +492,7 @@ class spell_mandokir_bloodletting : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spell*/) override
             {
-                if (!sSpellMgr->GetSpellInfo(SPELL_BLOODLETTING_DAMAGE))
-                    return false;
-                if (!sSpellMgr->GetSpellInfo(SPELL_BLOODLETTING_HEAL))
-                    return false;
-                return true;
+                return ValidateSpellInfo({ SPELL_BLOODLETTING_DAMAGE, SPELL_BLOODLETTING_HEAL });
             }
 
             void HandleEffectPeriodic(AuraEffect const* aurEff)

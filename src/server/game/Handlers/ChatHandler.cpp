@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,29 +16,30 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Common.h"
-#include "ObjectAccessor.h"
-#include "ObjectMgr.h"
-#include "GuildMgr.h"
-#include "World.h"
-#include "WorldPacket.h"
 #include "WorldSession.h"
-#include "DatabaseEnv.h"
-#include "Chat.h"
+#include "AccountMgr.h"
 #include "Channel.h"
 #include "ChannelMgr.h"
+#include "Chat.h"
+#include "ChatPackets.h"
+#include "Common.h"
+#include "DB2Stores.h"
+#include "DatabaseEnv.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
 #include "Guild.h"
+#include "GuildMgr.h"
 #include "Language.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
 #include "Opcodes.h"
 #include "Player.h"
+#include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "Util.h"
-#include "ScriptMgr.h"
-#include "AccountMgr.h"
-#include "ChatPackets.h"
+#include "World.h"
+#include "WorldPacket.h"
 
 void WorldSession::HandleChatMessageOpcode(WorldPackets::Chat::ChatMessage& chatMessage)
 {
@@ -658,7 +659,7 @@ void WorldSession::HandleTextEmoteOpcode(WorldPackets::Chat::CTextEmote& packet)
     // Send scripted event call
     if (unit)
         if (Creature* creature = unit->ToCreature())
-            creature->AI()->ReceiveEmote(_player, packet.SoundIndex);
+            creature->AI()->ReceiveEmote(_player, packet.EmoteID);
 }
 
 void WorldSession::HandleChatIgnoredOpcode(WorldPackets::Chat::ChatReportIgnored& chatReportIgnored)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,14 +18,18 @@
 
 #include "ScriptedCreature.h"
 #include "AreaBoundary.h"
+#include "DB2Stores.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
 #include "InstanceScript.h"
 #include "Log.h"
-#include "ObjectMgr.h"
+#include "MotionMaster.h"
+#include "ObjectAccessor.h"
 #include "Spell.h"
+#include "SpellMgr.h"
+#include "TemporarySummon.h"
 
 // Spell summary for ScriptedAI::SelectSpell
 struct TSpellSummary
@@ -594,7 +598,7 @@ void BossAI::_DespawnAtEvade(uint32 delayToRespawn, Creature* who)
         return;
     }
 
-    me->DespawnOrUnsummon(0, Seconds(delayToRespawn));
+    who->DespawnOrUnsummon(0, Seconds(delayToRespawn));
 
     if (instance && who == me)
         instance->SetBossState(_bossId, FAIL);
@@ -659,30 +663,4 @@ void WorldBossAI::UpdateAI(uint32 diff)
     }
 
     DoMeleeAttackIfReady();
-}
-
-// SD2 grid searchers.
-Creature* GetClosestCreatureWithEntry(WorldObject* source, uint32 entry, float maxSearchRange, bool alive /*= true*/)
-{
-    return source->FindNearestCreature(entry, maxSearchRange, alive);
-}
-
-GameObject* GetClosestGameObjectWithEntry(WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    return source->FindNearestGameObject(entry, maxSearchRange);
-}
-
-void GetCreatureListWithEntryInGrid(std::list<Creature*>& list, WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    source->GetCreatureListWithEntryInGrid(list, entry, maxSearchRange);
-}
-
-void GetGameObjectListWithEntryInGrid(std::list<GameObject*>& list, WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    source->GetGameObjectListWithEntryInGrid(list, entry, maxSearchRange);
-}
-
-void GetPlayerListInGrid(std::list<Player*>& list, WorldObject* source, float maxSearchRange)
-{
-    source->GetPlayerListInGrid(list, maxSearchRange);
 }

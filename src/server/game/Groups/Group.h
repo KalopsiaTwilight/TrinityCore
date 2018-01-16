@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,11 +20,11 @@
 #define TRINITYCORE_GROUP_H
 
 #include "DBCEnums.h"
+#include "DatabaseEnvFwd.h"
 #include "GroupRefManager.h"
 #include "Loot.h"
-#include "QueryResult.h"
-#include "SharedDefines.h"
 #include "Object.h"
+#include "SharedDefines.h"
 #include <map>
 
 class Battlefield;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 #include "GameObjectAI.h"
 #include "GridNotifiersImpl.h"
 #include "Log.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "PassiveAI.h"
@@ -34,6 +35,7 @@
 #include "SpellAuras.h"
 #include "SpellHistory.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "TemporarySummon.h"
 
 /*########
@@ -1731,41 +1733,6 @@ class npc_wormhole : public CreatureScript
 };
 
 /*######
-## npc_pet_trainer
-######*/
-
-enum PetTrainer
-{
-    MENU_ID_PET_UNLEARN      = 6520,
-    OPTION_ID_PLEASE_DO      = 0
-};
-
-class npc_pet_trainer : public CreatureScript
-{
-public:
-    npc_pet_trainer() : CreatureScript("npc_pet_trainer") { }
-
-    struct npc_pet_trainerAI : public ScriptedAI
-    {
-        npc_pet_trainerAI(Creature* creature) : ScriptedAI(creature) { }
-
-        void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
-        {
-            if (menuId == MENU_ID_PET_UNLEARN && gossipListId == OPTION_ID_PLEASE_DO)
-            {
-                player->ResetPetTalents();
-                CloseGossipMenuFor(player);
-            }
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_pet_trainerAI(creature);
-    }
-};
-
-/*######
 ## npc_experience
 ######*/
 
@@ -2035,10 +2002,10 @@ public:
                     break;
             }
 
-            const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
-
-            if (spellInfo && spellInfo->GetEffect(EFFECT_0)->Effect == SPELL_EFFECT_SUMMON_OBJECT_WILD)
-                return spellInfo->GetEffect(EFFECT_0)->MiscValue;
+            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
+                if (SpellEffectInfo const* effect0 = spellInfo->GetEffect(EFFECT_0))
+                    if (effect0->Effect == SPELL_EFFECT_SUMMON_OBJECT_WILD)
+                        return effect0->MiscValue;
 
             return 0;
         }
@@ -2551,7 +2518,6 @@ void AddSC_npcs_special()
     new npc_brewfest_reveler();
     new npc_training_dummy();
     new npc_wormhole();
-    new npc_pet_trainer();
     new npc_experience();
     new npc_firework();
     new npc_spring_rabbit();

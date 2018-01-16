@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -157,9 +157,11 @@ Object* ObjectAccessor::GetObjectByTypeMask(WorldObject const& p, ObjectGuid con
         case HighGuid::AreaTrigger:
             if (typemask & TYPEMASK_AREATRIGGER)
                 return GetAreaTrigger(p, guid);
+            break;
         case HighGuid::Conversation:
             if (typemask & TYPEMASK_CONVERSATION)
                 return GetConversation(p, guid);
+            break;
         case HighGuid::Corpse:
             break;
         default:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,11 +27,13 @@ EndScriptData */
 #include "DatabaseEnv.h"
 #include "Language.h"
 #include "MapManager.h"
+#include "MotionMaster.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "SupportMgr.h"
 #include "Transport.h"
+#include "WorldSession.h"
 
 class go_commandscript : public CommandScript
 {
@@ -319,7 +321,7 @@ public:
         if (!id)
             return false;
 
-        uint32 questID = atoi(id);
+        uint32 questID = atoul(id);
         if (!questID)
             return false;
 

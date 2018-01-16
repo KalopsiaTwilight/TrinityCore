@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,12 +30,12 @@
 #include "GridNotifiersImpl.h"
 #include "Map.h"
 #include "MMapFactory.h"
-#include "ObjectMgr.h"
 #include "PathGenerator.h"
 #include "Player.h"
 #include "PointMovementGenerator.h"
 #include "RBAC.h"
 #include "TargetedMovementGenerator.h"
+#include "WorldSession.h"
 
 class mmaps_commandscript : public CommandScript
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,18 +16,20 @@
  */
 
 #include "ScriptMgr.h"
-#include "ScriptedCreature.h"
-#include "ScriptedGossip.h"
-#include "Vehicle.h"
-#include "ObjectMgr.h"
-#include "ScriptedEscortAI.h"
 #include "CombatAI.h"
+#include "CreatureTextMgr.h"
+#include "GameObject.h"
+#include "Log.h"
+#include "MotionMaster.h"
+#include "MoveSplineInit.h"
+#include "ObjectAccessor.h"
 #include "PassiveAI.h"
 #include "Player.h"
+#include "ScriptedEscortAI.h"
+#include "ScriptedGossip.h"
 #include "SpellInfo.h"
-#include "CreatureTextMgr.h"
-#include "MoveSplineInit.h"
-#include "Log.h"
+#include "TemporarySummon.h"
+#include "Vehicle.h"
 
 /*######
 ##Quest 12848
@@ -950,15 +952,10 @@ public:
             std::list<TempSummon*> MinionList;
             owner->GetAllMinionsByEntry(MinionList, NPC_GHOULS);
 
-            if (!MinionList.empty())
-            {
-                for (TempSummon* summon : MinionList)
-                {
-                    if (summon->GetOwnerGUID() == me->GetOwnerGUID())
-                        if (summon->IsInCombat() && summon->getAttackerForHelper())
-                            AttackStart(summon->getAttackerForHelper());
-                }
-            }
+            for (TempSummon* summon : MinionList)
+                if (summon->GetOwnerGUID() == me->GetOwnerGUID())
+                    if (summon->IsInCombat() && summon->getAttackerForHelper())
+                        AttackStart(summon->getAttackerForHelper());
         }
 
         void UpdateAI(uint32 /*diff*/) override

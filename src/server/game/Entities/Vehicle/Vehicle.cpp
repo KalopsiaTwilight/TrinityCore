@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -16,24 +16,26 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Common.h"
-#include "Log.h"
-#include "ObjectMgr.h"
 #include "Vehicle.h"
+#include "Battleground.h"
+#include "Common.h"
+#include "CreatureAI.h"
+#include "DB2Stores.h"
+#include "EventProcessor.h"
+#include "Log.h"
+#include "MoveSplineInit.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "Player.h"
+#include "ScriptMgr.h"
+#include "TemporarySummon.h"
 #include "Unit.h"
 #include "Util.h"
-#include "ScriptMgr.h"
-#include "CreatureAI.h"
-#include "MoveSplineInit.h"
-#include "TemporarySummon.h"
-#include "EventProcessor.h"
-#include "Player.h"
-#include "Battleground.h"
 
 Vehicle::Vehicle(Unit* unit, VehicleEntry const* vehInfo, uint32 creatureEntry) :
 UsableSeatNum(0), _me(unit), _vehicleInfo(vehInfo), _creatureEntry(creatureEntry), _status(STATUS_NONE), _lastShootPos()
 {
-    for (uint32 i = 0; i < MAX_VEHICLE_SEATS; ++i)
+    for (int8 i = 0; i < MAX_VEHICLE_SEATS; ++i)
     {
         if (uint32 seatId = _vehicleInfo->SeatID[i])
             if (VehicleSeatEntry const* veSeat = sVehicleSeatStore.LookupEntry(seatId))
@@ -75,9 +77,9 @@ void Vehicle::Install()
     if (_me->GetTypeId() == TYPEID_UNIT)
     {
         if (PowerDisplayEntry const* powerDisplay = sPowerDisplayStore.LookupEntry(_vehicleInfo->PowerDisplayID[0]))
-            _me->setPowerType(Powers(powerDisplay->PowerType));
+            _me->SetPowerType(Powers(powerDisplay->PowerType));
         else if (_me->getClass() == CLASS_ROGUE)
-            _me->setPowerType(POWER_ENERGY);
+            _me->SetPowerType(POWER_ENERGY);
     }
 
     _status = STATUS_INSTALLED;

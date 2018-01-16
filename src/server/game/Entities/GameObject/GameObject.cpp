@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,9 +28,11 @@
 #include "GridNotifiersImpl.h"
 #include "Group.h"
 #include "GroupMgr.h"
+#include "Item.h"
 #include "Log.h"
 #include "LootMgr.h"
 #include "MiscPackets.h"
+#include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "OutdoorPvPMgr.h"
 #include "PoolMgr.h"
@@ -41,8 +43,19 @@
 #include "World.h"
 #include <G3D/Quat.h>
 
+bool QuaternionData::isUnit() const
+{
+    return fabs(x * x + y * y + z * z + w * w - 1.0f) < 1e-5;
+}
+
+QuaternionData QuaternionData::fromEulerAnglesZYX(float Z, float Y, float X)
+{
+    G3D::Quat quat(G3D::Matrix3::fromEulerAnglesZYX(Z, Y, X));
+    return QuaternionData(quat.x, quat.y, quat.z, quat.w);
+}
+
 GameObject::GameObject() : WorldObject(false), MapObject(),
-    m_model(nullptr), m_goValue(), m_AI(nullptr), _animKitId(0)
+    m_model(nullptr), m_goValue(), m_AI(nullptr), _animKitId(0), _worldEffectID(0)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
@@ -184,7 +197,7 @@ void GameObject::RemoveFromWorld()
     }
 }
 
-bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position const& pos, QuaternionData const& rotation, uint32 animprogress, GOState go_state, uint32 artKit /*= 0*/)
+bool GameObject::Create(uint32 name_id, Map* map, Position const& pos, QuaternionData const& rotation, uint32 animprogress, GOState go_state, uint32 artKit /*= 0*/)
 {
     ASSERT(map);
     SetMap(map);
@@ -262,6 +275,12 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position
     {
         SetUInt32Value(GAMEOBJECT_FACTION, m_goTemplateAddon->faction);
         SetUInt32Value(GAMEOBJECT_FLAGS, m_goTemplateAddon->flags);
+
+        if (m_goTemplateAddon->WorldEffectID)
+        {
+            m_updateFlag |= UPDATEFLAG_GAMEOBJECT;
+            SetWorldEffectID(m_goTemplateAddon->WorldEffectID);
+    }
     }
 
     SetEntry(goinfo->entry);
@@ -327,7 +346,8 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position
             break;
         }
         case GAMEOBJECT_TYPE_FISHINGNODE:
-            SetGoAnimProgress(0);
+            SetUInt32Value(GAMEOBJECT_LEVEL, 1);
+            SetGoAnimProgress(255);
             break;
         case GAMEOBJECT_TYPE_TRAP:
             if (GetGOInfo()->trap.stealthed)
@@ -353,12 +373,30 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 /*phaseMask*/, Position
         m_invisibility.AddValue(gameObjectAddon->invisibilityType, gameObjectAddon->InvisibilityValue);
         }
 
+    if (gameObjectAddon && gameObjectAddon->WorldEffectID)
+    {
+        m_updateFlag |= UPDATEFLAG_GAMEOBJECT;
+        SetWorldEffectID(gameObjectAddon->WorldEffectID);
+    }
+
     LastUsedScriptID = GetGOInfo()->ScriptId;
     AIM_Initialize();
 
     // Initialize loot duplicate count depending on raid difficulty
     if (map->Is25ManRaid())
         loot.maxDuplicates = 3;
+
+    if (uint32 linkedEntry = GetGOInfo()->GetLinkedGameObjectEntry())
+    {
+        GameObject* linkedGO = new GameObject();
+        if (linkedGO->Create(linkedEntry, map, pos, rotation, 255, GO_STATE_READY))
+        {
+            SetLinkedTrap(linkedGO);
+            map->AddToMap(linkedGO);
+        }
+        else
+            delete linkedGO;
+    }
 
     return true;
 }
@@ -493,6 +531,10 @@ void GameObject::Update(uint32 diff)
                     m_SkillupList.clear();
                     m_usetimes = 0;
 
+                    // If nearby linked trap exists, respawn it
+                    if (GameObject* linkedTrap = GetLinkedTrap())
+                        linkedTrap->SetLootState(GO_READY);
+
                     switch (GetGoType())
                     {
                         case GAMEOBJECT_TYPE_FISHINGNODE:   //  can't fish now
@@ -574,11 +616,9 @@ void GameObject::Update(uint32 diff)
                     if (Unit* owner = GetOwner())
                     {
                         // Hunter trap: Search units which are unfriendly to the trap's owner
-                        Trinity::AnyUnfriendlyNoTotemUnitInObjectRangeCheck checker(this, owner, radius);
-                        Trinity::UnitSearcher<Trinity::AnyUnfriendlyNoTotemUnitInObjectRangeCheck> searcher(this, target, checker);
-                        Cell::VisitGridObjects(this, searcher, radius);
-                        if (!target)
-                            Cell::VisitWorldObjects(this, searcher, radius);
+                        Trinity::NearestUnfriendlyNoTotemUnitInObjectRangeCheck checker(this, owner, radius);
+                        Trinity::UnitLastSearcher<Trinity::NearestUnfriendlyNoTotemUnitInObjectRangeCheck> searcher(this, target, checker);
+                        Cell::VisitAllObjects(this, searcher, radius);
                     }
                     else
                     {
@@ -677,6 +717,10 @@ void GameObject::Update(uint32 diff)
         }
         case GO_JUST_DEACTIVATED:
         {
+            // If nearby linked trap exists, despawn it
+            if (GameObject* linkedTrap = GetLinkedTrap())
+                linkedTrap->SetLootState(GO_JUST_DEACTIVATED);
+
             //if Gameobject should cast spell, then this, but some GOs (type = 10) should be destroyed
             if (GetGoType() == GAMEOBJECT_TYPE_GOOBER)
             {
@@ -840,10 +884,10 @@ void GameObject::SaveToDB()
         return;
     }
 
-    SaveToDB(GetMapId(), data->spawnMask, data->phaseMask);
+    SaveToDB(GetMapId(), data->spawnMask);
 }
 
-void GameObject::SaveToDB(uint32 mapid, uint32 spawnMask, uint32 phaseMask)
+void GameObject::SaveToDB(uint32 mapid, uint64 spawnMask)
 {
     const GameObjectTemplate* goI = GetGOInfo();
 
@@ -859,7 +903,6 @@ void GameObject::SaveToDB(uint32 mapid, uint32 spawnMask, uint32 phaseMask)
     // data->guid = guid must not be updated at save
     data.id = GetEntry();
     data.mapid = mapid;
-    data.phaseMask = phaseMask;
     data.posX = GetPositionX();
     data.posY = GetPositionY();
     data.posZ = GetPositionZ();
@@ -870,6 +913,9 @@ void GameObject::SaveToDB(uint32 mapid, uint32 spawnMask, uint32 phaseMask)
     data.go_state = GetGoState();
     data.spawnMask = spawnMask;
     data.artKit = GetGoArtKit();
+
+    data.phaseId = GetDBPhase() > 0 ? GetDBPhase() : data.phaseId;
+    data.phaseGroup = GetDBPhase() < 0 ? -GetDBPhase() : data.phaseGroup;
 
     // Update in DB
     SQLTransaction trans = WorldDatabase.BeginTransaction();
@@ -884,7 +930,9 @@ void GameObject::SaveToDB(uint32 mapid, uint32 spawnMask, uint32 phaseMask)
     stmt->setUInt64(index++, m_spawnId);
     stmt->setUInt32(index++, GetEntry());
     stmt->setUInt16(index++, uint16(mapid));
-    stmt->setUInt8(index++, spawnMask);
+    stmt->setUInt64(index++, spawnMask);
+    stmt->setUInt32(index++, data.phaseId);
+    stmt->setUInt32(index++, data.phaseGroup);
     stmt->setFloat(index++, GetPositionX());
     stmt->setFloat(index++, GetPositionY());
     stmt->setFloat(index++, GetPositionZ());
@@ -912,7 +960,6 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
 
     uint32 entry = data->id;
     //uint32 map_id = data->mapid;                          // already used before call
-    uint32 phaseMask = data->phaseMask;
     Position pos(data->posX, data->posY, data->posZ, data->orientation);
 
     uint32 animprogress = data->animprogress;
@@ -920,11 +967,11 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
     uint32 artKit = data->artKit;
 
     m_spawnId = spawnId;
-    if (!Create(entry, map, phaseMask, pos, data->rotation, animprogress, go_state, artKit))
+    if (!Create(entry, map, pos, data->rotation, animprogress, go_state, artKit))
         return false;
 
-    if (data->phaseid)
-        SetInPhase(data->phaseid, false, true);
+    if (data->phaseId)
+        SetInPhase(data->phaseId, false, true);
 
     if (data->phaseGroup)
     {
@@ -1152,10 +1199,10 @@ bool GameObject::IsInvisibleDueToDespawn() const
     return false;
 }
 
-uint8 GameObject::getLevelForTarget(WorldObject const* target) const
+uint8 GameObject::GetLevelForTarget(WorldObject const* target) const
 {
     if (Unit* owner = GetOwner())
-        return owner->getLevelForTarget(target);
+        return owner->GetLevelForTarget(target);
 
     return 1;
 }
@@ -1227,18 +1274,8 @@ void GameObject::TriggeringLinkedGameObject(uint32 trapEntry, Unit* target)
     if (!trapSpell)                                          // checked at load already
         return;
 
-    float range = float(target->GetSpellMaxRangeForTarget(GetOwner(), trapSpell));
-
-    // search nearest linked GO
-    GameObject* trapGO = nullptr;
-        // using original GO distance
-        Trinity::NearestGameObjectEntryInObjectRangeCheck go_check(*target, trapEntry, range);
-        Trinity::GameObjectLastSearcher<Trinity::NearestGameObjectEntryInObjectRangeCheck> checker(this, trapGO, go_check);
-    Cell::VisitGridObjects(this, checker, range);
-
-    // found correct GO
-    if (trapGO)
-        trapGO->CastSpell(target, trapInfo->trap.spell);
+    if (GameObject* trapGO = GetLinkedTrap())
+        trapGO->CastSpell(target, trapSpell->Id);
 }
 
 GameObject* GameObject::LookupFishingHoleAround(float range)
@@ -1914,6 +1951,18 @@ void GameObject::Use(Unit* user)
             player->SendDirectMessage(artifactForgeOpened.Write());
             return;
         }
+        case GAMEOBJECT_TYPE_UI_LINK:
+        {
+            Player* player = user->ToPlayer();
+            if (!player)
+                return;
+
+            WorldPackets::GameObject::GameObjectUIAction gameObjectUIAction;
+            gameObjectUIAction.ObjectGUID = GetGUID();
+            gameObjectUIAction.UILink = GetGOInfo()->UILink.UILinkType;
+            player->SendDirectMessage(gameObjectUIAction.Write());
+            return;
+        }
         default:
             if (GetGoType() >= MAX_GAMEOBJECT_TYPE)
                 TC_LOG_ERROR("misc", "GameObject::Use(): unit (type: %u, %s, name: %s) tries to use object (%s, name: %s) of unknown type (%u)",
@@ -1976,6 +2025,9 @@ void GameObject::CastSpell(Unit* target, uint32 spellId, TriggerCastFlags trigge
     if (!trigger)
         return;
 
+    // remove immunity flags, to allow spell to target anything
+    trigger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
+
     if (Unit* owner = GetOwner())
     {
         trigger->setFaction(owner->getFaction());
@@ -1987,7 +2039,7 @@ void GameObject::CastSpell(Unit* target, uint32 spellId, TriggerCastFlags trigge
     }
     else
     {
-        trigger->setFaction(14);
+        trigger->setFaction(spellInfo->IsPositive() ? 35 : 14);
         // Set owner guid for target if no owner available - needed by trigger auras
         // - trigger gets despawned and there's no caster avalible (see AuraEffect::TriggerSpell())
         trigger->CastSpell(target ? target : trigger, spellInfo, triggered, nullptr, nullptr, target ? target->GetGUID() : ObjectGuid::Empty);
@@ -2415,6 +2467,11 @@ bool GameObject::IsLootAllowedFor(Player const* player) const
         return false;                                           // if go doesnt have group bound it means it was solo killed by someone else
 
     return true;
+}
+
+GameObject* GameObject::GetLinkedTrap()
+{
+    return ObjectAccessor::GetGameObject(*this, m_linkedTrap);
 }
 
 void GameObject::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target) const

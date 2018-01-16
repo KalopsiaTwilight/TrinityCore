@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -254,8 +254,8 @@ WorldPacket const* WorldPackets::Item::ItemPushResult::Write()
     _worldPacket << int32(Quantity);
     _worldPacket << int32(QuantityInInventory);
     _worldPacket << int32(DungeonEncounterID);
-    _worldPacket << int32(BattlePetBreedID);
     _worldPacket << int32(BattlePetSpeciesID);
+    _worldPacket << int32(BattlePetBreedID);
     _worldPacket << uint32(BattlePetBreedQuality);
     _worldPacket << int32(BattlePetLevel);
     _worldPacket << ItemGUID;
@@ -340,8 +340,8 @@ void WorldPackets::Item::UpgradeItem::Read()
 void WorldPackets::Item::SocketGems::Read()
 {
     _worldPacket >> ItemGuid;
-    for (uint32 i = 0; i < MAX_GEM_SOCKETS; ++i)
-        _worldPacket >> GemItem[i];
+    for (ObjectGuid& gemGuid : GemItem)
+        _worldPacket >> gemGuid;
 }
 
 WorldPacket const* WorldPackets::Item::SocketGemsResult::Write()
@@ -357,4 +357,9 @@ WorldPacket const* WorldPackets::Item::ItemUpgradeResult::Write()
     _worldPacket.FlushBits();
 
     return &_worldPacket;
+}
+
+void WorldPackets::Item::RemoveNewItem::Read()
+{
+    _worldPacket >> ItemGuid;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,7 @@
 #include "BlackMarketPackets.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"
+#include "Item.h"
 #include "Language.h"
 #include "Log.h"
 #include "Mail.h"
@@ -28,6 +29,7 @@
 #include "Player.h"
 #include "Realm.h"
 #include "World.h"
+#include "WorldSession.h"
 #include <sstream>
 
 BlackMarketMgr::BlackMarketMgr()

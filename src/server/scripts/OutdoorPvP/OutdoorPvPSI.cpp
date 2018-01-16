@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "DB2Stores.h"
 #include "GameObject.h"
 #include "Language.h"
+#include "Map.h"
 #include "ObjectMgr.h"
 #include "OutdoorPvPSI.h"
 #include "Player.h"
@@ -159,10 +160,10 @@ bool OutdoorPvPSI::HandleDropFlag(Player* player, uint32 spellId)
                     if (player->GetDistance(atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z) > 5.0f + atEntry->Radius)
                     {
                         // he dropped it further, summon mound
-                        GameObject* go = new GameObject;
+                        GameObject* go = new GameObject();
                         Map* map = player->GetMap();
 
-                        if (!go->Create(SI_SILITHYST_MOUND, map, player->GetPhaseMask(), *player, QuaternionData(), 255, GO_STATE_READY))
+                        if (!go->Create(SI_SILITHYST_MOUND, map, *player, QuaternionData(), 255, GO_STATE_READY))
                         {
                             delete go;
                             return true;
@@ -190,10 +191,10 @@ bool OutdoorPvPSI::HandleDropFlag(Player* player, uint32 spellId)
                     if (player->GetDistance(atEntry->Pos.X, atEntry->Pos.Y, atEntry->Pos.Z) > 5.0f + atEntry->Radius)
                     {
                         // he dropped it further, summon mound
-                        GameObject* go = new GameObject;
+                        GameObject* go = new GameObject();
                         Map* map = player->GetMap();
 
-                        if (!go->Create(SI_SILITHYST_MOUND, map, player->GetPhaseMask(), *player, QuaternionData(), 255, GO_STATE_READY))
+                        if (!go->Create(SI_SILITHYST_MOUND, map, *player, QuaternionData(), 255, GO_STATE_READY))
                         {
                             delete go;
                             return true;

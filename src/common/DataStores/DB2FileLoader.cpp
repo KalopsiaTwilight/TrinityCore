@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -573,7 +573,6 @@ void DB2FileLoaderRegularImpl::FillCommonValues(char** indexTable)
                     ASSERT(_loadInfo->Meta->Types[field] == FT_SHORT);
                     uint16 value = *reinterpret_cast<uint16*>(commonDataItr);
                     EndianConvert(value);
-                    commonDataItr += sizeof(uint16);
                     for (uint32 arrayIndex = 0; arrayIndex < _loadInfo->Meta->ArraySizes[field]; ++arrayIndex)
                         *reinterpret_cast<uint16*>(&recordData[fieldOffset + sizeof(uint16) * arrayIndex]) = value;
                     break;
@@ -582,7 +581,6 @@ void DB2FileLoaderRegularImpl::FillCommonValues(char** indexTable)
                 {
                     ASSERT(_loadInfo->Meta->Types[field] == FT_BYTE);
                     uint8 value = *reinterpret_cast<uint8*>(commonDataItr);
-                    commonDataItr += sizeof(uint8);
                     for (uint32 arrayIndex = 0; arrayIndex < _loadInfo->Meta->ArraySizes[field]; ++arrayIndex)
                         *reinterpret_cast<uint8*>(&recordData[fieldOffset + sizeof(uint8) * arrayIndex]) = value;
                     break;
@@ -592,7 +590,6 @@ void DB2FileLoaderRegularImpl::FillCommonValues(char** indexTable)
                     ASSERT(_loadInfo->Meta->Types[field] == FT_FLOAT);
                     float value = *reinterpret_cast<float*>(commonDataItr);
                     EndianConvert(value);
-                    commonDataItr += sizeof(float);
                     for (uint32 arrayIndex = 0; arrayIndex < _loadInfo->Meta->ArraySizes[field]; ++arrayIndex)
                         *reinterpret_cast<float*>(&recordData[fieldOffset + sizeof(float) * arrayIndex]) = value;
                     break;
@@ -602,14 +599,16 @@ void DB2FileLoaderRegularImpl::FillCommonValues(char** indexTable)
                     ASSERT(_loadInfo->Meta->Types[field] == FT_INT);
                     uint32 value = *reinterpret_cast<uint32*>(commonDataItr);
                     EndianConvert(value);
-                    commonDataItr += sizeof(uint32);
                     for (uint32 arrayIndex = 0; arrayIndex < _loadInfo->Meta->ArraySizes[field]; ++arrayIndex)
                         *reinterpret_cast<uint32*>(&recordData[fieldOffset + sizeof(uint32) * arrayIndex]) = value;
                     break;
                 }
                 default:
+                    ASSERT(false, "Unhandled common value type %d found in %s", dataType, fileName);
                     break;
             }
+
+            commonDataItr += sizeof(uint32);
         }
 
         switch (_loadInfo->Meta->Types[field])
@@ -1115,7 +1114,8 @@ char const* DB2FileLoaderSparseImpl::RecordGetString(unsigned char const* record
 uint32 DB2FileLoaderSparseImpl::RecordGetVarInt(unsigned char const* record, uint32 field, uint32 arrayIndex, bool isSigned) const
 {
     ASSERT(field < _header->FieldCount);
-    uint32 val = *reinterpret_cast<uint32 const*>(record + GetFieldOffset(field, arrayIndex));
+    uint32 val = 0;
+    memcpy(&val, record + GetFieldOffset(field, arrayIndex), GetFieldSize(field));
     EndianConvert(val);
     if (isSigned)
         return int32(val) << fields[field].UnusedBits >> fields[field].UnusedBits;
@@ -1125,7 +1125,7 @@ uint32 DB2FileLoaderSparseImpl::RecordGetVarInt(unsigned char const* record, uin
 
 uint16 DB2FileLoaderSparseImpl::GetFieldOffset(uint32 field, uint32 arrayIndex) const
 {
-    return _fieldAndArrayOffsets[_fieldAndArrayOffsets[field] + arrayIndex];
+    return uint16(_fieldAndArrayOffsets[_fieldAndArrayOffsets[field] + arrayIndex]);
 }
 
 uint16 DB2FileLoaderSparseImpl::GetFieldSize(uint32 field) const
@@ -1139,7 +1139,7 @@ std::size_t* DB2FileLoaderSparseImpl::RecordCreateDetachedFieldOffsets(std::size
     if (oldOffsets != _fieldAndArrayOffsets)
         return oldOffsets;
 
-    uint32 size = _loadInfo->Meta->FieldCount + _loadInfo->FieldCount - (!_loadInfo->Meta->HasIndexFieldInData() ? 1 : 0);
+    std::size_t size = _loadInfo->Meta->FieldCount + _loadInfo->FieldCount - (!_loadInfo->Meta->HasIndexFieldInData() ? 1 : 0);
     std::size_t* newOffsets = new std::size_t[size];
     memcpy(newOffsets, _fieldAndArrayOffsets, size * sizeof(std::size_t));
     return newOffsets;

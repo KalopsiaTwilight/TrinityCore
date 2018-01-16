@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ SDCategory: Tempest Keep, The Botanica
 EndScriptData */
 
 #include "ScriptMgr.h"
+#include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ScriptedCreature.h"
 #include "TemporarySummon.h"
@@ -250,4 +251,3 @@ void AddSC_boss_warp_splinter()
     new boss_warp_splinter();
     new npc_warp_splinter_treant();
 }
-

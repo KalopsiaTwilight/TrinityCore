@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -97,9 +97,7 @@ void utf8print(void* /*arg*/, const char* str)
     if (!Utf8toWStr(str, strlen(str), wtemp_buf, wtemp_len))
         return;
 
-    char temp_buf[6000];
-    CharToOemBuffW(&wtemp_buf[0], &temp_buf[0], wtemp_len+1);
-    printf(temp_buf);
+    wprintf(L"%s", wtemp_buf);
 #else
 {
     printf("%s", str);
