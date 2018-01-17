@@ -1,14 +1,16 @@
 #include "ScriptMgr.h"
-#include "ObjectMgr.h"
-#include "MapManager.h"
-#include "SupportMgr.h"
 #include "Chat.h"
+#include "DatabaseEnv.h"
 #include "Language.h"
+#include "MapManager.h"
+#include "ObjectMgr.h"
 #include "Player.h"
-#include "Transport.h"
 #include "RBAC.h"
-#include "Utilities/ArgumentTokenizer.h"
+#include "SupportMgr.h"
+#include "Transport.h"
+#include "WorldSession.h"
 #include "FreedomMgr.h"
+#include "Utilities/ArgumentTokenizer.h"
 
 class fgoto_commandscript : public CommandScript
 {

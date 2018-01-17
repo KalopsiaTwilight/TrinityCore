@@ -20,8 +20,45 @@
 
 #include "Common.h"
 #include "SharedDefines.h"
+#include "G3D/Quat.h"
 #include <string>
 #include <vector>
+
+using G3D::Quat;
+struct QuaternionCompressed
+{
+    QuaternionCompressed() : m_raw(0) {}
+    QuaternionCompressed(int64 val) : m_raw(val) {}
+    QuaternionCompressed(const Quat& quat) { Set(quat); }
+    
+    enum {
+        PACK_COEFF_YZ = 1 << 20,
+        PACK_COEFF_X = 1 << 21,
+    };
+    
+        void Set(const Quat& quat)
+        {
+            int8 w_sign = (quat.w >= 0 ? 1 : -1);
+            int64 X = int32(quat.x * PACK_COEFF_X) * w_sign & ((1 << 22) - 1);
+            int64 Y = int32(quat.y * PACK_COEFF_YZ) * w_sign & ((1 << 21) - 1);
+            int64 Z = int32(quat.z * PACK_COEFF_YZ) * w_sign & ((1 << 21) - 1);
+            m_raw = Z | (Y << 21) | (X << 42);
+        }
+    
+        Quat Unpack() const
+        {
+            double x = (double)(m_raw >> 42) / (double)PACK_COEFF_X;
+            double y = (double)(m_raw << 22 >> 43) / (double)PACK_COEFF_YZ;
+            double z = (double)(m_raw << 43 >> 43) / (double)PACK_COEFF_YZ;
+            double w = 1 - (x * x + y * y + z * z);
+            ASSERT(w >= 0 && "Quaternion w @ QuaternionCompressed::Unpack() must be positive or zero");
+            w = sqrt(w);
+        
+            return Quat(x, y, z, w);
+        }
+    
+        int64 m_raw;
+};
 
 // from `gameobject_template`
 struct GameObjectTemplate

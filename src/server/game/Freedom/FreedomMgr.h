@@ -4,6 +4,7 @@
 #include "ObjectMgr.h"
 #include "GameObject.h"
 #include "Creature.h"
+#include "Log.h"
 
 struct GameObjectTemplateExtraData
 {

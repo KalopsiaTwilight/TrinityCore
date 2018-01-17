@@ -25,7 +25,7 @@
 #include "Loot.h"
 #include "MapObject.h"
 #include "SharedDefines.h"
-#include <G3D/Quat.h>
+#include "G3D/Quat.h"
 
 class GameObjectAI;
 class GameObjectModel;

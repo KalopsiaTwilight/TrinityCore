@@ -1,17 +1,22 @@
 #include "ScriptMgr.h"
-#include "GameEventMgr.h"
-#include "ObjectMgr.h"
-#include "PoolMgr.h"
-#include "MapManager.h"
 #include "Chat.h"
-#include "Language.h"
-#include "Player.h"
-#include "Opcodes.h"
 #include "Config.h"
-#include "BattlenetAccountMgr.h"
+#include "DatabaseEnv.h"
+#include "DB2Stores.h"
+#include "GameEventMgr.h"
+#include "GameObject.h"
+#include "Language.h"
+#include "Log.h"
+#include "MapManager.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "Player.h"
+#include "PoolMgr.h"
 #include "RBAC.h"
 #include "World.h"
-#include "DatabaseEnv.h"
+#include "WorldSession.h"
+#include "BattlenetAccountMgr.h"
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
 
@@ -361,7 +366,7 @@ public:
         uint32 scriptId = object->GetScriptId();
         std::string name = goTemplate->name;
         std::string aiName = object->GetAIName();
-        uint32 phaseMask = object->GetPhaseMask();
+        //uint32 phaseMask = object->GetPhaseMask();
         auto phaseList = object->GetPhases();
         float ox, oy, oz, oo;
         object->GetPosition(ox, oy, oz, oo);
@@ -384,7 +389,7 @@ public:
             handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_SCRIPT_ID, scriptId);
             handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_NAME, name);
             handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_AI_NAME, aiName);
-            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASEMASK, phaseMask);
+            //handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASEMASK, phaseMask);
 
             std::string stateEnumName;
 

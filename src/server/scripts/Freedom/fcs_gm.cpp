@@ -9,6 +9,7 @@
 #include "ScriptMgr.h"
 #include "Language.h"
 #include "World.h"
+#include "WorldSession.h"
 #include "FreedomMgr.h"
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/locks.hpp>

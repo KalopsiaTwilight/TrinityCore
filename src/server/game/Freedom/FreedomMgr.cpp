@@ -12,6 +12,8 @@
 #include "DatabaseEnv.h"
 #include "Log.h"
 #include "World.h"
+#include "Unit.h"
+#include "MotionMaster.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/tokenizer.hpp>
@@ -132,7 +134,7 @@ void FreedomMgr::CreaturePhase(Creature* creature, uint32 phaseMask)
             creature->SetInPhase(GetPhaseId(phase), false, true);
     }
 
-    creature->SetPhaseMask(phaseMask, true);
+//    creature->SetPhaseMask(phaseMask, true);
 
     _creatureExtraStore[creature->GetSpawnId()].phaseMask = phaseMask;    
 }
@@ -152,7 +154,7 @@ void FreedomMgr::GameObjectPhase(GameObject* go, uint32 phaseMask)
             go->SetInPhase(GetPhaseId(phase), false, true);
     }
 
-    go->SetPhaseMask(phaseMask, true);
+//    go->SetPhaseMask(phaseMask, true);
 
     _gameObjectExtraStore[go->GetSpawnId()].phaseMask = phaseMask;
 }
@@ -172,7 +174,7 @@ void FreedomMgr::PlayerPhase(Player* player, uint32 phaseMask)
             player->SetInPhase(GetPhaseId(phase), false, true);
     }
 
-    player->SetPhaseMask(phaseMask, true);
+//    player->SetPhaseMask(phaseMask, true);
 
     _playerExtraDataStore[player->GetGUID().GetCounter()].phaseMask = phaseMask;
 }
@@ -584,7 +586,6 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
         ObjectGuid::LowType guid = map->GenerateLowGuid<HighGuid::Creature>();
         CreatureData& data = sObjectMgr->NewOrExistCreatureData(guid);
         data.id = entryId;
-        data.phaseMask = creator->GetPhaseMask();
         data.posX = creator->GetTransOffsetX();
         data.posY = creator->GetTransOffsetY();
         data.posZ = creator->GetTransOffsetZ();
@@ -592,23 +593,24 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
 
         Creature* creature = trans->CreateNPCPassenger(guid, &data);
 
-        creature->SaveToDB(trans->GetGOInfo()->moTransport.SpawnMap, 1 << map->GetSpawnMode(), creator->GetPhaseMask());
+        creature->SaveToDB(trans->GetGOInfo()->moTransport.SpawnMap, UI64LIT(1) << map->GetSpawnMode());
 
         sObjectMgr->AddCreatureToGrid(guid, &data);
         return creature;
     }
 
     Creature* creature = new Creature();
-    if (!creature->Create(map->GenerateLowGuid<HighGuid::Creature>(), map, creator->GetPhaseMask(), entryId, x, y, z, o))
+    if (!creature->Create(map->GenerateLowGuid<HighGuid::Creature>(), map, entryId, x, y, z, o))
     {
         delete creature;
         return nullptr;
     }
 
-    creature->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), creator->GetPhaseMask());
+    creature->CopyPhaseFrom(creator);
+    creature->SaveToDB(map->GetId(), (UI64LIT(1) << map->GetSpawnMode()));
     
     ObjectGuid::LowType db_guid = creature->GetSpawnId();
-    sFreedomMgr->CreaturePhase(creature, creator->GetPhaseMask());
+
     sFreedomMgr->CreatureScale(creature, creature->GetObjectScale());
     sFreedomMgr->CreatureSetFly(creature, ((creature->GetCreatureTemplate()->InhabitType & INHABIT_AIR) != 0));
 
@@ -632,7 +634,6 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
     data.modifierPlayerId = creator->GetGUID().GetCounter();
     data.created = time(NULL);
     data.modified = time(NULL);
-    data.phaseMask = creator->GetPhaseMask();
     _creatureExtraStore[creature->GetSpawnId()] = data;
 
     int index = 0;
@@ -1130,7 +1131,7 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
 
     GameObject* object = new GameObject;
     //if (!object->Create(gobTemplate->entry, map, 0, x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
-    if (!object->Create(gobTemplate->entry, map, 0, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY))
+    if (!object->Create(gobTemplate->entry, map, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY))
     {
         delete object;
         return nullptr;
@@ -1144,10 +1145,9 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     }
 
     // fill the gameobject data and save to the db
-    object->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), creator->GetPhaseMask());
+    object->SaveToDB(map->GetId(), (UI64LIT(1) << map->GetSpawnMode()));
     ObjectGuid::LowType spawnId = object->GetSpawnId();
 
-    sFreedomMgr->GameObjectPhase(object, creator->GetPhaseMask());
     sFreedomMgr->GameObjectScale(object, object->GetObjectScale());
 
     // delete the old object and do a clean load from DB with a fresh new GameObject instance.
@@ -1174,7 +1174,6 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     data.modifierPlayerId = creator->GetGUID().GetCounter();
     data.created = time(NULL);
     data.modified = time(NULL);
-    data.phaseMask = creator->GetPhaseMask();
 
     _gameObjectExtraStore[spawnId] = data;
 
@@ -1285,7 +1284,7 @@ void FreedomMgr::RemoveHoverFromPlayer(Player* player)
     // Force player on the ground after removing hover
     source_unit->SetUnitMovementFlags(MOVEMENTFLAG_FALLING);
     WorldPackets::Movement::MoveUpdate moveUpdate;
-    moveUpdate.movementInfo = &source_unit->m_movementInfo;
+    moveUpdate.Status = &source_unit->m_movementInfo;
     source_unit->SendMessageToSet(moveUpdate.Write(), true);
 }
 

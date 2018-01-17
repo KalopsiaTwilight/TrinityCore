@@ -15,6 +15,7 @@
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "World.h"
 #include "FreedomMgr.h"
+#include "WorldSession.h"
 #include "Utilities/ArgumentTokenizer.h"
 
 template<typename E, typename T = char const*>
@@ -1129,13 +1130,27 @@ public:
 
         uint32 vendor_entry = vendor->GetEntry();
 
-        if (!sObjectMgr->IsVendorItemValid(vendor_entry, itemId, maxCount, incrTime, extendedCost, type, handler->GetSession()->GetPlayer()))
+        VendorItem vItem;
+        vItem.item = itemId;
+        vItem.maxcount = maxCount;
+        vItem.incrtime = incrTime;
+        vItem.ExtendedCost = extendedCost;
+        vItem.Type = type;
+
+        /*if (fbonuslist)
+        {
+            Tokenizer bonusListIDsTok(fbonuslist, ';');
+            for (char const* token : bonusListIDsTok)
+                vItem.BonusListIDs.push_back(int32(atol(token)));
+        }*/
+
+        if (sObjectMgr->IsVendorItemValid(vendor_entry, vItem, handler->GetSession()->GetPlayer()))
         {
             handler->PSendSysMessage(FREEDOM_CMDE_NPC_ADD_ITEM_CANNOT_ADD);
             return true;
         }
 
-        sObjectMgr->AddVendorItem(vendor_entry, itemId, maxCount, incrTime, extendedCost, type);
+        sObjectMgr->AddVendorItem(vendor_entry, vItem);
         sFreedomMgr->CreatureSetModifyHistory(vendor, source);
         sFreedomMgr->SaveCreature(vendor);
 
@@ -1661,7 +1676,7 @@ public:
 
         if (advancedInfo)
         {
-            handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_PHASEMASK, extraData ? extraData->phaseMask : target->GetPhaseMask());
+            //handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_PHASEMASK, extraData ? extraData->phaseMask : target->GetPhaseMask());
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_FACTION_ID, faction);
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_NAME, name);
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_AI_INFO, target->GetAIName());

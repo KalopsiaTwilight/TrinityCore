@@ -1132,8 +1132,7 @@ enum TrinityStrings
     LANG_SHUTDOWN_CANCELLED                       = 11018,
     LANG_YOU_CHANGE_POWER                         = 11019,
     LANG_YOUR_POWER_CHANGED                       = 11020,
-    LANG_INVALID_POWER_NAME                       = 11021
-    LANG_SHUTDOWN_CANCELLED                       = 11018,
+    LANG_INVALID_POWER_NAME                       = 11021,
 
 
     // Custom FreedomCore Trinity Strings

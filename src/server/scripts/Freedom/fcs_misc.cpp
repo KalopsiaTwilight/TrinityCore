@@ -26,6 +26,8 @@
 #include "Group.h"
 #include "GroupMgr.h"
 #include "InstanceSaveMgr.h"
+#include "IpAddress.h"
+#include "Item.h"
 #include "Language.h"
 #include "LFG.h"
 #include "Log.h"
@@ -42,16 +44,23 @@
 #include "ScriptMgr.h"
 #include "SpellAuras.h"
 #include "SpellHistory.h"
+#include "SpellMgr.h"
 #include "TargetedMovementGenerator.h"
 #include "Transport.h"
 #include "Weather.h"
 #include "WeatherMgr.h"
 #include "World.h"
+#include "WorldSession.h"
 #include "BattlenetAccountMgr.h"
 #include "RBAC.h"
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
 #include <boost/asio/ip/address_v4.hpp>
+
+// temporary hack until database includes are sorted out (don't want to pull in Windows.h everywhere from mysql.h)
+#ifdef GetClassName
+#undef GetClassName
+#endif
 
 class fmisc_commandscript : public CommandScript
 {
@@ -291,7 +300,8 @@ public:
             mapId, (mapEntry ? mapEntry->MapName->Str[handler->GetSessionDbcLocale()] : unknown),
             zoneId, (zoneEntry ? zoneEntry->AreaName->Str[handler->GetSessionDbcLocale()] : unknown),
             areaId, (areaEntry ? areaEntry->AreaName->Str[handler->GetSessionDbcLocale()] : unknown),
-            object->GetPhaseMask(), StringJoin(object->GetPhases(), ", ").c_str(),
+            //object->GetPhaseMask(), StringJoin(object->GetPhases(), ", ").c_str(),
+            StringJoin(object->GetPhases(), ", ").c_str(),
             object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), object->GetOrientation());
         if (Transport* transport = object->GetTransport())
             handler->PSendSysMessage(LANG_TRANSPORT_POSITION,
@@ -1472,10 +1482,7 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
         uint32 zoneid = player->GetZoneId();
 
-        Weather* weather = WeatherMgr::FindWeather(zoneid);
-
-        if (!weather)
-            weather = WeatherMgr::AddWeather(zoneid);
+        Weather* weather = player->GetMap()->GetOrGenerateZoneDefaultWeather(zoneid);
         if (!weather)
         {
             handler->SendSysMessage(LANG_NO_WEATHER);
@@ -2372,7 +2379,7 @@ public:
                 GameObject* go = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
                 if (!go)
                 {
-                    handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, guidLow);
+                    handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(guidLow).c_str());
                     handler->SetSentErrorMessage(true);
                     return false;
                 }
@@ -2385,7 +2392,7 @@ public:
                 }
 
                 go->ModifyHealth(-damage, player);
-                handler->PSendSysMessage(LANG_GAMEOBJECT_DAMAGED, go->GetName().c_str(), guidLow, -damage, go->GetGOValue()->Building.Health);
+                handler->PSendSysMessage(LANG_GAMEOBJECT_DAMAGED, go->GetName().c_str(), std::to_string(guidLow).c_str(), -damage, go->GetGOValue()->Building.Health);
             }
 
             return true;
@@ -2438,22 +2445,24 @@ public:
 
         char* spellStr = strtok((char*)NULL, " ");
 
+        Player* attacker = handler->GetSession()->GetPlayer();
+
         // melee damage by specific school
         if (!spellStr)
         {
-            uint32 absorb = 0;
-            uint32 resist = 0;
+            DamageInfo dmgInfo(attacker, target, damage, nullptr, schoolmask, SPELL_DIRECT_DAMAGE, BASE_ATTACK);
+            attacker->CalcAbsorbResist(dmgInfo);
 
-            handler->GetSession()->GetPlayer()->CalcAbsorbResist(target, schoolmask, SPELL_DIRECT_DAMAGE, damage, &absorb, &resist);
-
-            if (damage <= absorb + resist)
+            if (!dmgInfo.GetDamage())
                 return true;
 
-            damage -= absorb + resist;
+            damage = dmgInfo.GetDamage();
 
-            handler->GetSession()->GetPlayer()->DealDamageMods(target, damage, &absorb);
-            handler->GetSession()->GetPlayer()->DealDamage(target, damage, NULL, DIRECT_DAMAGE, schoolmask, NULL, false);
-            handler->GetSession()->GetPlayer()->SendAttackStateUpdate(HITINFO_AFFECTS_VICTIM, target, 1, schoolmask, damage, absorb, resist, VICTIMSTATE_HIT, 0);
+            uint32 absorb = dmgInfo.GetAbsorb();
+            uint32 resist = dmgInfo.GetResist();
+            attacker->DealDamageMods(target, damage, &absorb);
+            attacker->DealDamage(target, damage, nullptr, DIRECT_DAMAGE, schoolmask, nullptr, false);
+            attacker->SendAttackStateUpdate(HITINFO_AFFECTS_VICTIM, target, 0, schoolmask, damage, absorb, resist, VICTIMSTATE_HIT, 0);
             return true;
         }
 
@@ -2461,13 +2470,16 @@ public:
 
         // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
         uint32 spellid = handler->extractSpellIdFromLink((char*)args);
+        if (!spellid)
+            return false;
+
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellid);
         if (!spellInfo)
             return false;
 
-        SpellNonMeleeDamage damageInfo(handler->GetSession()->GetPlayer(), target, spellid, spellInfo->GetSpellXSpellVisualId(handler->GetSession()->GetPlayer()), spellInfo->SchoolMask);
+        SpellNonMeleeDamage damageInfo(attacker, target, spellid, spellInfo->GetSpellXSpellVisualId(handler->GetSession()->GetPlayer()), spellInfo->SchoolMask);
         damageInfo.damage = damage;
-        handler->GetSession()->GetPlayer()->DealDamageMods(damageInfo.target, damageInfo.damage, &damageInfo.absorb);
+        attacker->DealDamageMods(damageInfo.target, damageInfo.damage, &damageInfo.absorb);
         target->DealSpellDamage(&damageInfo, true);
         target->SendSpellNonMeleeDamageLog(&damageInfo);
         return true;

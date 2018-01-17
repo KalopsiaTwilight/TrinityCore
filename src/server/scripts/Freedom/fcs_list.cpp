@@ -1,12 +1,13 @@
-#include "ScriptMgr.h"
 #include "Chat.h"
-#include "SpellAuraEffects.h"
+#include "DatabaseEnv.h"
 #include "Language.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "RBAC.h"
-#include "DatabaseEnv.h"
+#include "ScriptMgr.h"
+#include "SpellAuraEffects.h"
+#include "WorldSession.h"
 #include <iostream>
 
 class flist_commandscript : public CommandScript

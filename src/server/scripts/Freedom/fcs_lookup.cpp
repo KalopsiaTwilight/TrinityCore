@@ -25,6 +25,7 @@ EndScriptData */
 #include "AccountMgr.h"
 #include "Chat.h"
 #include "DatabaseEnv.h"
+#include "DB2Stores.h"
 #include "GameEventMgr.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -32,7 +33,9 @@ EndScriptData */
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
 #include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "World.h"
+#include "WorldSession.h"
 #include "RBAC.h"
 #include <boost/algorithm/string/predicate.hpp>
 #include "Utilities/ArgumentTokenizer.h"

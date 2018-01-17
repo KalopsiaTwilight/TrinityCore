@@ -24,13 +24,16 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "Chat.h"
+#include "DB2Stores.h"
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "ReputationMgr.h"
+#include "SpellMgr.h"
 #include "SpellPackets.h"
+#include "WorldSession.h"
 #include "Utilities/ArgumentTokenizer.h"
 #include "FreedomMgr.h"
 
