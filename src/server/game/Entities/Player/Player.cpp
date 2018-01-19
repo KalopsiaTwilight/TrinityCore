@@ -26037,7 +26037,7 @@ void Player::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0*/, uint6
         scenario->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
 
     if (Guild* guild = sGuildMgr->GetGuildById(GetGuildId()))
-         bguild->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
+         guild->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
 }
 
 void Player::CompletedAchievement(AchievementEntry const* entry)
