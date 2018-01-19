@@ -217,7 +217,7 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
                 return;
             }
 
-                sender->Say(msg, Language(lang));
+            sender->Say(msg, Language(lang));
             break;
         }
         case CHAT_MSG_EMOTE:
@@ -232,7 +232,7 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
                 return;
             }
 
-                sender->TextEmote(msg);
+            sender->TextEmote(msg);
             break;
         }
         case CHAT_MSG_YELL:
@@ -247,7 +247,7 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
                 return;
             }
 
-                sender->Yell(msg, Language(lang));
+            sender->Yell(msg, Language(lang));
             break;
         }
         case CHAT_MSG_WHISPER:
@@ -384,9 +384,9 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
 
             if (Channel* chn = ChannelMgr::GetChannelForPlayerByNamePart(target, sender))
             {
-                    sScriptMgr->OnPlayerChat(sender, type, lang, msg, chn);
-                    chn->Say(sender->GetGUID(), msg.c_str(), lang);
-                }
+                sScriptMgr->OnPlayerChat(sender, type, lang, msg, chn);
+                chn->Say(sender->GetGUID(), msg.c_str(), lang);
+            }
             break;
         }
         case CHAT_MSG_INSTANCE_CHAT:

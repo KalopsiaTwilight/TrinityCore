@@ -465,8 +465,8 @@ enum PlayerBytes4Offsets
 
 enum PlayerFieldBytesOffsets
 {
-    PLAYER_FIELD_BYTES_OFFSET_RAF_GRANTABLE_LEVEL   = 0,
-    PLAYER_FIELD_BYTES_OFFSET_ACTION_BAR_TOGGLES    = 1,
+    PLAYER_FIELD_BYTES_OFFSET_RAF_GRANTABLE_LEVEL       = 0,
+    PLAYER_FIELD_BYTES_OFFSET_ACTION_BAR_TOGGLES        = 1,
     PLAYER_FIELD_BYTES_OFFSET_LIFETIME_MAX_PVP_RANK     = 2,
     PLAYER_FIELD_BYTES_OFFSET_NUM_RESPECS               = 3,
 };
@@ -1001,7 +1001,7 @@ struct TC_GAME_API SpecializationInfo
 {
     SpecializationInfo() : ResetTalentsCost(0), ResetTalentsTime(0), PrimarySpecialization(0), ActiveGroup(0)
     {
-        }
+    }
 
     PlayerTalentMap Talents[MAX_SPECIALIZATIONS];
     std::vector<uint32> Glyphs[MAX_SPECIALIZATIONS];
@@ -1587,7 +1587,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void RemoveSpell(uint32 spell_id, bool disabled = false, bool learn_low_rank = true);
         void ResetSpells(bool myClassOnly = false);
         void LearnCustomSpells();
-		void LearnCustomSkills();
+        //void LearnCustomSkills();
         void LearnDefaultSkills();
         void LearnDefaultSkill(SkillRaceClassInfoEntry const* rcInfo);
         void LearnQuestRewardedSpells();

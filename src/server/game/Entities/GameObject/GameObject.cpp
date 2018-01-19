@@ -1616,7 +1616,7 @@ void GameObject::Use(Unit* user)
 
                     TC_LOG_DEBUG("misc", "Fishing check (skill: %i zone min skill: %i chance %i roll: %i", skill, zone_skill, chance, roll);
 
-                        player->UpdateFishingSkill();
+                    player->UpdateFishingSkill();
 
                     /// @todo find reasonable value for fishing hole search
                     GameObject* fishingPool = LookupFishingHoleAround(20.0f + CONTACT_DISTANCE);
@@ -2166,7 +2166,7 @@ Quat GameObject::GetRotationQuat()
         return Quat(m_quatX, m_quatY, m_quatZ, m_quatW);
 }
 
-void GameObject::ModifyHealth(int32 change, Unit* attackerOrHealer /*= NULL*/, uint32 spellId /*= 0*/)
+void GameObject::ModifyHealth(int32 change, Unit* attackerOrHealer /*= nullptr*/, uint32 spellId /*= 0*/)
 {
     if (!m_goValue.Building.MaxHealth || !change)
         return;

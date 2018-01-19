@@ -72,10 +72,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         void SetObjectScale(float scale) override;
         void SetDisplayId(uint32 modelId) override;
 
-        //Dress NPCs
-        void SetOutfit(int32 outfit) { outfitId = outfit; };
-        int32 GetOutfit() const { return outfitId; };
-
         void DisappearAndDie();
 
         bool Create(ObjectGuid::LowType guidlow, Map* map, uint32 entry, float x, float y, float z, float ang, CreatureData const* data = nullptr, uint32 vehId = 0);
@@ -412,9 +408,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         bool m_shouldReacquireTarget;
         ObjectGuid m_suppressedTarget; // Stores the creature's "real" target while casting
         float m_suppressedOrientation; // Stores the creature's "real" orientation while casting
-
-        //Dress NPCs
-        int32 outfitId;
 
         CreatureTextRepeatGroup m_textRepeat;
 };

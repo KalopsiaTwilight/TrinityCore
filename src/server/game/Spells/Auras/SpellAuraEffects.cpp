@@ -1115,7 +1115,7 @@ bool AuraEffect::IsAffectingSpell(SpellInfo const* spell) const
     if (!spell->IsAffected(m_spellInfo->SpellFamilyName, GetSpellEffectInfo()->SpellClassMask))
         return false;
 
-        return true;
+    return true;
 }
 
 void AuraEffect::SendTickImmune(Unit* target, Unit* caster) const
@@ -1397,8 +1397,8 @@ void AuraEffect::HandleShapeshiftBoosts(Unit* target, bool apply) const
                 if (spellInfo->Stances & (UI64LIT(1) << (GetMiscValue() - 1)))
                     target->CastSpell(target, itr->first, true, NULL, this);
             }
-                    }
-                }
+        }
+    }
     else
     {
         if (spellId)
@@ -2032,10 +2032,8 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                     uint32 model_id = 0;
 
                     // choose a model, based on trigger flag
-                    //if (uint32 modelid = sObjectMgr->ChooseDisplayId(ci))
-                    //    model_id = modelid;
-                    if (uint32 modelid = sObjectMgr->GetCreatureDisplay(ci->GetRandomValidModelId()))
-                        model_id = modelid;                     // Will use the default model here
+                    if (uint32 modelid = sObjectMgr->ChooseDisplayId(ci))
+                        model_id = modelid;                  // Will use the default model here
 
                     target->SetDisplayId(model_id);
 
@@ -2075,7 +2073,7 @@ void AuraEffect::HandleAuraTransform(AuraApplication const* aurApp, uint8 mode, 
                 uint32 cr_id = target->GetAuraEffectsByType(SPELL_AURA_MOUNTED).front()->GetMiscValue();
                 if (CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(cr_id))
                 {
-                    uint32 displayID = sObjectMgr->GetCreatureDisplay(ObjectMgr::ChooseDisplayId(ci));
+                    uint32 displayID = ObjectMgr::ChooseDisplayId(ci);
                     sObjectMgr->GetCreatureModelRandomGender(&displayID);
 
                     target->SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, displayID);
@@ -2272,8 +2270,8 @@ void AuraEffect::HandleAuraModDisarm(AuraApplication const* aurApp, uint8 mode, 
             player->ApplyItemDependentAuras(item, !apply);
             if (attacktype < MAX_ATTACK)
                 player->_ApplyWeaponDamage(slot, item, !apply);
-            }
         }
+    }
 
     // if disarm effects should be applied, wait to set flag until damage mods are unapplied
     if (apply)
@@ -2570,7 +2568,7 @@ void AuraEffect::HandleAuraMounted(AuraApplication const* aurApp, uint8 mode, bo
 
             if (!displayId || vehicleId)
             {
-                displayId = sObjectMgr->GetCreatureDisplay(ObjectMgr::ChooseDisplayId(creatureInfo));
+                displayId = ObjectMgr::ChooseDisplayId(creatureInfo);
                 sObjectMgr->GetCreatureModelRandomGender(&displayId);
             }
 
@@ -2620,7 +2618,7 @@ void AuraEffect::HandleAuraAllowFlight(AuraApplication const* aurApp, uint8 mode
 
     if (target->SetCanFly(apply))
         if (!apply && !target->IsLevitating())
-        target->GetMotionMaster()->MoveFall();
+            target->GetMotionMaster()->MoveFall();
 }
 
 void AuraEffect::HandleAuraWaterWalk(AuraApplication const* aurApp, uint8 mode, bool apply) const
@@ -3029,7 +3027,7 @@ void AuraEffect::HandleAuraModIncreaseFlightSpeed(AuraApplication const* aurApp,
         {
             if (target->SetCanFly(apply))
                 if (!apply && !target->IsLevitating())
-                target->GetMotionMaster()->MoveFall();
+                    target->GetMotionMaster()->MoveFall();
         }
 
         //! Someone should clean up these hacks and remove it from this function. It doesn't even belong here.
@@ -3163,7 +3161,7 @@ void AuraEffect::HandleAuraModSchoolImmunity(AuraApplication const* aurApp, uint
             bool banishFound = false;
             Unit::AuraEffectList const& banishAuras = target->GetAuraEffectsByType(GetAuraType());
             for (AuraEffect const* aurEff : banishAuras)
-                {
+            {
                 if (aurEff->GetSpellInfo()->Mechanic == MECHANIC_BANISH)
                 {
                     banishFound = true;
@@ -4158,10 +4156,10 @@ void AuraEffect::HandleModDamageDone(AuraApplication const* aurApp, uint8 mode, 
 
     if (GetMiscValue() & SPELL_SCHOOL_MASK_NORMAL)
     {
-            target->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_VALUE, float(GetAmount()), apply);
-            target->HandleStatModifier(UNIT_MOD_DAMAGE_OFFHAND, TOTAL_VALUE, float(GetAmount()), apply);
-            target->HandleStatModifier(UNIT_MOD_DAMAGE_RANGED, TOTAL_VALUE, float(GetAmount()), apply);
-            }
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_VALUE, float(GetAmount()), apply);
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_OFFHAND, TOTAL_VALUE, float(GetAmount()), apply);
+        target->HandleStatModifier(UNIT_MOD_DAMAGE_RANGED, TOTAL_VALUE, float(GetAmount()), apply);
+    }
 
     // Magic damage modifiers implemented in Unit::SpellBaseDamageBonusDone
     // This information for client side use only
@@ -4202,17 +4200,17 @@ void AuraEffect::HandleModDamagePercentDone(AuraApplication const* aurApp, uint8
     }
 
     if (target->GetTypeId() == TYPEID_PLAYER)
-        {
+    {
         for (uint16 i = 0; i < MAX_SPELL_SCHOOL; ++i)
         {
             if (GetMiscValue() & (1 << i))
             {
-            if (spellGroupVal)
+                if (spellGroupVal)
                     target->ApplyPercentModFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i, float(spellGroupVal), !apply);
 
                 target->ApplyPercentModFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i, float(GetAmount()), apply);
+            }
         }
-    }
     }
 }
 

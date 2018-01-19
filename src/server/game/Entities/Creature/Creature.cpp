@@ -76,10 +76,10 @@ VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, uint32 extend
     return nullptr;
 }
 
-int32 CreatureTemplate::GetRandomValidModelId() const
+uint32 CreatureTemplate::GetRandomValidModelId() const
 {
     uint8 c = 0;
-    int32 modelIDs[4];
+    uint32 modelIDs[4];
 
     if (Modelid1) modelIDs[c++] = Modelid1;
     if (Modelid2) modelIDs[c++] = Modelid2;
@@ -89,7 +89,7 @@ int32 CreatureTemplate::GetRandomValidModelId() const
     return ((c>0) ? modelIDs[urand(0, c-1)] : 0);
 }
 
-int32 CreatureTemplate::GetFirstValidModelId() const
+uint32 CreatureTemplate::GetFirstValidModelId() const
 {
     if (Modelid1) return Modelid1;
     if (Modelid2) return Modelid2;
@@ -100,42 +100,42 @@ int32 CreatureTemplate::GetFirstValidModelId() const
 
 uint32 CreatureTemplate::GetFirstInvisibleModel() const
 {
-    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid1));
+    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid1);
     if (modelInfo && modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid1);
+        return Modelid1;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid2));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid2);
     if (modelInfo && modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid2);
+        return Modelid2;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid3));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid3);
     if (modelInfo && modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid3);
+        return Modelid3;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid4));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid4);
     if (modelInfo && modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid4);
+        return Modelid4;
 
     return 11686;
 }
 
 uint32 CreatureTemplate::GetFirstVisibleModel() const
 {
-    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid1));
+    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid1);
     if (modelInfo && !modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid1);
+        return Modelid1;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid2));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid2);
     if (modelInfo && !modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid2);
+        return Modelid2;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid3));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid3);
     if (modelInfo && !modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid3);
+        return Modelid3;
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid4));
+    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid4);
     if (modelInfo && !modelInfo->is_trigger)
-        return sObjectMgr->GetCreatureDisplay(Modelid4);
+        return Modelid4;
 
     return 17519;
 }
@@ -348,12 +348,7 @@ bool Creature::InitEntry(uint32 entry, CreatureData const* data /*= nullptr*/)
         return false;
     }
 
-    SetOutfit(ObjectMgr::ChooseDisplayId(GetCreatureTemplate(), data));
-    uint32 displayID = sObjectMgr->GetCreatureDisplay(GetOutfit());
-    if (GetOutfit() < 0 && displayID)
-        SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
-    else
-        RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
+    uint32 displayID = ObjectMgr::ChooseDisplayId(GetCreatureTemplate(), data);
 
     CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
     if (!minfo)                                             // Cancel load if no model defined
@@ -430,11 +425,7 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
         SetUInt64Value(UNIT_NPC_FLAGS, npcFlags);
 
     SetUInt32Value(UNIT_FIELD_FLAGS, unitFlags);
-    //SetUInt32Value(UNIT_FIELD_FLAGS_2, unitFlags2);
-    if (GetOutfit() < 0 && GetDisplayId())
-        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unit_flags2 | UNIT_FLAG2_MIRROR_IMAGE);
-    else
-        SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unit_flags2);
+    SetUInt32Value(UNIT_FIELD_FLAGS_2, unitFlags2);
     SetUInt32Value(UNIT_FIELD_FLAGS_3, unitFlags3);
 
     SetUInt32Value(OBJECT_DYNAMIC_FLAGS, dynamicFlags);
@@ -446,7 +437,7 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
     SetBaseAttackTime(RANGED_ATTACK, cInfo->RangeAttackTime);
 
     if (updateLevel)
-    SelectLevel();
+        SelectLevel();
     else
         UpdateLevelDependantStats(); // We still re-initialize level dependant stats on entry update
 
@@ -678,20 +669,20 @@ void Creature::Update(uint32 diff)
 
             if (m_regenTimer == 0)
             {
-            bool bInCombat = IsInCombat() && (!GetVictim() ||                                        // if IsInCombat() is true and this has no victim
-                             !EnsureVictim()->GetCharmerOrOwnerPlayerOrPlayerItself() ||                // or the victim/owner/charmer is not a player
-                             !EnsureVictim()->GetCharmerOrOwnerPlayerOrPlayerItself()->IsGameMaster()); // or the victim/owner/charmer is not a GameMaster
+                bool bInCombat = IsInCombat() && (!GetVictim() ||                                        // if IsInCombat() is true and this has no victim
+                                 !EnsureVictim()->GetCharmerOrOwnerPlayerOrPlayerItself() ||                // or the victim/owner/charmer is not a player
+                                 !EnsureVictim()->GetCharmerOrOwnerPlayerOrPlayerItself()->IsGameMaster()); // or the victim/owner/charmer is not a GameMaster
 
                 if (!IsInEvadeMode() && (!bInCombat || IsPolymorphed() || CanNotReachTarget())) // regenerate health if not in combat or if polymorphed
-                RegenerateHealth();
+                    RegenerateHealth();
 
-            if (HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER))
-            {
+                if (HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER))
+                {
                     if (GetPowerType() == POWER_ENERGY)
-                    Regenerate(POWER_ENERGY);
-                else
-                    RegenerateMana();
-            }
+                        Regenerate(POWER_ENERGY);
+                    else
+                        RegenerateMana();
+                }
                 m_regenTimer = CREATURE_REGEN_INTERVAL;
             }
 
@@ -871,14 +862,14 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 entry, float
 
 
     if (data && data->phaseGroup)
-    {
+    //{
         for (auto ph : sDB2Manager.GetPhasesForGroup(data->phaseGroup))
             SetInPhase(ph, false, true);
-    }
+    /*}
     else if (extraData)
     {
         sFreedomMgr->CreaturePhase(this, extraData->phaseMask);
-    }
+    }*/
 
     CreatureTemplate const* cinfo = sObjectMgr->GetCreatureTemplate(entry);
     if (!cinfo)
@@ -933,7 +924,6 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 entry, float
     }
 
     uint32 displayID = GetNativeDisplayId();
-
     CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
     if (minfo && !IsTotem())                               // Cancel load if no model defined or if totem
     {
@@ -953,8 +943,6 @@ bool Creature::Create(ObjectGuid::LowType guidlow, Map* map, uint32 entry, float
     {
         SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_GENDER, extraData->gender);
     }
-
-    LastUsedScriptID = GetCreatureTemplate()->ScriptID;
 
     /// @todo Replace with spell, handle from DB
     if (IsSpiritHealer() || IsSpiritGuide())
@@ -1121,8 +1109,8 @@ void Creature::SaveToDB(uint32 mapid, uint64 spawnMask)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     if (cinfo)
     {
-        if (displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid1) || displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid2) ||
-            displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid3) || displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid4))
+        if (displayId == cinfo->Modelid1 || displayId == cinfo->Modelid2 ||
+            displayId == cinfo->Modelid3 || displayId == cinfo->Modelid4)
             displayId = 0;
 
         if (npcflag == cinfo->npcflag)
@@ -1258,11 +1246,11 @@ void Creature::SelectLevel()
 
     if (!HasScalableLevels())
     {
-    // level
-    uint8 minlevel = std::min(cInfo->maxlevel, cInfo->minlevel);
-    uint8 maxlevel = std::max(cInfo->maxlevel, cInfo->minlevel);
-    uint8 level = minlevel == maxlevel ? minlevel : urand(minlevel, maxlevel);
-    SetLevel(level);
+        // level
+        uint8 minlevel = std::min(cInfo->maxlevel, cInfo->minlevel);
+        uint8 maxlevel = std::max(cInfo->maxlevel, cInfo->minlevel);
+        uint8 level = minlevel == maxlevel ? minlevel : urand(minlevel, maxlevel);
+        SetLevel(level);
     }
     else
     {
@@ -1562,16 +1550,16 @@ void Creature::SetSpawnHealth()
 
     if (!m_regenHealth)
     {
-            curhealth = m_creatureData->curhealth;
-            if (curhealth)
-            {
-                curhealth = uint32(curhealth*_GetHealthMod(GetCreatureTemplate()->rank));
-                if (curhealth < 1)
-                    curhealth = 1;
-            }
-            SetPower(POWER_MANA, m_creatureData->curmana);
+        curhealth = m_creatureData->curhealth;
+        if (curhealth)
+        {
+            curhealth = uint32(curhealth*_GetHealthMod(GetCreatureTemplate()->rank));
+            if (curhealth < 1)
+                curhealth = 1;
         }
-        else
+        SetPower(POWER_MANA, m_creatureData->curmana);
+    }
+    else
     {
         curhealth = GetMaxHealth();
         SetFullPower(POWER_MANA);
@@ -1806,7 +1794,7 @@ void Creature::setDeathState(DeathState s)
     else if (s == JUST_RESPAWNED)
     {
         if (IsPet())
-        SetFullHealth();
+            SetFullHealth();
         else
             SetSpawnHealth();
 
@@ -1875,7 +1863,7 @@ void Creature::Respawn(bool force)
         if (m_originalEntry != GetEntry())
             UpdateEntry(m_originalEntry);
         else
-        SelectLevel();
+            SelectLevel();
 
         setDeathState(JUST_RESPAWNED);
 
@@ -1920,13 +1908,13 @@ void Creature::ForcedDespawn(uint32 timeMSToDespawn, Seconds const& forceRespawn
 
     if (forceRespawnTimer > Seconds::zero())
     {
-    if (IsAlive())
+        if (IsAlive())
         {
             uint32 respawnDelay = m_respawnDelay;
             uint32 corpseDelay = m_corpseDelay;
             m_respawnDelay = forceRespawnTimer.count();
             m_corpseDelay = 0;
-        setDeathState(JUST_DIED);
+            setDeathState(JUST_DIED);
             m_respawnDelay = respawnDelay;
             m_corpseDelay = corpseDelay;
         }
@@ -2115,12 +2103,12 @@ SpellInfo const* Creature::reachWithSpellCure(Unit* victim)
 // select nearest hostile unit within the given distance (regardless of threat list).
 Unit* Creature::SelectNearestTarget(float dist, bool playerOnly /* = false */) const
 {
-        if (dist == 0.0f)
-            dist = MAX_VISIBILITY_DISTANCE;
+    if (dist == 0.0f)
+        dist = MAX_VISIBILITY_DISTANCE;
 
     Unit* target = nullptr;
-        Trinity::NearestHostileUnitCheck u_check(this, dist, playerOnly);
-        Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
+    Trinity::NearestHostileUnitCheck u_check(this, dist, playerOnly);
+    Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
     Cell::VisitAllObjects(this, searcher, dist);
     return target;
 }
@@ -2135,8 +2123,8 @@ Unit* Creature::SelectNearestTargetInAttackDistance(float dist) const
     }
 
     Unit* target = nullptr;
-        Trinity::NearestHostileUnitInAttackDistanceCheck u_check(this, dist);
-        Trinity::UnitLastSearcher<Trinity::NearestHostileUnitInAttackDistanceCheck> searcher(this, target, u_check);
+    Trinity::NearestHostileUnitInAttackDistanceCheck u_check(this, dist);
+    Trinity::UnitLastSearcher<Trinity::NearestHostileUnitInAttackDistanceCheck> searcher(this, target, u_check);
     Cell::VisitAllObjects(this, searcher, std::max(dist, ATTACK_DISTANCE));
     return target;
 }
@@ -2950,9 +2938,9 @@ void Creature::FocusTarget(Spell const* focusSpell, WorldObject const* target)
                 // only update players that are known to the client (have already been created)
                 if (player->HaveAtClient(this))
                     SendUpdateToPlayer(player);
-                }
             }
         }
+    }
 
     bool canTurnDuringCast = !focusSpell->GetSpellInfo()->HasAttribute(SPELL_ATTR5_DONT_TURN_DURING_CAST);
     // Face the target - we need to do this before the unit state is modified for no-turn spells
@@ -3008,7 +2996,7 @@ void Creature::ReleaseFocus(Spell const* focusSpell, bool withDelay)
             if (WorldObject const* objTarget = ObjectAccessor::GetWorldObject(*this, m_suppressedTarget))
                 SetFacingToObject(objTarget);
         }
-    else
+        else
             SetFacingTo(m_suppressedOrientation);
     }
     else

@@ -170,24 +170,6 @@ struct GameTele
 
 typedef std::unordered_map<uint32, GameTele > GameTeleContainer;
 
-//Dress NPCs
-#define MAX_CREATURE_OUTFIT_DISPLAYS 11
-struct CreatureOutfit
-{
-    uint8 race;
-    uint8 Class;
-    uint8 gender;
-    uint8 face;
-    uint8 skin;
-    uint8 hair;
-    uint8 facialhair;
-    uint8 haircolor;
-    uint32 displayId;
-    uint32 outfit[MAX_CREATURE_OUTFIT_DISPLAYS];
-    };
-
-typedef std::unordered_map<uint32, CreatureOutfit> CreatureOutfitContainer;
-
 enum ScriptsType
 {
     SCRIPTS_FIRST = 1,
@@ -586,7 +568,7 @@ struct PlayerCreateInfoAction
     uint32 action;
 };
 
-struct PlayerCreateInfoCustomSkill
+/*struct PlayerCreateInfoCustomSkill
 {
     PlayerCreateInfoCustomSkill() : raceMask(0), classMask(0), skillId(0), rank(0) { }
     PlayerCreateInfoCustomSkill(uint32 _raceMask, uint32 _classMask, uint16 _skillId, uint16 _rank) : raceMask(_raceMask), classMask(_classMask), skillId(_skillId), rank(_rank) { }
@@ -595,13 +577,13 @@ struct PlayerCreateInfoCustomSkill
     uint32 classMask;
     uint16 skillId;
     uint16 rank;
-};
+};*/
 
 typedef std::list<PlayerCreateInfoAction> PlayerCreateInfoActions;
 
 typedef std::list<SkillRaceClassInfoEntry const*> PlayerCreateInfoSkills;
 
-typedef std::list<PlayerCreateInfoCustomSkill> PlayerCreateInfoCustomSkills;
+//typedef std::list<PlayerCreateInfoCustomSkill> PlayerCreateInfoCustomSkills;
 
 struct PlayerInfo
 {
@@ -621,7 +603,7 @@ struct PlayerInfo
     PlayerCreateInfoSpells castSpells;
     PlayerCreateInfoActions action;
     PlayerCreateInfoSkills skills;
-    PlayerCreateInfoCustomSkills customSkills;
+    //PlayerCreateInfoCustomSkills customSkills;
 
     PlayerLevelInfo* levelInfo;                             //[level-1] 0..MaxPlayerLevel-1
 };
@@ -699,16 +681,16 @@ struct GossipMenuItems
 {
     uint32               MenuID;
     uint32               OptionID;
-    uint8           OptionIcon;
-    std::string     OptionText;
+    uint8                OptionIcon;
+    std::string          OptionText;
     uint32               OptionBroadcastTextID;
-    uint32          OptionType;
+    uint32               OptionType;
     uint64               OptionNpcFlag;
     uint32               ActionMenuID;
     uint32               ActionPoiID;
-    bool            BoxCoded;
-    uint32          BoxMoney;
-    std::string     BoxText;
+    bool                 BoxCoded;
+    uint32               BoxMoney;
+    std::string          BoxText;
     uint32               BoxBroadcastTextID;
     uint32               TrainerId;
     ConditionContainer   Conditions;
@@ -984,7 +966,7 @@ class TC_GAME_API ObjectMgr
         CreatureTemplateContainer const* GetCreatureTemplates() const { return &_creatureTemplateStore; }
         CreatureModelInfo const* GetCreatureModelInfo(uint32 modelId) const;
         CreatureModelInfo const* GetCreatureModelRandomGender(uint32* displayID) const;
-        static int32 ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data = nullptr);
+        static uint32 ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data = nullptr);
         static void ChooseCreatureFlags(CreatureTemplate const* cInfo, uint64& npcFlags, uint32& unitFlags, uint32& unitFlags2, uint32& unitFlags3, uint32& dynamicFlags, CreatureData const* data = nullptr);
         EquipmentInfo const* GetEquipmentInfo(uint32 entry, int8& id) const;
         CreatureAddon const* GetCreatureAddon(ObjectGuid::LowType lowguid) const;
@@ -993,7 +975,6 @@ class TC_GAME_API ObjectMgr
         CreatureAddon const* GetCreatureTemplateAddon(uint32 entry) const;
         ItemTemplate const* GetItemTemplate(uint32 entry) const;
         ItemTemplateContainer const* GetItemTemplateStore() const { return &_itemTemplateStore; }
-        uint32 GetCreatureDisplay(int32 modelid) const; //Dress NPCs
 
         InstanceTemplate const* GetInstanceTemplate(uint32 mapId) const;
 
@@ -1253,7 +1234,7 @@ class TC_GAME_API ObjectMgr
 
         void LoadPlayerInfo();
         void LoadPlayerCustomSpells();
-        void LoadPlayerCustomSkills();
+        //void LoadPlayerCustomSkills();
         void LoadPetLevelInfo();
         void LoadExplorationBaseXP();
         void LoadPetNames();
@@ -1270,7 +1251,6 @@ class TC_GAME_API ObjectMgr
 
         void LoadNPCSpellClickSpells();
 
-        void LoadCreatureOutfits(); //Dress NPCs
         void LoadGameTele();
 
         void LoadGossipMenu();
@@ -1501,10 +1481,7 @@ class TC_GAME_API ObjectMgr
 
         Trainer::Trainer const* GetTrainer(uint32 trainerId) const;
         uint32 GetCreatureDefaultTrainer(uint32 creatureId) const;
-
-        //Dress NPCs
-        const CreatureOutfitContainer& GetCreatureOutfitMap() const { return _creatureOutfitStore; }
-
+        
         VendorItemData const* GetNpcVendorItemList(uint32 entry) const
         {
             CacheVendorItemContainer::const_iterator iter = _cacheVendorItemStore.find(entry);
@@ -1717,8 +1694,6 @@ class TC_GAME_API ObjectMgr
 
         PageTextContainer _pageTextStore;
         InstanceTemplateContainer _instanceTemplateStore;
-
-        CreatureOutfitContainer _creatureOutfitStore;
 
         TerrainPhaseInfo _terrainPhaseInfoStore;
         TerrainPhaseInfo _terrainMapDefaultStore;

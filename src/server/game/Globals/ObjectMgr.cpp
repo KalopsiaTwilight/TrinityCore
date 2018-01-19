@@ -359,7 +359,7 @@ void ObjectMgr::LoadGossipMenuItemsLocales()
         Field* fields = result->Fetch();
 
 
-        uint16 menuId   = fields[0].GetUInt16();
+        uint16 menuId           = fields[0].GetUInt16();
         uint16 optionId         = fields[1].GetUInt16();
         std::string localeName  = fields[2].GetString();
 
@@ -458,15 +458,15 @@ void ObjectMgr::LoadCreatureTemplate(Field* fields)
         creatureTemplate.DifficultyEntry[i] = fields[1 + i].GetUInt32();
 
     for (uint8 i = 0; i < MAX_KILL_CREDIT; ++i)
-        creatureTemplate.KillCredit[i] = fields[4 + i].GetUInt32();
+        creatureTemplate.KillCredit[i]      = fields[4 + i].GetUInt32();
 
-    creatureTemplate.Modelid1          = fields[6].GetInt32();
-    creatureTemplate.Modelid2          = fields[7].GetInt32();
-    creatureTemplate.Modelid3          = fields[8].GetInt32();
-    creatureTemplate.Modelid4          = fields[9].GetInt32();
-    creatureTemplate.Name              = fields[10].GetString();
-    creatureTemplate.FemaleName        = fields[11].GetString();
-    creatureTemplate.SubName           = fields[12].GetString();
+    creatureTemplate.Modelid1               = fields[6].GetUInt32();
+    creatureTemplate.Modelid2               = fields[7].GetUInt32();
+    creatureTemplate.Modelid3               = fields[8].GetUInt32();
+    creatureTemplate.Modelid4               = fields[9].GetUInt32();
+    creatureTemplate.Name                   = fields[10].GetString();
+    creatureTemplate.FemaleName             = fields[11].GetString();
+    creatureTemplate.SubName                = fields[12].GetString();
     creatureTemplate.TitleAlt               = fields[13].GetString();
     creatureTemplate.IconName               = fields[14].GetString();
     creatureTemplate.GossipMenuId           = fields[15].GetUInt32();
@@ -556,11 +556,11 @@ void ObjectMgr::LoadCreatureTemplateAddons()
 
         CreatureAddon& creatureAddon = _creatureTemplateAddonStore[entry];
 
-        creatureAddon.path_id = fields[1].GetUInt32();
-        creatureAddon.mount   = fields[2].GetUInt32();
-        creatureAddon.bytes1  = fields[3].GetUInt32();
-        creatureAddon.bytes2  = fields[4].GetUInt32();
-        creatureAddon.emote   = fields[5].GetUInt32();
+        creatureAddon.path_id         = fields[1].GetUInt32();
+        creatureAddon.mount           = fields[2].GetUInt32();
+        creatureAddon.bytes1          = fields[3].GetUInt32();
+        creatureAddon.bytes2          = fields[4].GetUInt32();
+        creatureAddon.emote           = fields[5].GetUInt32();
         creatureAddon.aiAnimKit       = fields[6].GetUInt16();
         creatureAddon.movementAnimKit = fields[7].GetUInt16();
         creatureAddon.meleeAnimKit    = fields[8].GetUInt16();
@@ -868,64 +868,64 @@ void ObjectMgr::CheckCreatureTemplate(CreatureTemplate const* cInfo)
 
     if (cInfo->Modelid1)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid1));
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid1);
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid1 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid1);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid1 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid1);
             const_cast<CreatureTemplate*>(cInfo)->Modelid1 = 0;
         }
         else
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid1));
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid1);
         if (!modelInfo)
-            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid1` = %i listed by creature (Entry: %u).", cInfo->Modelid1, cInfo->Entry);
+            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid1` = %u listed by creature (Entry: %u).", cInfo->Modelid1, cInfo->Entry);
     }
 
     if (cInfo->Modelid2)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid2));
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid2);
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid2 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid2);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid2 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid2);
             const_cast<CreatureTemplate*>(cInfo)->Modelid2 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid2));
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid2);
         if (!modelInfo)
-            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid2` = %i listed by creature (Entry: %u).", cInfo->Modelid2, cInfo->Entry);
+            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid2` = %u listed by creature (Entry: %u).", cInfo->Modelid2, cInfo->Entry);
     }
 
     if (cInfo->Modelid3)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid3));
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid3);
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid3 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid3);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid3 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid3);
             const_cast<CreatureTemplate*>(cInfo)->Modelid3 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid3));
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid3);
         if (!modelInfo)
             TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid3` = %i listed by creature (Entry: %u).", cInfo->Modelid3, cInfo->Entry);
     }
 
     if (cInfo->Modelid4)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid4));
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid4);
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid4 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid4);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid4 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid4);
             const_cast<CreatureTemplate*>(cInfo)->Modelid4 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid4));
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid4);
         if (!modelInfo)
             TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid4` = %i listed by creature (Entry: %u).", cInfo->Modelid4, cInfo->Entry);
     }
@@ -1113,10 +1113,10 @@ void ObjectMgr::LoadCreatureAddons()
             TC_LOG_ERROR("sql.sql", "Creature (GUID " UI64FMTD ") has movement type set to WAYPOINT_MOTION_TYPE but no path assigned", guid);
         }
 
-        creatureAddon.mount   = fields[2].GetUInt32();
-        creatureAddon.bytes1  = fields[3].GetUInt32();
-        creatureAddon.bytes2  = fields[4].GetUInt32();
-        creatureAddon.emote   = fields[5].GetUInt32();
+        creatureAddon.mount           = fields[2].GetUInt32();
+        creatureAddon.bytes1          = fields[3].GetUInt32();
+        creatureAddon.bytes2          = fields[4].GetUInt32();
+        creatureAddon.emote           = fields[5].GetUInt32();
         creatureAddon.aiAnimKit       = fields[6].GetUInt16();
         creatureAddon.movementAnimKit = fields[7].GetUInt16();
         creatureAddon.meleeAnimKit    = fields[8].GetUInt16();
@@ -1308,7 +1308,7 @@ void ObjectMgr::LoadEquipmentTemplates()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                 0     1       2           3           4
+    //                                                        0   1        2                 3            4
     QueryResult result = WorldDatabase.Query("SELECT CreatureID, ID, ItemID1, AppearanceModID1, ItemVisual1, "
     //                                                                     5                 6            7
                                                                     "ItemID2, AppearanceModID2, ItemVisual2, "
@@ -1405,7 +1405,7 @@ CreatureModelInfo const* ObjectMgr::GetCreatureModelInfo(uint32 modelId) const
     return nullptr;
 }
 
-int32 ObjectMgr::ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data /*= nullptr*/)
+uint32 ObjectMgr::ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data /*= nullptr*/)
 {
     // Load creature model (display id)
     if (data && data->displayid)
@@ -2456,8 +2456,8 @@ bool ObjectMgr::GetPlayerNameByGUID(ObjectGuid const& guid, std::string& name)
     if (!characterInfo)
         return false;
 
-        name = characterInfo->Name;
-        return true;
+    name = characterInfo->Name;
+    return true;
 }
 
 bool ObjectMgr::GetPlayerNameAndClassByGUID(ObjectGuid const& guid, std::string& name, uint8& _class)
@@ -2716,7 +2716,7 @@ struct ItemSpecStats
                 default:
                     if (item->SubClass == ITEM_SUBCLASS_ARMOR_SHIELD)
                     {
-                    ItemType = 6;
+                        ItemType = 6;
                         AddStat(ITEM_SPEC_STAT_SHIELD);
                     }
                     else if (item->SubClass > ITEM_SUBCLASS_ARMOR_SHIELD && item->SubClass <= ITEM_SUBCLASS_ARMOR_RELIC)
@@ -2867,36 +2867,36 @@ void ObjectMgr::LoadItemTemplates()
                 {
                     itemTemplate.ItemSpecClassMask |= 1 << (specialization->ClassID - 1);
                     itemTemplate.Specializations[0].set(ItemTemplate::CalculateItemSpecBit(specialization));
-            itemTemplate.Specializations[1] |= itemTemplate.Specializations[0];
+                    itemTemplate.Specializations[1] |= itemTemplate.Specializations[0];
                     itemTemplate.Specializations[2] |= itemTemplate.Specializations[0];
-        }
+                }
             }
         }
         else
         {
             ItemSpecStats itemSpecStats(db2Data, sparse);
 
-                for (ItemSpecEntry const* itemSpec : sItemSpecStore)
-                {
-                    if (itemSpecStats.ItemType != itemSpec->ItemType)
-                        continue;
+            for (ItemSpecEntry const* itemSpec : sItemSpecStore)
+            {
+                if (itemSpecStats.ItemType != itemSpec->ItemType)
+                    continue;
 
                 bool hasPrimary = itemSpec->PrimaryStat == ITEM_SPEC_STAT_NONE;
-                    bool hasSecondary = itemSpec->SecondaryStat == ITEM_SPEC_STAT_NONE;
-                    for (uint32 i = 0; i < itemSpecStats.ItemSpecStatCount; ++i)
-                    {
-                        if (itemSpecStats.ItemSpecStatTypes[i] == itemSpec->PrimaryStat)
-                            hasPrimary = true;
-                        if (itemSpecStats.ItemSpecStatTypes[i] == itemSpec->SecondaryStat)
-                            hasSecondary = true;
-                    }
-
-                    if (!hasPrimary || !hasSecondary)
-                        continue;
-
-                    if (ChrSpecializationEntry const* specialization = sChrSpecializationStore.LookupEntry(itemSpec->SpecID))
+                bool hasSecondary = itemSpec->SecondaryStat == ITEM_SPEC_STAT_NONE;
+                for (uint32 i = 0; i < itemSpecStats.ItemSpecStatCount; ++i)
                 {
-                        if ((1 << (specialization->ClassID - 1)) & sparse->AllowableClass)
+                    if (itemSpecStats.ItemSpecStatTypes[i] == itemSpec->PrimaryStat)
+                        hasPrimary = true;
+                    if (itemSpecStats.ItemSpecStatTypes[i] == itemSpec->SecondaryStat)
+                        hasSecondary = true;
+                }
+
+                if (!hasPrimary || !hasSecondary)
+                    continue;
+
+                if (ChrSpecializationEntry const* specialization = sChrSpecializationStore.LookupEntry(itemSpec->SpecID))
+                {
+                    if ((1 << (specialization->ClassID - 1)) & sparse->AllowableClass)
                     {
                         itemTemplate.ItemSpecClassMask |= 1 << (specialization->ClassID - 1);
                         std::size_t specBit = ItemTemplate::CalculateItemSpecBit(specialization);
@@ -2905,9 +2905,9 @@ void ObjectMgr::LoadItemTemplates()
                             itemTemplate.Specializations[1].set(specBit);
                         if (itemSpec->MaxLevel >= 110)
                             itemTemplate.Specializations[2].set(specBit);
+                    }
                 }
             }
-        }
         }
 
         // Items that have no specializations set can be used by everyone
@@ -3430,8 +3430,8 @@ void ObjectMgr::LoadPlayerInfo()
     }
 
     // Load playercreate custom skills
-    TC_LOG_INFO("server.loading", "Loading Player Create Custom Skill Data...");
-    LoadPlayerCustomSkills();
+    //TC_LOG_INFO("server.loading", "Loading Player Create Custom Skill Data...");
+    //LoadPlayerCustomSkills();
 
     // Load playercreate custom spells
     TC_LOG_INFO("server.loading", "Loading Player Create Custom Spell Data...");
@@ -3711,7 +3711,7 @@ void ObjectMgr::LoadPlayerInfo()
         TC_LOG_INFO("server.loading", ">> Loaded %u xp for level definition(s) from database in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     }
 }
-
+/*
 void ObjectMgr::LoadPlayerCustomSkills()
 {
     uint32 oldMSTime = getMSTime();
@@ -3780,7 +3780,7 @@ void ObjectMgr::LoadPlayerCustomSkills()
             TC_LOG_INFO("server.loading", ">> Loaded %u custom player create skills in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
             }
     }
-
+*/
 void ObjectMgr::LoadPlayerCustomSpells()
 {
     uint32 oldMSTime = getMSTime();
@@ -3847,7 +3847,8 @@ void ObjectMgr::LoadPlayerCustomSpells()
                     }
                 }
             }
-        } while (result->NextRow());
+        }
+        while (result->NextRow());
             
         TC_LOG_INFO("server.loading", ">> Loaded %u custom player create spells in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
     }
@@ -3968,7 +3969,7 @@ void ObjectMgr::LoadQuests()
     QueryResult result = WorldDatabase.Query("SELECT "
         //0  1          2           3               4         5            6            7                  8                9                   10
         "ID, QuestType, QuestLevel, QuestPackageID, MinLevel, QuestSortID, QuestInfoID, SuggestedGroupNum, RewardNextQuest, RewardXPDifficulty, RewardXPMultiplier, "
-        //11          12                     13                     14                15                  16           17           18               19         20     21
+        //11          12                     13                     14                15                   16                   17                   18           19           20               21
         "RewardMoney, RewardMoneyDifficulty, RewardMoneyMultiplier, RewardBonusMoney, RewardDisplaySpell1, RewardDisplaySpell2, RewardDisplaySpell3, RewardSpell, RewardHonor, RewardKillHonor, StartItem, "
         //22                         23                          24                        25     26
         "RewardArtifactXPDifficulty, RewardArtifactXPMultiplier, RewardArtifactCategoryID, Flags, FlagsEx, "
@@ -4610,20 +4611,20 @@ void ObjectMgr::LoadQuests()
             {
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(qinfo->RewardDisplaySpell[i]);
 
-            if (!spellInfo)
-            {
+                if (!spellInfo)
+                {
                     TC_LOG_ERROR("sql.sql", "Quest %u has `RewardDisplaySpell%u` = %u but spell %u does not exist, spell removed as display reward.",
                         qinfo->GetQuestId(), i, qinfo->RewardDisplaySpell[i], qinfo->RewardDisplaySpell[i]);
                     qinfo->RewardDisplaySpell[i] = 0;                        // no spell reward will display for this quest
-            }
+                }
 
-            else if (!SpellMgr::IsSpellValid(spellInfo))
-            {
+                else if (!SpellMgr::IsSpellValid(spellInfo))
+                {
                     TC_LOG_ERROR("sql.sql", "Quest %u has `RewardDisplaySpell%u` = %u but spell %u is broken, quest will not have a spell reward.",
                         qinfo->GetQuestId(), i, qinfo->RewardDisplaySpell[i], qinfo->RewardDisplaySpell[i]);
                     qinfo->RewardDisplaySpell[i] = 0;                        // no spell reward will display for this quest
+                }
             }
-        }
         }
 
         if (qinfo->RewardSpell > 0)
@@ -6227,7 +6228,7 @@ uint32 ObjectMgr::GetTaxiMountDisplayId(uint32 id, uint32 team, bool allowed_alt
         CreatureTemplate const* mount_info = GetCreatureTemplate(mount_entry);
         if (mount_info)
         {
-            mount_id = sObjectMgr->GetCreatureDisplay(mount_info->GetRandomValidModelId());
+            mount_id = mount_info->GetRandomValidModelId();
             if (!mount_id)
             {
                 TC_LOG_ERROR("sql.sql", "No displayid found for the taxi mount with the entry %u! Can't load it!", mount_entry);
@@ -7214,10 +7215,10 @@ void ObjectMgr::LoadGameObjectTemplateAddons()
         }
 
         GameObjectTemplateAddon& gameObjectAddon = _gameObjectTemplateAddonStore[entry];
-        gameObjectAddon.faction = uint32(fields[1].GetUInt16());
-        gameObjectAddon.flags   = fields[2].GetUInt32();
-        gameObjectAddon.mingold = fields[3].GetUInt32();
-        gameObjectAddon.maxgold = fields[4].GetUInt32();
+        gameObjectAddon.faction       = uint32(fields[1].GetUInt16());
+        gameObjectAddon.flags         = fields[2].GetUInt32();
+        gameObjectAddon.mingold       = fields[3].GetUInt32();
+        gameObjectAddon.maxgold       = fields[4].GetUInt32();
         gameObjectAddon.WorldEffectID = fields[5].GetUInt32();
 
         // checks
@@ -8364,91 +8365,6 @@ SkillRangeType GetSkillRangeType(SkillRaceClassInfoEntry const* rcEntry)
     return SKILL_RANGE_LEVEL;
 }
 
-//Dress NPCs
-void ObjectMgr::LoadCreatureOutfits()
-{
-    uint32 oldMSTime = getMSTime();
-    
-    _creatureOutfitStore.clear();   // for reload case (test only)
-    
-    QueryResult result = FreedomDatabase.Query("SELECT entry, race, class, gender, skin, face, hair, haircolor, facialhair, "
-        "head, shoulders, body, chest, waist, legs, feet, wrists, hands, tabard, back FROM creature_template_outfits");
-    
-    if (!result)
-    {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 creature outfits. DB table `creature_template_outfits` is empty!");
-        return;
-    }
-    
-    uint32 count = 0;
-    
-    do
-    {
-        Field* fields = result->Fetch();
-        
-        uint32 i = 0;
-        uint32 entry = fields[i++].GetUInt32();
-        
-        CreatureOutfit co;
-        
-        co.race = fields[i++].GetUInt8();
-        const ChrRacesEntry* rEntry = sChrRacesStore.LookupEntry(co.race);
-        if (!rEntry)
-        {
-            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has incorrect race (%u).", entry, uint32(co.race));
-            continue;
-        }
-        
-        co.Class = fields[i++].GetUInt8();
-        const ChrClassesEntry* cEntry = sChrClassesStore.LookupEntry(co.Class);
-        if (!cEntry)
-        {
-            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has incorrect class (%u).", entry, uint32(co.Class));
-            continue;
-        }
-        
-        co.gender = fields[i++].GetUInt8();
-        switch (co.gender)
-        {
-            case GENDER_FEMALE: co.displayId = rEntry->FemaleDisplayID; break;
-            case GENDER_MALE:   co.displayId = rEntry->MaleDisplayID; break;
-            default:
-                TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has invalid gender %u", entry, uint32(co.gender));
-                continue;
-        }
-        
-        co.skin = fields[i++].GetUInt8();
-        co.face = fields[i++].GetUInt8();
-        co.hair = fields[i++].GetUInt8();
-        co.haircolor = fields[i++].GetUInt8();
-        co.facialhair = fields[i++].GetUInt8();
-        for (uint32 j = 0; j < MAX_CREATURE_OUTFIT_DISPLAYS; ++j)
-        {
-            int32 displayInfo = fields[i + j].GetInt32();
-            if (displayInfo > 0) // entry
-            {
-                if (uint32 display = sDB2Manager.GetItemDisplayId(static_cast<uint32>(displayInfo), 0))
-                    co.outfit[j] = display;
-                else
-                {
-                    TC_LOG_ERROR("server.loading", ">> Creature entry %u in `creature_template_outfits` has invalid item entry %i", entry, displayInfo);
-                    co.outfit[j] = 0;
-                }
-            }
-            else // display
-                co.outfit[j] = uint32(-displayInfo);
-        }
-        
-        _creatureOutfitStore[entry] = co;
-        
-        ++count;
-    }
-    while (result->NextRow());
-    
-    TC_LOG_INFO("server.loading", ">> Loaded %u creature outfits in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
-}
-
-
 void ObjectMgr::LoadGameTele()
 {
     uint32 oldMSTime = getMSTime();
@@ -8696,25 +8612,25 @@ void ObjectMgr::LoadTrainers()
             {
                 TC_LOG_ERROR("sql.sql", "Table `trainer_spell` references non-existing spell (SpellId: %u) for TrainerId %u, ignoring", spell.SpellId, trainerId);
                 continue;
-    }
+            }
 
             if (spell.ReqSkillLine && !sSkillLineStore.LookupEntry(spell.ReqSkillLine))
-    {
+            {
                 TC_LOG_ERROR("sql.sql", "Table `trainer_spell` references non-existing skill (ReqSkillLine: %u) for TrainerId %u and SpellId %u, ignoring",
                     spell.ReqSkillLine, spell.SpellId, trainerId);
                 continue;
-    }
+            }
 
             bool allReqValid = true;
             for (std::size_t i = 0; i < spell.ReqAbility.size(); ++i)
-    {
+            {
                 uint32 requiredSpell = spell.ReqAbility[i];
                 if (requiredSpell && !sSpellMgr->GetSpellInfo(requiredSpell))
                 {
                     TC_LOG_ERROR("sql.sql", "Table `trainer_spell` references non-existing spell (ReqAbility" SZFMTD ": %u) for TrainerId %u and SpellId %u, ignoring",
                         i + 1, requiredSpell, spell.SpellId, trainerId);
                     allReqValid = false;
-    }
+                }
             }
 
             if (!allReqValid)
@@ -8722,14 +8638,14 @@ void ObjectMgr::LoadTrainers()
 
             spell.LearnedSpellId = spell.SpellId;
             for (SpellEffectInfo const* spellEffect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
-    {
+            {
                 if (spellEffect && spellEffect->IsEffect(SPELL_EFFECT_LEARN_SPELL))
                 {
                     ASSERT(spell.LearnedSpellId == spell.SpellId,
                         "Only one learned spell is currently supported - spell %u already teaches %u but it tried to overwrite it with %u",
                         spell.SpellId, spell.LearnedSpellId, spellEffect->TriggerSpell);
                     spell.LearnedSpellId = spellEffect->TriggerSpell;
-    }
+                }
             }
 
             spellsByTrainer[trainerId].push_back(spell);
@@ -8798,9 +8714,9 @@ void ObjectMgr::LoadCreatureDefaultTrainers()
 
     if (QueryResult result = WorldDatabase.Query("SELECT CreatureId, TrainerId FROM creature_default_trainer"))
     {
-    do
-    {
-        Field* fields = result->Fetch();
+        do
+        {
+            Field* fields = result->Fetch();
             uint32 creatureId = fields[0].GetUInt32();
             uint32 trainerId = fields[1].GetUInt32();
 
@@ -9050,7 +8966,7 @@ void ObjectMgr::LoadGossipMenuItems()
         {
             TC_LOG_ERROR("sql.sql", "Table `gossip_menu_option_trainer` for MenuId %u, OptionIndex %u use non-existing TrainerId %u, ignoring", gMenuItem.MenuID, gMenuItem.OptionID, gMenuItem.TrainerId);
             gMenuItem.TrainerId = 0;
-    }
+        }
 
         _gossipMenuItemsStore.insert(GossipMenuItemsContainer::value_type(gMenuItem.MenuID, gMenuItem));
     } while (result->NextRow());
@@ -9192,7 +9108,7 @@ bool ObjectMgr::IsVendorItemValid(uint32 vendor_entry, VendorItem const& vItem, 
             {
                 TC_LOG_ERROR("sql.sql", "Table `(game_event_)npc_vendor` have Item (Entry: %u) with invalid bonus %u for vendor (%u), ignore", vItem.item, bonusList, vendor_entry);
                 return false;
-    }
+            }
         }
     }
 
@@ -9817,20 +9733,6 @@ PlayerInfo const* ObjectMgr::GetPlayerInfo(uint32 race, uint32 class_) const
         return nullptr;
     return info;
 }
-
-//Dress NPCs
-uint32 ObjectMgr::GetCreatureDisplay(int32 modelid) const
-{
-    if (modelid >= 0)
-        return modelid;
-    
-        const CreatureOutfitContainer& outfits = GetCreatureOutfitMap();
-    CreatureOutfitContainer::const_iterator it = outfits.find(-modelid);
-    if (it != outfits.end())
-        return it->second.displayId;
-    
-        return 0;
-    }
 
 void ObjectMgr::LoadRaceAndClassExpansionRequirements()
 {

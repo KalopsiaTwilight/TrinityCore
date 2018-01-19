@@ -596,7 +596,7 @@ bool Player::Create(ObjectGuid::LowType guidlow, WorldPackets::Character::Charac
 
     // original spells
     LearnDefaultSkills();
-    LearnCustomSkills();
+    //LearnCustomSkills();
     LearnCustomSpells();
 
     // Original action bar. Do not use Player::AddActionButton because we do not have skill spells loaded at this time
@@ -1861,11 +1861,11 @@ void Player::Regenerate(Powers power)
 
         addvalue = (powerType->RegenerationPeace + GetFloatValue(UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER + powerIndex)) * 0.001f * m_regenTimer;
     }
-            else
+    else
         addvalue = (powerType->RegenerationCombat + GetFloatValue(UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER + powerIndex)) * 0.001f * m_regenTimer;
 
     static Rates const RatesForPower[MAX_POWERS] =
-        {
+    {
         RATE_POWER_MANA,
         RATE_POWER_RAGE_LOSS,
         RATE_POWER_FOCUS,
@@ -1898,7 +1898,7 @@ void Player::Regenerate(Powers power)
             if (Powers((*i)->GetMiscValue()) == power)
                 AddPct(addvalue, (*i)->GetAmount());
 
-            addvalue += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * ((power != POWER_ENERGY) ? m_regenTimerCount : m_regenTimer) / (5 * IN_MILLISECONDS);
+        addvalue += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_POWER_REGEN, power) * ((power != POWER_ENERGY) ? m_regenTimerCount : m_regenTimer) / (5 * IN_MILLISECONDS);
     }
 
     int32 minPower = powerType->RegenerationMin;
@@ -1953,7 +1953,7 @@ void Player::Regenerate(Powers power)
     {
         if (curValue + integerValue <= maxPower)
         {
-        curValue += integerValue;
+            curValue += integerValue;
             m_powerFraction[powerIndex] = addvalue - integerValue;
         }
         else
@@ -2798,8 +2798,8 @@ void Player::AddNewMailDeliverTime(time_t deliver_time)
 void DeleteSpellFromAllPlayers(uint32 spellId)
 {
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_INVALID_SPELL_SPELLS);
-        stmt->setUInt32(0, spellId);
-        CharacterDatabase.Execute(stmt);
+    stmt->setUInt32(0, spellId);
+    CharacterDatabase.Execute(stmt);
 }
 
 bool Player::AddTalent(TalentEntry const* talent, uint8 spec, bool learning)
@@ -2813,7 +2813,7 @@ bool Player::AddTalent(TalentEntry const* talent, uint8 spec, bool learning)
 
     if (!SpellMgr::IsSpellValid(spellInfo, this, false))
     {
-            TC_LOG_ERROR("spells", "Player::AddTalent: Spell (ID: %u) is invalid", talent->SpellID);
+        TC_LOG_ERROR("spells", "Player::AddTalent: Spell (ID: %u) is invalid", talent->SpellID);
         return false;
     }
 
@@ -3411,7 +3411,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
         if (spellInfo && spellInfo->IsPassive() && spellInfo->HasEffect(SPELL_EFFECT_TITAN_GRIP))
         {
             RemoveAurasDueToSpell(m_titanGripPenaltySpellId);
-        SetCanTitanGrip(false);
+            SetCanTitanGrip(false);
         }
     }
 
@@ -3584,7 +3584,7 @@ void Player::BuildCreateUpdateBlockForPlayer(UpdateData* data, Player* target) c
                 continue;
 
             m_items[i]->BuildCreateUpdateBlockForPlayer(data, target);
-    }
+        }
 
         for (uint8 i = CHILD_EQUIPMENT_SLOT_START; i < CHILD_EQUIPMENT_SLOT_END; ++i)
         {
@@ -3626,7 +3626,7 @@ void Player::DestroyForPlayer(Player* target) const
                 continue;
 
             m_items[i]->DestroyForPlayer(target);
-    }
+        }
 
         for (uint8 i = CHILD_EQUIPMENT_SLOT_START; i < CHILD_EQUIPMENT_SLOT_END; ++i)
         {
@@ -4690,7 +4690,7 @@ void Player::CleanupChannels()
                 cMgr->LeftChannel(ch->GetChannelId(), ch->GetZoneEntry());
             else
                 cMgr->LeftChannel(ch->GetName());
-    }
+        }
     }
     TC_LOG_DEBUG("chat.system", "Player::CleanupChannels: Channels of player '%s' (%s) cleaned up.", GetName().c_str(), GetGUID().ToString().c_str());
 }
@@ -4714,56 +4714,56 @@ void Player::UpdateLocalChannels(uint32 newZone)
         if (!channelEntry)
             continue;
 
-            Channel* usedChannel = nullptr;
+        Channel* usedChannel = nullptr;
         for (Channel* channel : m_channels)
-            {
+        {
             if (channel->GetChannelId() == i)
-                {
+            {
                 usedChannel = channel;
-                    break;
-                }
-            }
-
-            Channel* removeChannel = nullptr;
-            Channel* joinChannel = nullptr;
-            bool sendRemove = true;
-
-        if (CanJoinConstantChannelInZone(channelEntry, current_zone))
-            {
-            if (!(channelEntry->Flags & CHANNEL_DBC_FLAG_GLOBAL))
-                {
-                if (channelEntry->Flags & CHANNEL_DBC_FLAG_CITY_ONLY && usedChannel)
-                        continue;                            // Already on the channel, as city channel names are not changing
-
-                joinChannel = cMgr->GetJoinChannel(channelEntry->ID, std::string(), current_zone);
-                    if (usedChannel)
-                    {
-                        if (joinChannel != usedChannel)
-                        {
-                            removeChannel = usedChannel;
-                            sendRemove = false;              // Do not send leave channel, it already replaced at client
-                        }
-                        else
-                            joinChannel = nullptr;
-                    }
-                }
-                else
-                joinChannel = cMgr->GetJoinChannel(channelEntry->ID, std::string());
-            }
-            else
-                removeChannel = usedChannel;
-
-            if (joinChannel)
-                joinChannel->JoinChannel(this, "");          // Changed Channel: ... or Joined Channel: ...
-
-            if (removeChannel)
-            {
-                removeChannel->LeaveChannel(this, sendRemove); // Leave old channel
-
-                LeftChannel(removeChannel);                  // Remove from player's channel list
-            cMgr->LeftChannel(removeChannel->GetChannelId(), removeChannel->GetZoneEntry());    // Delete if empty
+                break;
             }
         }
+
+        Channel* removeChannel = nullptr;
+        Channel* joinChannel = nullptr;
+        bool sendRemove = true;
+
+        if (CanJoinConstantChannelInZone(channelEntry, current_zone))
+        {
+            if (!(channelEntry->Flags & CHANNEL_DBC_FLAG_GLOBAL))
+            {
+                if (channelEntry->Flags & CHANNEL_DBC_FLAG_CITY_ONLY && usedChannel)
+                    continue;                            // Already on the channel, as city channel names are not changing
+
+                joinChannel = cMgr->GetJoinChannel(channelEntry->ID, std::string(), current_zone);
+                if (usedChannel)
+                {
+                    if (joinChannel != usedChannel)
+                    {
+                        removeChannel = usedChannel;
+                        sendRemove = false;              // Do not send leave channel, it already replaced at client
+                    }
+                    else
+                        joinChannel = nullptr;
+                }
+            }
+            else
+                joinChannel = cMgr->GetJoinChannel(channelEntry->ID, std::string());
+        }
+        else
+            removeChannel = usedChannel;
+
+        if (joinChannel)
+            joinChannel->JoinChannel(this, "");          // Changed Channel: ... or Joined Channel: ...
+
+        if (removeChannel)
+        {
+            removeChannel->LeaveChannel(this, sendRemove);                                  // Leave old channel
+
+            LeftChannel(removeChannel);                                                     // Remove from player's channel list
+            cMgr->LeftChannel(removeChannel->GetChannelId(), removeChannel->GetZoneEntry());    // Delete if empty
+        }
+    }
 }
 
 void Player::LeaveLFGChannel()
@@ -5290,7 +5290,7 @@ bool Player::UpdateFishingSkill()
     {
         m_fishingSteps = 0;
 
-    uint32 gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
+        uint32 gathering_skill_gain = sWorld->getIntConfig(CONFIG_SKILL_GAIN_GATHERING);
         return UpdateSkillPro(SKILL_FISHING, 100*10, gathering_skill_gain);
     }
 
@@ -7636,9 +7636,9 @@ void Player::ApplyItemDependentAuras(Item* item, bool apply)
 
             if (!HasAura(itr->first) && HasItemFitToSpellRequirements(spellInfo))
                 AddAura(itr->first, this);  // no SMSG_SPELL_GO in sniff found
+        }
     }
-    }
-            else
+    else
         RemoveItemDependentAurasAndCasts(item);
 }
 
@@ -7829,7 +7829,6 @@ void Player::ApplyArtifactPowerRank(Item* artifact, ArtifactPowerRankEntry const
             SendDirectMessage(unlearnedSpells.Write());
         }
     }
-
 }
 
 void Player::CastItemCombatSpell(DamageInfo const& damageInfo)
@@ -7877,7 +7876,7 @@ void Player::CastItemCombatSpell(DamageInfo const& damageInfo)
 
                     CastItemCombatSpell(damageInfo, item, proto);
                 }
-    }
+            }
         }
     }
 }
@@ -8569,7 +8568,7 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
         }
 
         if (!aeLooting)
-        SetLootGUID(guid);
+            SetLootGUID(guid);
 
         WorldPackets::Loot::LootResponse packet;
         packet.Owner = guid;
@@ -10161,7 +10160,7 @@ InventoryResult Player::CanStoreItem_InSpecificSlot(uint8 bag, uint8 slot, ItemP
     if (pSrcItem)
     {
         if (pSrcItem->IsNotEmptyBag() && !IsBagPos(uint16(bag) << 8 | slot))
-        return EQUIP_ERR_DESTROY_NONEMPTY_BAG;
+            return EQUIP_ERR_DESTROY_NONEMPTY_BAG;
 
         if (pSrcItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_CHILD) && !IsEquipmentPos(bag, slot) && !IsChildEquipmentPos(bag, slot))
             return EQUIP_ERR_WRONG_BAG_TYPE_3;
@@ -10237,7 +10236,7 @@ InventoryResult Player::CanStoreItem_InBag(uint8 bag, ItemPosCountVec &dest, Ite
     if (pSrcItem)
     {
         if (pSrcItem->IsNotEmptyBag())
-        return EQUIP_ERR_DESTROY_NONEMPTY_BAG;
+            return EQUIP_ERR_DESTROY_NONEMPTY_BAG;
 
         if (pSrcItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_CHILD))
             return EQUIP_ERR_WRONG_BAG_TYPE_3;
@@ -11623,7 +11622,7 @@ Item* Player::StoreNewItem(ItemPosCountVec const& pos, uint32 itemId, bool updat
         UpdateCriteria(CRITERIA_TYPE_OWN_ITEM, itemId, 1);
 
         item->SetFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_NEW_ITEM);
-            item->SetItemRandomProperties(randomPropertyId);
+        item->SetItemRandomProperties(randomPropertyId);
 
         if (uint32 upgradeID = sDB2Manager.GetRulesetItemUpgrade(itemId))
             item->SetModifier(ITEM_MODIFIER_UPGRADE_ID, upgradeID);
@@ -11667,7 +11666,7 @@ Item* Player::StoreNewItem(ItemPosCountVec const& pos, uint32 itemId, bool updat
                     childItem->SetGuidValue(ITEM_FIELD_CREATOR, item->GetGUID());
                     childItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_CHILD);
                     item->SetChildItem(childItem->GetGUID());
-    }
+                }
             }
         }
     }
@@ -12177,7 +12176,7 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
                 SetVisibleItemSlot(slot, nullptr);
                 if (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND)
                     CheckTitanGripPenalty();
-        }
+            }
         }
         else if (Bag* pBag = GetBagByPos(bag))
             pBag->RemoveItem(slot, update);
@@ -13631,11 +13630,11 @@ void Player::ApplyEnchantment(Item* item, EnchantmentSlot slot, bool apply, bool
     {
         if (!item->GetSocketColor(slot - SOCK_ENCHANTMENT_SLOT))
         {
-        // Check if the requirements for the prismatic socket are met before applying the gem stats
-        SpellItemEnchantmentEntry const* pPrismaticEnchant = sSpellItemEnchantmentStore.LookupEntry(item->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
-        if (!pPrismaticEnchant || (pPrismaticEnchant->RequiredSkillID > 0 && pPrismaticEnchant->RequiredSkillRank > GetSkillValue(pPrismaticEnchant->RequiredSkillID)))
-            return;
-    }
+            // Check if the requirements for the prismatic socket are met before applying the gem stats
+            SpellItemEnchantmentEntry const* pPrismaticEnchant = sSpellItemEnchantmentStore.LookupEntry(item->GetEnchantmentId(PRISMATIC_ENCHANTMENT_SLOT));
+            if (!pPrismaticEnchant || (pPrismaticEnchant->RequiredSkillID > 0 && pPrismaticEnchant->RequiredSkillRank > GetSkillValue(pPrismaticEnchant->RequiredSkillID)))
+                return;
+        }
 
         // Cogwheel gems dont have requirement data set in SpellItemEnchantment.dbc, but they do have it in Item-sparse.db2
         if (ItemDynamicFieldGems const* gem = item->GetGem(uint16(slot - SOCK_ENCHANTMENT_SLOT)))
@@ -14168,7 +14167,7 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                     break;
                 }
                 case GOSSIP_OPTION_LEARNDUALSPEC:
-                        canTalk = false;
+                    canTalk = false;
                     break;
                 case GOSSIP_OPTION_UNLEARNTALENTS:
                     if (!creature->CanResetTalents(this))
@@ -14694,7 +14693,7 @@ bool Player::CanCompleteQuest(uint32 quest_id)
                 if (!(obj.Flags & QUEST_OBJECTIVE_FLAG_OPTIONAL) && !(obj.Flags & QUEST_OBJECTIVE_FLAG_PART_OF_PROGRESS_BAR))
                 {
                     if (!IsQuestObjectiveComplete(obj))
-                            return false;
+                        return false;
                 }
             }
 
@@ -14903,17 +14902,16 @@ bool Player::CanRewardQuest(Quest const* quest, uint32 reward, bool msg)
                     if (questPackageItem->ItemID != reward)
                         continue;
 
-                        InventoryResult res = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount);
-                        if (res != EQUIP_ERR_OK)
-                        {
-                            SendEquipError(res, nullptr, nullptr, questPackageItem->ItemID);
-                            return false;
-                        }
+                    InventoryResult res = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount);
+                    if (res != EQUIP_ERR_OK)
+                    {
+                        SendEquipError(res, nullptr, nullptr, questPackageItem->ItemID);
+                        return false;
                     }
                 }
             }
         }
-
+    }
     return true;
 }
 
@@ -14949,8 +14947,8 @@ void Player::AddQuest(Quest const* quest, Object* questGiver)
         {
             case QUEST_OBJECTIVE_MIN_REPUTATION:
             case QUEST_OBJECTIVE_MAX_REPUTATION:
-            if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
-                GetReputationMgr().SetVisible(factionEntry);
+                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
+                    GetReputationMgr().SetVisible(factionEntry);
                 break;
             case QUEST_OBJECTIVE_CRITERIA_TREE:
                 if (quest->HasFlagEx(QUEST_FLAGS_EX_CLEAR_PROGRESS_OF_CRITERIA_TREE_OBJECTIVES_ON_ACCEPT))
@@ -15021,7 +15019,7 @@ void Player::CompleteQuest(uint32 quest_id)
         if (Quest const* qInfo = sObjectMgr->GetQuestTemplate(quest_id))
             if (qInfo->HasFlag(QUEST_FLAGS_TRACKING))
                 RewardQuest(qInfo, 0, this, false);
-        }
+    }
 
     if (sWorld->getBoolConfig(CONFIG_QUEST_ENABLE_QUEST_TRACKER)) // check if Quest Tracker is enabled
     {
@@ -15264,7 +15262,7 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
         if (uint32 questMailSender = quest->GetRewMailSenderEntry())
             MailDraft(mail_template_id).SendMailTo(trans, this, questMailSender, MAIL_CHECK_MASK_HAS_BODY, quest->GetRewMailDelaySecs());
         else
-        MailDraft(mail_template_id).SendMailTo(trans, this, questGiver, MAIL_CHECK_MASK_HAS_BODY, quest->GetRewMailDelaySecs());
+            MailDraft(mail_template_id).SendMailTo(trans, this, questGiver, MAIL_CHECK_MASK_HAS_BODY, quest->GetRewMailDelaySecs());
         CharacterDatabase.CommitTransaction(trans);
     }
 
@@ -15321,13 +15319,13 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
                 if (questGiver && questGiver->isType(TYPEMASK_UNIT) &&
                     !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) &&
                     !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_CREATE_ITEM))
-        {
+                {
                     if (Unit* unit = questGiver->ToUnit())
                         unit->CastSpell(this, quest->RewardDisplaySpell[i], true);
-        }
-        else
+                }
+                else
                     CastSpell(this, quest->RewardDisplaySpell[i], true);
-    }
+            }
         }
     }
 
@@ -16019,7 +16017,7 @@ void Player::SetQuestStatus(uint32 questId, QuestStatus status, bool update /*= 
         m_QuestStatus[questId].Status = status;
 
         if (!quest->IsAutoComplete())
-        m_QuestStatusSave[questId] = QUEST_DEFAULT_SAVE_TYPE;
+            m_QuestStatusSave[questId] = QUEST_DEFAULT_SAVE_TYPE;
 
         sScriptMgr->OnQuestStatusChange(this, questId);
         sScriptMgr->OnQuestStatusChange(this, quest, oldStatus, status);
@@ -16061,7 +16059,7 @@ void Player::RemoveRewardedQuest(uint32 questId, bool update /*= true*/)
 void Player::SendQuestUpdate(uint32 questId)
 {
     uint32 zone = 0, area = 0;
-        GetZoneAndAreaId(zone, area);
+    GetZoneAndAreaId(zone, area);
 
     SpellAreaForQuestAreaMapBounds saBounds = sSpellMgr->GetSpellAreaForQuestAreaMapBounds(area, questId);
 
@@ -16074,7 +16072,7 @@ void Player::SendQuestUpdate(uint32 questId)
             else if (itr->second->autocast)
                 if (!HasAura(itr->second->spellId))
                     CastSpell(this, itr->second->spellId, true);
-    }
+        }
     }
 
     UpdateForQuestWorldObjects();
@@ -16128,7 +16126,7 @@ QuestGiverStatus Player::GetQuestDialogStatus(Object* questgiver)
 
         QuestStatus status = GetQuestStatus(questId);
         if (status == QUEST_STATUS_COMPLETE && !GetQuestRewardStatus(questId))
-                result2 = DIALOG_STATUS_REWARD;
+            result2 = DIALOG_STATUS_REWARD;
         else if (status == QUEST_STATUS_INCOMPLETE)
             result2 = DIALOG_STATUS_INCOMPLETE;
 
@@ -17017,7 +17015,7 @@ void Player::SendQuestReward(Quest const* quest, Creature const* questGiver, uin
         else if (questGiver->IsQuestGiver())
             packet.LaunchQuest = true;
         else if (quest->GetNextQuestInChain() && !quest->HasFlag(QUEST_FLAGS_AUTOCOMPLETE))
-    packet.UseQuestReward = true;
+            packet.UseQuestReward = true;
     }
 
     packet.HideChatMessage = hideChatMessage;
@@ -18005,8 +18003,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     // after spell and quest load
     InitTalentForLevel();
     LearnDefaultSkills();
-    LearnCustomSkills();
     LearnCustomSpells();
+    //LearnCustomSkills();
 
     // must be before inventory (some items required reputation check)
     m_reputationMgr->LoadFromDB(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_REPUTATION));
@@ -19027,7 +19025,7 @@ void Player::_LoadQuestStatusObjectives(PreparedQueryResult result)
                     int32 data = fields[2].GetInt32();
                     questStatusData.ObjectiveData[objectiveIndex] = data;
                     if (!objectiveItr->IsStoringFlag())
-                    SetQuestSlotCounter(slot, objectiveIndex, data);
+                        SetQuestSlotCounter(slot, objectiveIndex, data);
                     else if (data)
                         SetQuestSlotState(slot, 256 << objectiveIndex);
                 }
@@ -19083,8 +19081,8 @@ void Player::_LoadQuestStatusRewarded(PreparedQueryResult result)
                                 GetSession()->GetCollectionMgr()->AddItemAppearance(questPackageItem->ItemID);
 
                 if (quest->CanIncreaseRewardedQuestCounters())
-            m_RewardedQuests.insert(quest_id);
-        }
+                    m_RewardedQuests.insert(quest_id);
+            }
         }
         while (result->NextRow());
     }
@@ -19240,12 +19238,12 @@ void Player::_LoadGroup(PreparedQueryResult result)
             SetGroup(group, subgroup);
             SetPartyType(group->GetGroupCategory(), GROUP_TYPE_NORMAL);
             ResetGroupUpdateSequenceIfNeeded(group);
-                // the group leader may change the instance difficulty while the player is offline
-                SetDungeonDifficultyID(group->GetDungeonDifficultyID());
-                SetRaidDifficultyID(group->GetRaidDifficultyID());
-                SetLegacyRaidDifficultyID(group->GetLegacyRaidDifficultyID());
-            }
+            // the group leader may change the instance difficulty while the player is offline
+            SetDungeonDifficultyID(group->GetDungeonDifficultyID());
+            SetRaidDifficultyID(group->GetRaidDifficultyID());
+            SetLegacyRaidDifficultyID(group->GetLegacyRaidDifficultyID());
         }
+    }
 
     if (!GetGroup() || !GetGroup()->IsLeader(GetGUID()))
         RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_GROUP_LEADER);
@@ -20062,7 +20060,7 @@ void Player::SaveToDB(bool create /*=false*/)
         index = 0;
         stmt->setUInt64(index++, GetGUID().GetCounter());
         stmt->setUInt32(index++, m_fishingSteps);
-    trans->Append(stmt);
+        trans->Append(stmt);
     }
 
     if (m_mailsUpdated)                                     //save mails only when needed
@@ -21689,46 +21687,46 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
     /// Now, send spellmodifier packet
     if (!IsLoading())
     {
-    OpcodeServer opcode = (mod->type == SPELLMOD_FLAT) ? SMSG_SET_FLAT_SPELL_MODIFIER : SMSG_SET_PCT_SPELL_MODIFIER;
+        OpcodeServer opcode = (mod->type == SPELLMOD_FLAT) ? SMSG_SET_FLAT_SPELL_MODIFIER : SMSG_SET_PCT_SPELL_MODIFIER;
 
-    WorldPackets::Spells::SetSpellModifier packet(opcode);
+        WorldPackets::Spells::SetSpellModifier packet(opcode);
 
-    /// @todo Implement sending of bulk modifiers instead of single
-    packet.Modifiers.resize(1);
-    WorldPackets::Spells::SpellModifier& spellMod = packet.Modifiers[0];
+        /// @todo Implement sending of bulk modifiers instead of single
+        packet.Modifiers.resize(1);
+        WorldPackets::Spells::SpellModifier& spellMod = packet.Modifiers[0];
 
-    spellMod.ModIndex = mod->op;
+        spellMod.ModIndex = mod->op;
 
-    for (int eff = 0; eff < 128; ++eff)
-    {
-            flag128 mask;
-            mask[eff / 32] = 1u << (eff % 32);
-            if (mod->mask & mask)
+        for (int eff = 0; eff < 128; ++eff)
         {
-            WorldPackets::Spells::SpellModifierData modData;
+                flag128 mask;
+                mask[eff / 32] = 1u << (eff % 32);
+                if (mod->mask & mask)
+            {
+                WorldPackets::Spells::SpellModifierData modData;
 
-                if (mod->type == SPELLMOD_FLAT)
-                {
-                    modData.ModifierValue = 0.0f;
-                    for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_FLAT])
-                        if (spellMod->mask & mask)
-                            modData.ModifierValue += spellMod->value;
-                }
-                else
-                {
-                    modData.ModifierValue = 1.0f;
-                    for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_PCT])
-                        if (spellMod->mask & mask)
-                            modData.ModifierValue *= 1.0f + CalculatePct(1.0f, spellMod->value);
-                }
+                    if (mod->type == SPELLMOD_FLAT)
+                    {
+                        modData.ModifierValue = 0.0f;
+                        for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_FLAT])
+                            if (spellMod->mask & mask)
+                                modData.ModifierValue += spellMod->value;
+                    }
+                    else
+                    {
+                        modData.ModifierValue = 1.0f;
+                        for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_PCT])
+                            if (spellMod->mask & mask)
+                                modData.ModifierValue *= 1.0f + CalculatePct(1.0f, spellMod->value);
+                    }
 
-            modData.ClassIndex = eff;
+                modData.ClassIndex = eff;
 
-            spellMod.ModifierData.push_back(modData);
+                spellMod.ModifierData.push_back(modData);
+            }
         }
-    }
 
-    SendDirectMessage(packet.Write());
+        SendDirectMessage(packet.Write());
     }
 }
 
@@ -21747,34 +21745,34 @@ void Player::RestoreSpellMods(Spell* spell, uint32 ownerAuraId /*= 0*/, Aura* au
             {
                 // Spellmods without charged aura set cannot be charged
                 if (!mod->ownerAura->IsUsingCharges())
-                continue;
+                    continue;
 
-            // Restore only specific owner aura mods
+                // Restore only specific owner aura mods
                 if (ownerAuraId && mod->spellId != ownerAuraId)
-                continue;
+                    continue;
 
-            if (aura && mod->ownerAura != aura)
-                continue;
+                if (aura && mod->ownerAura != aura)
+                    continue;
 
-            // Check if mod affected this spell
-            // First, check if the mod aura applied at least one spellmod to this spell
-            Spell::UsedSpellMods::iterator iterMod = spell->m_appliedMods.find(mod->ownerAura);
-            if (iterMod == spell->m_appliedMods.end())
-                continue;
-            // Second, check if the current mod is one of those applied by the mod aura
-            if (!(mod->mask & spell->m_spellInfo->SpellFamilyFlags))
-                continue;
+                // Check if mod affected this spell
+                // First, check if the mod aura applied at least one spellmod to this spell
+                Spell::UsedSpellMods::iterator iterMod = spell->m_appliedMods.find(mod->ownerAura);
+                if (iterMod == spell->m_appliedMods.end())
+                    continue;
+                // Second, check if the current mod is one of those applied by the mod aura
+                if (!(mod->mask & spell->m_spellInfo->SpellFamilyFlags))
+                    continue;
 
-            // remove from list - This will be done after all mods have been gone through
-            // to ensure we iterate over all mods of an aura before removing said aura
-            // from applied mods (Else, an aura with two mods on the current spell would
-            // only see the first of its modifier restored)
-            aurasQueue.push_back(mod->ownerAura);
+                // remove from list - This will be done after all mods have been gone through
+                // to ensure we iterate over all mods of an aura before removing said aura
+                // from applied mods (Else, an aura with two mods on the current spell would
+                // only see the first of its modifier restored)
+                aurasQueue.push_back(mod->ownerAura);
 
                 // add charges back to aura
                 mod->ownerAura->ModCharges(1);
+            }
         }
-    }
     }
 
     for (Aura* aura : aurasQueue)
@@ -21798,7 +21796,7 @@ void Player::ApplyModToSpell(SpellModifier* mod, Spell* spell)
         return;
 
     // register inside spell, proc system uses this to drop charges
-        spell->m_appliedMods.insert(mod->ownerAura);
+    spell->m_appliedMods.insert(mod->ownerAura);
 }
 
 void Player::SetSpellModTakingSpell(Spell* spell, bool apply)
@@ -22910,9 +22908,9 @@ bool Player::EnchantmentFitsRequirements(uint32 enchantmentcondition, int8 slot)
                 for (uint8 b = 0, tmpcolormask = 1; b < 4; b++, tmpcolormask <<= 1)
                     if (tmpcolormask & GemColor)
                         ++curcount[b];
-                }
             }
         }
+    }
 
     bool activate = true;
 
@@ -23878,8 +23876,8 @@ void Player::ResetSpells(bool myClassOnly)
             RemoveSpell(iter->first, false, false);           // only iter->first can be accessed, object by iter->second can be deleted already
 
     LearnDefaultSkills();
-    LearnCustomSkills();
     LearnCustomSpells();
+    //LearnCustomSkills();
     LearnQuestRewardedSpells();
 }
 
@@ -23902,7 +23900,7 @@ void Player::LearnCustomSpells()
     }
 }
 
-void Player::LearnCustomSkills()
+/*void Player::LearnCustomSkills()
 {
     if (!sWorld->getBoolConfig(CONFIG_START_ALL_SPELLS))
         return;
@@ -23914,7 +23912,7 @@ void Player::LearnCustomSkills()
         PlayerCreateInfoCustomSkill const &customSkill = *itr;
         SetSkill(customSkill.skillId, GetSkillValue(customSkill.skillId) ? GetSkillStep(customSkill.skillId) : 1, customSkill.rank, customSkill.rank);
     }
-}
+}*/
 
 void Player::LearnDefaultSkills()
 {
@@ -24601,7 +24599,7 @@ void Player::AutoUnequipOffhandIfNeed(bool force /*= false*/)
     if (!CanDualWield()
         && ((offItem->GetTemplate()->GetInventoryType() == INVTYPE_WEAPONOFFHAND && !(offItem->GetTemplate()->GetFlags3() & ITEM_FLAG3_ALWAYS_ALLOW_DUAL_WIELD))
             || offItem->GetTemplate()->GetInventoryType() == INVTYPE_WEAPON))
-          force = true;
+        force = true;
 
     // need unequip offhand for 2h-weapon without TitanGrip (in any from hands)
     if (!force && (CanTitanGrip() || (offItem->GetTemplate()->GetInventoryType() != INVTYPE_2HWEAPON && !IsTwoHandUsed())))
@@ -24655,16 +24653,16 @@ bool Player::HasItemFitToSpellRequirements(SpellInfo const* spellInfo, Item cons
         {
             if (!spellInfo->HasAttribute(SPELL_ATTR8_ARMOR_SPECIALIZATION))
             {
-            // tabard not have dependent spells
-            for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_MAINHAND; ++i)
-                if (Item* item = GetUseableItemByPos(INVENTORY_SLOT_BAG_0, i))
+                // tabard not have dependent spells
+                for (uint8 i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_MAINHAND; ++i)
+                    if (Item* item = GetUseableItemByPos(INVENTORY_SLOT_BAG_0, i))
+                        if (item != ignoreItem && item->IsFitToSpellRequirements(spellInfo))
+                            return true;
+
+                // shields can be equipped to offhand slot
+                if (Item* item = GetUseableItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
                     if (item != ignoreItem && item->IsFitToSpellRequirements(spellInfo))
                         return true;
-
-            // shields can be equipped to offhand slot
-            if (Item* item = GetUseableItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
-                if (item != ignoreItem && item->IsFitToSpellRequirements(spellInfo))
-                    return true;
             }
             else
             {
@@ -24779,7 +24777,7 @@ bool Player::isHonorOrXPTarget(Unit const* victim) const
     if (Creature const* const creature = victim->ToCreature())
     {
         if (!creature->CanGiveExperience())
-                return false;
+            return false;
     }
     return true;
 }
@@ -24907,8 +24905,8 @@ void Player::ResurrectUsingRequestDataImpl()
 {
     ResurrectPlayer(0.0f, false);
 
-        SetHealth(_resurrectionData->Health);
-        SetPower(POWER_MANA, _resurrectionData->Mana);
+    SetHealth(_resurrectionData->Health);
+    SetPower(POWER_MANA, _resurrectionData->Mana);
 
     SetPower(POWER_RAGE, 0);
     SetFullPower(POWER_ENERGY);
@@ -25575,7 +25573,7 @@ void Runes::SetRuneState(uint8 index, bool set /*= true*/)
         RuneState |= (1 << index);                      // usable
         if (itr != CooldownOrder.end())
             CooldownOrder.erase(itr);
-        }
+    }
     else
     {
         RuneState &= ~(1 << index);                     // on cooldown
@@ -25725,10 +25723,10 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot, AELootResult* aeResult/* 
         // if aeLooting then we must delay sending out item so that it appears properly stacked in chat
         if (!aeResult)
         {
-        SendNewItem(newitem, uint32(item->count), false, false, true);
-        UpdateCriteria(CRITERIA_TYPE_LOOT_ITEM, item->itemid, item->count);
-        UpdateCriteria(CRITERIA_TYPE_LOOT_TYPE, item->itemid, item->count, loot->loot_type);
-        UpdateCriteria(CRITERIA_TYPE_LOOT_EPIC_ITEM, item->itemid, item->count);
+            SendNewItem(newitem, uint32(item->count), false, false, true);
+            UpdateCriteria(CRITERIA_TYPE_LOOT_ITEM, item->itemid, item->count);
+            UpdateCriteria(CRITERIA_TYPE_LOOT_TYPE, item->itemid, item->count, loot->loot_type);
+            UpdateCriteria(CRITERIA_TYPE_LOOT_EPIC_ITEM, item->itemid, item->count);
         }
         else
             aeResult->Add(newitem, item->count, loot->loot_type);
@@ -26039,7 +26037,7 @@ void Player::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0*/, uint6
         scenario->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
 
     if (Guild* guild = sGuildMgr->GetGuildById(GetGuildId()))
-    guild->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
+         bguild->UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, this);
 }
 
 void Player::CompletedAchievement(AchievementEntry const* entry)
@@ -26346,16 +26344,16 @@ void Player::_SaveEquipmentSets(SQLTransaction& trans)
             {
                 if (eqSet.Data.Type == EquipmentSetInfo::EQUIPMENT)
                 {
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_EQUIP_SET);
-                stmt->setString(j++, eqSet.Data.SetName);
-                stmt->setString(j++, eqSet.Data.SetIcon);
-                stmt->setUInt32(j++, eqSet.Data.IgnoreMask);
+                    stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_EQUIP_SET);
+                    stmt->setString(j++, eqSet.Data.SetName);
+                    stmt->setString(j++, eqSet.Data.SetIcon);
+                    stmt->setUInt32(j++, eqSet.Data.IgnoreMask);
                     stmt->setInt32(j++, eqSet.Data.AssignedSpecIndex);
                 for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
                     stmt->setUInt64(j++, eqSet.Data.Pieces[i].GetCounter());
-                stmt->setUInt64(j++, GetGUID().GetCounter());
-                stmt->setUInt64(j++, eqSet.Data.Guid);
-                stmt->setUInt32(j, eqSet.Data.SetID);
+                    stmt->setUInt64(j++, GetGUID().GetCounter());
+                    stmt->setUInt64(j++, eqSet.Data.Guid);
+                    stmt->setUInt32(j, eqSet.Data.SetID);
                 }
                 else
                 {
@@ -26380,16 +26378,16 @@ void Player::_SaveEquipmentSets(SQLTransaction& trans)
             {
                 if (eqSet.Data.Type == EquipmentSetInfo::EQUIPMENT)
                 {
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_EQUIP_SET);
-                stmt->setUInt64(j++, GetGUID().GetCounter());
-                stmt->setUInt64(j++, eqSet.Data.Guid);
-                stmt->setUInt32(j++, eqSet.Data.SetID);
-                stmt->setString(j++, eqSet.Data.SetName);
-                stmt->setString(j++, eqSet.Data.SetIcon);
-                stmt->setUInt32(j++, eqSet.Data.IgnoreMask);
+                    stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_EQUIP_SET);
+                    stmt->setUInt64(j++, GetGUID().GetCounter());
+                    stmt->setUInt64(j++, eqSet.Data.Guid);
+                    stmt->setUInt32(j++, eqSet.Data.SetID);
+                    stmt->setString(j++, eqSet.Data.SetName);
+                    stmt->setString(j++, eqSet.Data.SetIcon);
+                    stmt->setUInt32(j++, eqSet.Data.IgnoreMask);
                     stmt->setInt32(j++, eqSet.Data.AssignedSpecIndex);
-                for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
-                    stmt->setUInt64(j++, eqSet.Data.Pieces[i].GetCounter());
+                    for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
+                        stmt->setUInt64(j++, eqSet.Data.Pieces[i].GetCounter());
                 }
                 else
                 {
@@ -26412,7 +26410,7 @@ void Player::_SaveEquipmentSets(SQLTransaction& trans)
             }
             case EQUIPMENT_SET_DELETED:
                 if (eqSet.Data.Type == EquipmentSetInfo::EQUIPMENT)
-                stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_EQUIP_SET);
+                    stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_EQUIP_SET);
                 else
                     stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_TRANSMOG_OUTFIT);
                 stmt->setUInt64(0, eqSet.Data.Guid);
@@ -26526,15 +26524,15 @@ void Player::_SaveGlyphs(SQLTransaction& trans) const
     {
         for (uint32 glyphId : GetGlyphs(spec))
         {
-        uint8 index = 0;
+            uint8 index = 0;
 
-        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_GLYPHS);
-        stmt->setUInt64(index++, GetGUID().GetCounter());
+            stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_CHAR_GLYPHS);
+            stmt->setUInt64(index++, GetGUID().GetCounter());
             stmt->setUInt8(index++, spec);
             stmt->setUInt16(index++, uint16(glyphId));
 
-        trans->Append(stmt);
-    }
+            trans->Append(stmt);
+        }
     }
 }
 
@@ -26688,9 +26686,9 @@ void Player::ActivateTalentGroup(ChrSpecializationEntry const* spec)
     LearnSpecializationSpells();
 
     if (CanUseMastery())
-            for (uint32 i = 0; i < MAX_MASTERY_SPELLS; ++i)
+        for (uint32 i = 0; i < MAX_MASTERY_SPELLS; ++i)
             if (uint32 mastery = spec->MasterySpellID[i])
-                    LearnSpell(mastery, false);
+                LearnSpell(mastery, false);
 
     InitTalentForLevel();
 
@@ -27721,9 +27719,9 @@ void Player::RemoveSocial()
 
 uint32 GetSelectionFromContext(uint32 context, uint32 playerClass)
 {
-    return true;
+    //return true; //Custom?
     switch (context)
-        {
+    {
         case 1:
             if (playerClass == CLASS_DEATH_KNIGHT)
                 return 1;
@@ -27767,7 +27765,7 @@ bool ComponentFlagsMatch(CharSectionsEntry const* entry, uint32 selection)
             if (!(entry->Flags & 1))
                 return false;
             if (!(entry->Flags & 0x94))
-            return false;
+                return false;
             return !(entry->Flags & 8);
         case 2:
             if (!(entry->Flags & 1))
@@ -27806,7 +27804,7 @@ bool ComponentFlagsMatch(CharSectionsEntry const* entry, uint32 selection)
             break;
     }
 
-        return false;
+    return false;
 }
 
 bool IsSectionFlagValid(CharSectionsEntry const* entry, uint8 class_, bool create)
@@ -27829,13 +27827,13 @@ bool IsSectionValid(uint8 race, uint8 class_, uint8 gender, CharBaseSectionVaria
 bool Player::ValidateAppearance(uint8 race, uint8 class_, uint8 gender, uint8 hairID, uint8 hairColor, uint8 faceID, uint8 facialHairID, uint8 skinColor, std::array<uint8, PLAYER_CUSTOM_DISPLAY_SIZE> const& customDisplay, bool create /*= false*/)
 {
     if (!IsSectionValid(race, class_, gender, CharBaseSectionVariation::Skin, 0, skinColor, create))
-            return false;
+        return false;
 
     if (!IsSectionValid(race, class_, gender, CharBaseSectionVariation::Face, faceID, skinColor, create))
-                    return false;
+        return false;
 
     if (!IsSectionValid(race, class_, gender, CharBaseSectionVariation::Hair, hairID, hairColor, create))
-                    return false;
+        return false;
 
     if (!IsSectionValid(race, class_, gender, CharBaseSectionVariation::FacialHair, facialHairID, hairColor, create))
         if (sDB2Manager.HasCharSections(race, gender, CharBaseSectionVariation::FacialHair) || !sDB2Manager.HasCharacterFacialHairStyle(race, gender, facialHairID))
@@ -27848,7 +27846,7 @@ bool Player::ValidateAppearance(uint8 race, uint8 class_, uint8 gender, uint8 ha
         return false;
 
     if (!IsSectionValid(race, class_, gender, CharBaseSectionVariation::CustomDisplay3, customDisplay[2], 0, create))
-                return false;
+        return false;
 
     return true;
 }
