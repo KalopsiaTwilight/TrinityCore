@@ -2038,6 +2038,8 @@ public:
 
         target->SetDisplayId(displayId);
         target->SetNativeDisplayId(displayId);
+        target->SetOutfit(displayId);
+        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
 
         target->SaveToDB();
 

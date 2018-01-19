@@ -76,10 +76,10 @@ VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, uint32 extend
     return nullptr;
 }
 
-uint32 CreatureTemplate::GetRandomValidModelId() const
+int32 CreatureTemplate::GetRandomValidModelId() const
 {
     uint8 c = 0;
-    uint32 modelIDs[4];
+    int32 modelIDs[4];
 
     if (Modelid1) modelIDs[c++] = Modelid1;
     if (Modelid2) modelIDs[c++] = Modelid2;
@@ -89,7 +89,7 @@ uint32 CreatureTemplate::GetRandomValidModelId() const
     return ((c>0) ? modelIDs[urand(0, c-1)] : 0);
 }
 
-uint32 CreatureTemplate::GetFirstValidModelId() const
+int32 CreatureTemplate::GetFirstValidModelId() const
 {
     if (Modelid1) return Modelid1;
     if (Modelid2) return Modelid2;
@@ -100,42 +100,42 @@ uint32 CreatureTemplate::GetFirstValidModelId() const
 
 uint32 CreatureTemplate::GetFirstInvisibleModel() const
 {
-    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid1);
+    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid1));
     if (modelInfo && modelInfo->is_trigger)
-        return Modelid1;
+        return sObjectMgr->GetCreatureDisplay(Modelid1);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid2);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid2));
     if (modelInfo && modelInfo->is_trigger)
-        return Modelid2;
+        return sObjectMgr->GetCreatureDisplay(Modelid2);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid3);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid3));
     if (modelInfo && modelInfo->is_trigger)
-        return Modelid3;
+        return sObjectMgr->GetCreatureDisplay(Modelid3);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid4);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid4));
     if (modelInfo && modelInfo->is_trigger)
-        return Modelid4;
+        return sObjectMgr->GetCreatureDisplay(Modelid4);
 
     return 11686;
 }
 
 uint32 CreatureTemplate::GetFirstVisibleModel() const
 {
-    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid1);
+    CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid1));
     if (modelInfo && !modelInfo->is_trigger)
-        return Modelid1;
+        return sObjectMgr->GetCreatureDisplay(Modelid1);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid2);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid2));
     if (modelInfo && !modelInfo->is_trigger)
-        return Modelid2;
+        return sObjectMgr->GetCreatureDisplay(Modelid2);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid3);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid3));
     if (modelInfo && !modelInfo->is_trigger)
-        return Modelid3;
+        return sObjectMgr->GetCreatureDisplay(Modelid3);
 
-    modelInfo = sObjectMgr->GetCreatureModelInfo(Modelid4);
+    modelInfo = sObjectMgr->GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(Modelid4));
     if (modelInfo && !modelInfo->is_trigger)
-        return Modelid4;
+        return sObjectMgr->GetCreatureDisplay(Modelid4);
 
     return 17519;
 }
@@ -178,7 +178,7 @@ _pickpocketLootRestore(0), m_corpseRemoveTime(0), m_respawnTime(0),
 m_respawnDelay(300), m_corpseDelay(60), m_respawnradius(0.0f), m_boundaryCheckTime(2500), m_combatPulseTime(0), m_combatPulseDelay(0), m_reactState(REACT_AGGRESSIVE),
 m_defaultMovementType(IDLE_MOTION_TYPE), m_spawnId(UI64LIT(0)), m_equipmentId(1), m_originalEquipmentId(1), m_AlreadyCallAssistance(false),
 m_AlreadySearchedAssistance(false), m_regenHealth(true), m_cannotReachTarget(false), m_cannotReachTimer(0), m_AI_locked(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_originalEntry(0), m_homePosition(), m_transportHomePosition(), m_creatureInfo(nullptr), m_creatureData(nullptr), m_waypointID(0), m_path_id(0), m_formation(nullptr), m_focusSpell(nullptr), m_focusDelay(0), m_shouldReacquireTarget(false), m_suppressedOrientation(0.0f)
+m_originalEntry(0), m_homePosition(), m_transportHomePosition(), m_creatureInfo(nullptr), m_creatureData(nullptr), m_waypointID(0), m_path_id(0), m_formation(nullptr), m_focusSpell(nullptr), m_focusDelay(0), m_shouldReacquireTarget(false), m_suppressedOrientation(0.0f), outfitId(0)
 {
     m_regenTimer = CREATURE_REGEN_INTERVAL;
     m_valuesCount = UNIT_END;
@@ -241,6 +241,34 @@ void Creature::RemoveFromWorld()
         if (m_spawnId)
             Trinity::Containers::MultimapErasePair(GetMap()->GetCreatureBySpawnIdStore(), m_spawnId, this);
         GetMap()->GetObjectsStore().Remove<Creature>(GetGUID());
+    }
+}
+
+void Creature::SendMirrorSound(Player* target, uint8 type)
+{
+    int32 outfitId = GetOutfit();
+    if (outfitId < 0)
+    {
+        const CreatureOutfitContainer& outfits = sObjectMgr->GetCreatureOutfitMap();
+        auto it = outfits.find(-outfitId);
+        if (it != outfits.end() && it->second.npcsoundsid)
+        {
+            if (auto const* npcsounds = sNPCSoundsStore.LookupEntry(it->second.npcsoundsid))
+            {
+                switch (type)
+                {
+                case 0:
+                    PlayDistanceSound(npcsounds->hello, target);
+                    break;
+                case 1:
+                    PlayDistanceSound(npcsounds->goodbye, target);
+                    break;
+                case 2:
+                    PlayDistanceSound(npcsounds->pissed, target);
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -348,7 +376,11 @@ bool Creature::InitEntry(uint32 entry, CreatureData const* data /*= nullptr*/)
         return false;
     }
 
-    uint32 displayID = ObjectMgr::ChooseDisplayId(GetCreatureTemplate(), data);
+    SetOutfit(ObjectMgr::ChooseDisplayId(GetCreatureTemplate(), data));
+    uint32 displayID = sObjectMgr->GetCreatureDisplay(GetOutfit());
+    if (IsMirrorImage())
+        displayID = 11686; // invisible in beginning if a mirror image
+    RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
 
     CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
     if (!minfo)                                             // Cancel load if no model defined
@@ -427,6 +459,8 @@ bool Creature::UpdateEntry(uint32 entry, CreatureData const* data /*= nullptr*/,
     SetUInt32Value(UNIT_FIELD_FLAGS, unitFlags);
     SetUInt32Value(UNIT_FIELD_FLAGS_2, unitFlags2);
     SetUInt32Value(UNIT_FIELD_FLAGS_3, unitFlags3);
+    if (IsMirrorImage())
+        new MirrorImageUpdate(this);
 
     SetUInt32Value(OBJECT_DYNAMIC_FLAGS, dynamicFlags);
 
@@ -1099,6 +1133,8 @@ void Creature::SaveToDB(uint32 mapid, uint64 spawnMask)
     CreatureData& data = sObjectMgr->NewOrExistCreatureData(m_spawnId);
 
     uint32 displayId = GetNativeDisplayId();
+    if (IsMirrorImage())
+        displayId = 0; // For mirror images dont save displayid, it comes from outfit
     uint64 npcflag = GetUInt64Value(UNIT_NPC_FLAGS);
     uint32 unitFlags = GetUInt32Value(UNIT_FIELD_FLAGS);
     uint32 unitFlags2 = GetUInt32Value(UNIT_FIELD_FLAGS_2);
@@ -1109,8 +1145,8 @@ void Creature::SaveToDB(uint32 mapid, uint64 spawnMask)
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     if (cinfo)
     {
-        if (displayId == cinfo->Modelid1 || displayId == cinfo->Modelid2 ||
-            displayId == cinfo->Modelid3 || displayId == cinfo->Modelid4)
+        if (displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid1) || displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid2) ||
+            displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid3) || displayId == sObjectMgr->GetCreatureDisplay(cinfo->Modelid4))
             displayId = 0;
 
         if (npcflag == cinfo->npcflag)
@@ -1873,6 +1909,8 @@ void Creature::Respawn(bool force)
         {
             SetDisplayId(displayID);
             SetNativeDisplayId(displayID);
+            if (IsMirrorImage())
+                new MirrorImageUpdate(this);
             SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_GENDER, minfo->gender);
         }
 
@@ -3041,6 +3079,34 @@ void Creature::ClearTextRepeatGroup(uint8 textGroup)
     CreatureTextRepeatGroup::iterator groupItr = m_textRepeat.find(textGroup);
     if (groupItr != m_textRepeat.end())
         groupItr->second.clear();
+}
+
+MirrorImageUpdate::MirrorImageUpdate(Creature* creature) : BasicEvent(), creature(creature)
+{
+    static uint32 delay = 1;
+    creature->m_Events.AddEvent(this, creature->m_Events.CalculateTime(delay));
+    creature->SetDisplayId(11686); // invisible in beginning if a mirror image
+    creature->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
+}
+
+bool MirrorImageUpdate::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
+{
+    // From AuraEffect::HandleAuraCloneCaster
+    int32 outfitId = creature->GetOutfit();
+    if (outfitId < 0)
+    {
+        const CreatureOutfitContainer& outfits = sObjectMgr->GetCreatureOutfitMap();
+        auto it = outfits.find(-outfitId);
+        if (it != outfits.end())
+        {
+            creature->SetDisplayId(it->second.displayId);
+            creature->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
+            return true;
+        }
+    }
+    creature->SetDisplayId(creature->GetNativeDisplayId());
+    creature->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
+    return true;
 }
 
 bool Creature::CanGiveExperience() const

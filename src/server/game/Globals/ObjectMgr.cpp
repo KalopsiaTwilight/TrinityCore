@@ -460,10 +460,10 @@ void ObjectMgr::LoadCreatureTemplate(Field* fields)
     for (uint8 i = 0; i < MAX_KILL_CREDIT; ++i)
         creatureTemplate.KillCredit[i]      = fields[4 + i].GetUInt32();
 
-    creatureTemplate.Modelid1               = fields[6].GetUInt32();
-    creatureTemplate.Modelid2               = fields[7].GetUInt32();
-    creatureTemplate.Modelid3               = fields[8].GetUInt32();
-    creatureTemplate.Modelid4               = fields[9].GetUInt32();
+    creatureTemplate.Modelid1               = fields[6].GetInt32();
+    creatureTemplate.Modelid2               = fields[7].GetInt32();
+    creatureTemplate.Modelid3               = fields[8].GetInt32();
+    creatureTemplate.Modelid4               = fields[9].GetInt32();
     creatureTemplate.Name                   = fields[10].GetString();
     creatureTemplate.FemaleName             = fields[11].GetString();
     creatureTemplate.SubName                = fields[12].GetString();
@@ -868,64 +868,64 @@ void ObjectMgr::CheckCreatureTemplate(CreatureTemplate const* cInfo)
 
     if (cInfo->Modelid1)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid1);
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid1));
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid1 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid1);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid1 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid1);
             const_cast<CreatureTemplate*>(cInfo)->Modelid1 = 0;
         }
         else
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid1);
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid1));
         if (!modelInfo)
-            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid1` = %u listed by creature (Entry: %u).", cInfo->Modelid1, cInfo->Entry);
+            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid1` = %i listed by creature (Entry: %u).", cInfo->Modelid1, cInfo->Entry);
     }
 
     if (cInfo->Modelid2)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid2);
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid2));
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid2 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid2);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid2 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid2);
             const_cast<CreatureTemplate*>(cInfo)->Modelid2 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid2);
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid2));
         if (!modelInfo)
-            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid2` = %u listed by creature (Entry: %u).", cInfo->Modelid2, cInfo->Entry);
+            TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid2` = %i listed by creature (Entry: %u).", cInfo->Modelid2, cInfo->Entry);
     }
 
     if (cInfo->Modelid3)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid3);
+                CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid3));
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid3 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid3);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid3 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid3);
             const_cast<CreatureTemplate*>(cInfo)->Modelid3 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid3);
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid3));
         if (!modelInfo)
             TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid3` = %i listed by creature (Entry: %u).", cInfo->Modelid3, cInfo->Entry);
     }
 
     if (cInfo->Modelid4)
     {
-        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(cInfo->Modelid4);
+        CreatureDisplayInfoEntry const* displayEntry = sCreatureDisplayInfoStore.LookupEntry(sObjectMgr->GetCreatureDisplay(cInfo->Modelid4));
         if (!displayEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid4 id (%u), this can crash the client.", cInfo->Entry, cInfo->Modelid4);
+            TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) lists non-existing Modelid4 id (%i), this can crash the client.", cInfo->Entry, cInfo->Modelid4);
             const_cast<CreatureTemplate*>(cInfo)->Modelid4 = 0;
         }
         else if (!displayScaleEntry)
             displayScaleEntry = displayEntry;
 
-        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(cInfo->Modelid4);
+        CreatureModelInfo const* modelInfo = GetCreatureModelInfo(sObjectMgr->GetCreatureDisplay(cInfo->Modelid4));
         if (!modelInfo)
             TC_LOG_ERROR("sql.sql", "No model data exist for `Modelid4` = %i listed by creature (Entry: %u).", cInfo->Modelid4, cInfo->Entry);
     }
@@ -8365,6 +8365,108 @@ SkillRangeType GetSkillRangeType(SkillRaceClassInfoEntry const* rcEntry)
     return SKILL_RANGE_LEVEL;
 }
 
+void ObjectMgr::LoadCreatureOutfits()
+{
+    uint32 oldMSTime = getMSTime();
+
+    _creatureOutfitStore.clear();   // for reload case (test only)
+
+    QueryResult result = WorldDatabase.Query("SELECT entry, npcsoundsid, race, class, gender, skin, face, hair, haircolor, facialhair, feature1, feature2, feature3, "
+        "head, head_appearance, shoulders, shoulders_appearance, body, body_appearance, chest, chest_appearance, waist, waist_appearance, "
+        "legs, legs_appearance, feet, feet_appearance, wrists, wrists_appearance, hands, hands_appearance, tabard, tabard_appearance, back, back_appearance, "
+        "guildid FROM creature_template_outfits");
+
+    if (!result)
+    {
+        TC_LOG_ERROR("server.loading", ">> Loaded 0 creature outfits. DB table `creature_template_outfits` is empty!");
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        uint32 i = 0;
+        uint32 entry   = fields[i++].GetUInt32();
+
+        CreatureOutfit co;
+
+        co.npcsoundsid = fields[i++].GetUInt32();
+        if (co.npcsoundsid && !sNPCSoundsStore.HasRecord(co.npcsoundsid))
+        {
+            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has incorrect npcsoundsid (%u). Using 0.", entry, co.npcsoundsid);
+            co.npcsoundsid = 0;
+        }
+        co.race         = fields[i++].GetUInt8();
+        const ChrRacesEntry* rEntry = sChrRacesStore.LookupEntry(co.race);
+        if (!rEntry)
+        {
+            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has incorrect race (%u).", entry, uint32(co.race));
+            continue;
+        }
+
+        co.Class = fields[i++].GetUInt8();
+        const ChrClassesEntry* cEntry = sChrClassesStore.LookupEntry(co.Class);
+        if (!cEntry)
+        {
+            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has incorrect class (%u).", entry, uint32(co.Class));
+            continue;
+        }
+
+        co.gender       = fields[i++].GetUInt8();
+        switch (co.gender)
+        {
+        case GENDER_FEMALE: co.displayId = rEntry->FemaleDisplayID; break;
+        case GENDER_MALE:   co.displayId = rEntry->MaleDisplayID; break;
+        default:
+            TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has invalid gender %u", entry, uint32(co.gender));
+            continue;
+        }
+
+        co.skin         = fields[i++].GetUInt8();
+        co.face         = fields[i++].GetUInt8();
+        co.hair         = fields[i++].GetUInt8();
+        co.haircolor    = fields[i++].GetUInt8();
+        co.facialhair   = fields[i++].GetUInt8();
+        for (uint32 j = 0; j < CreatureOutfit::max_custom_displays; ++j)
+            co.customdisplay[j] = fields[i++].GetUInt8();
+        for (uint32 j = 0; j < CreatureOutfit::max_outfit_displays; ++j)
+        {
+            int64 displayInfo = fields[i++].GetInt64();
+            uint32 appearancemodid = fields[i++].GetUInt32();
+            if (displayInfo > 0) // entry
+            {
+                uint32 item_entry = static_cast<uint32>(displayInfo);
+                if (uint32 display = sDB2Manager.GetItemDisplayId(item_entry, appearancemodid))
+                    co.outfit[j] = display;
+                else
+                {
+                    TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` has invalid (item entry, appearance) combination: %u, %u. Ignoring.", entry, item_entry, appearancemodid);
+                    co.outfit[j] = 0;
+                }
+            }
+            else // display
+            {
+                if (appearancemodid)
+                {
+                    TC_LOG_ERROR("server.loading", ">> Outfit entry %u in `creature_template_outfits` is using displayid (negative value), but also has appearance set (displayid, appearance): %s, %u. Ignoring appearance.", entry, std::to_string(displayInfo).c_str(), appearancemodid);
+                }
+                co.outfit[j] = static_cast<uint32>(-displayInfo);
+            }
+        }
+        co.guild = fields[i++].GetUInt64();
+
+        _creatureOutfitStore[entry] = co;
+
+        ++count;
+    }
+    while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u creature outfits in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
 void ObjectMgr::LoadGameTele()
 {
     uint32 oldMSTime = getMSTime();
@@ -9732,6 +9834,19 @@ PlayerInfo const* ObjectMgr::GetPlayerInfo(uint32 race, uint32 class_) const
     if (!info)
         return nullptr;
     return info;
+}
+
+uint32 ObjectMgr::GetCreatureDisplay(int32 modelid) const
+{
+    if (modelid >= 0)
+        return modelid;
+
+    const CreatureOutfitContainer& outfits = GetCreatureOutfitMap();
+    CreatureOutfitContainer::const_iterator it = outfits.find(-modelid);
+    if (it != outfits.end())
+        return 11686; // invisible for mirror image
+
+    return 0;
 }
 
 void ObjectMgr::LoadRaceAndClassExpansionRequirements()

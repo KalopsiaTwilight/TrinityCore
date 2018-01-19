@@ -499,6 +499,49 @@ void WorldSession::HandleMirrorImageDataRequest(WorldPackets::Spells::GetMirrorI
     Unit* unit = ObjectAccessor::GetUnit(*_player, guid);
     if (!unit)
         return;
+    
+    if (Creature* creature = unit->ToCreature())
+    {
+        int32 outfitId = creature->GetOutfit();
+        if (outfitId < 0)
+        {
+            const CreatureOutfitContainer& outfits = sObjectMgr->GetCreatureOutfitMap();
+            CreatureOutfitContainer::const_iterator it = outfits.find(-outfitId);
+            if (it != outfits.end())
+            {
+                CreatureOutfit const& outfit = it->second;
+                WorldPackets::Spells::MirrorImageComponentedData mirrorImageComponentedData;
+                mirrorImageComponentedData.UnitGUID = guid;
+                mirrorImageComponentedData.DisplayID = outfit.displayId;
+                mirrorImageComponentedData.RaceID = outfit.race;
+                mirrorImageComponentedData.Gender = outfit.gender;
+                mirrorImageComponentedData.ClassID = outfit.Class;
+
+                mirrorImageComponentedData.SkinColor = outfit.skin;
+                mirrorImageComponentedData.FaceVariation = outfit.face;
+                mirrorImageComponentedData.HairVariation = outfit.hair;
+                mirrorImageComponentedData.HairColor = outfit.haircolor;
+                mirrorImageComponentedData.BeardVariation = outfit.facialhair;
+
+                static_assert(CreatureOutfit::max_custom_displays == PLAYER_CUSTOM_DISPLAY_SIZE, "Amount of custom displays for player has changed - change it for dressnpcs as well");
+                for (uint32 i = 0; i < PLAYER_CUSTOM_DISPLAY_SIZE; ++i)
+                    mirrorImageComponentedData.CustomDisplay[i] = outfit.customdisplay[i];
+                mirrorImageComponentedData.GuildGUID = ObjectGuid::Empty;
+                if (outfit.guild)
+                {
+                    if (Guild* guild = sGuildMgr->GetGuildById(outfit.guild))
+                        mirrorImageComponentedData.GuildGUID = guild->GetGUID();
+                }
+
+                mirrorImageComponentedData.ItemDisplayID.reserve(11);
+                for (auto const& display : it->second.outfit)
+                    mirrorImageComponentedData.ItemDisplayID.push_back(display);
+
+                SendPacket(mirrorImageComponentedData.Write());
+                return;
+            }
+        }
+    }
 
     if (!unit->HasAuraType(SPELL_AURA_CLONE_CASTER))
         return;
