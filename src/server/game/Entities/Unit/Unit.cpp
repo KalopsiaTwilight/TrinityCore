@@ -1553,7 +1553,7 @@ bool Unit::IsDamageReducedByArmor(SpellSchoolMask schoolMask, SpellInfo const* s
             {
                 if (effect->ApplyAuraName == SPELL_AURA_PERIODIC_DAMAGE ||
                     effect->Effect == SPELL_EFFECT_SCHOOL_DAMAGE)
-                        if (spellInfo->GetEffectMechanicMask(effIndex) & (1 << MECHANIC_BLEED))
+                    if (spellInfo->GetEffectMechanicMask(effIndex) & (1 << MECHANIC_BLEED))
                         return false;
             }
         }
@@ -7297,13 +7297,13 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) cons
     uint32 eff = effect->Effect;
     auto const& effectList = m_spellImmune[IMMUNITY_EFFECT];
     if (effectList.count(eff) > 0)
-            return true;
+        return true;
 
     if (uint32 mechanic = effect->Mechanic)
     {
         auto const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
         if (mechanicList.count(mechanic) > 0)
-                return true;
+            return true;
     }
 
     if (!spellInfo->HasAttribute(SPELL_ATTR3_IGNORE_HIT_RESULT))
@@ -7320,7 +7320,7 @@ bool Unit::IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) cons
                 AuraEffectList const& immuneAuraApply = GetAuraEffectsByType(SPELL_AURA_MOD_IMMUNE_AURA_APPLY_SCHOOL);
                 for (AuraEffectList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
                     if (((*iter)->GetMiscValue() & spellInfo->GetSchoolMask()) &&  // Check school
-                        !spellInfo->IsPositiveEffect(index))                                  // Harmful
+                        !spellInfo->IsPositiveEffect(index))                       // Harmful
                         return true;
             }
         }
@@ -7384,20 +7384,20 @@ uint32 Unit::MeleeDamageBonusDone(Unit* victim, uint32 pdamage, WeaponAttackType
     // Some spells don't benefit from pct done mods
     if (spellProto)
     {
-    // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
-    if (!spellProto->HasAttribute(SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS) && !(spellProto->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
+        // mods for SPELL_SCHOOL_MASK_NORMAL are already factored in base melee damage calculation
+        if (!spellProto->HasAttribute(SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS) && !(spellProto->GetSchoolMask() & SPELL_SCHOOL_MASK_NORMAL))
         {
-        float maxModDamagePercentSchool = 0.0f;
-        if (GetTypeId() == TYPEID_PLAYER)
+            float maxModDamagePercentSchool = 0.0f;
+            if (GetTypeId() == TYPEID_PLAYER)
             {
             for (uint32 i = SPELL_SCHOOL_HOLY; i < MAX_SPELL_SCHOOL; ++i)
                 if (spellProto->GetSchoolMask() & (1 << i))
                     maxModDamagePercentSchool = std::max(maxModDamagePercentSchool, GetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + i));
             }
-        else
-            maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, spellProto->GetSchoolMask());
+            else
+                maxModDamagePercentSchool = GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, spellProto->GetSchoolMask());
 
-        DoneTotalMod *= maxModDamagePercentSchool;
+            DoneTotalMod *= maxModDamagePercentSchool;
         }
     }
 
@@ -10071,9 +10071,9 @@ uint32 createProcHitMask(SpellNonMeleeDamage* damageInfo, SpellMissInfo missCond
         {
             // On crit
             if (damageInfo->HitInfo & SPELL_HIT_TYPE_CRIT)
-                    hitMask |= PROC_HIT_CRITICAL;
+                hitMask |= PROC_HIT_CRITICAL;
             else
-                    hitMask |= PROC_HIT_NORMAL;
+                hitMask |= PROC_HIT_NORMAL;
         }
         else if ((damageInfo->HitInfo & HITINFO_FULL_RESIST) != 0)
             hitMask |= PROC_HIT_FULL_RESIST;

@@ -1,6 +1,6 @@
 /** 
 * -- WOW FREEDOM PERMISSION SETS --
-* Description: main SQL script to launch to change RBAC permissions to fit WoW Freedom 6XX needs
+* Description: main SQL script to launch to change RBAC permissions to fit WoW Freedom 7XX needs
 * Usage: Launch this script and use '.reload rbac' (without quotes) in-game to reload RBAC perms.
 * Modification: Remember to update this script when making permanent changes to RBAC permissions.
 */
@@ -9,8 +9,8 @@
 * PERMISSION GROUP STRUCTURE:
 * NOTE: Lesser ID PERM GROUP inherits all permissions from higher ID PERM GROUP.
 *       e.g. PERM GROUP 198 (mod) has all permissions of PERM GROUP 199 (player)
-* 190 - Role: [GM3] Administrator
-* 191 - Role: [GM2] Gamemaster
+* 196 - Role: [GM3] Administrator
+* 197 - Role: [GM2] Gamemaster
 * 198 - Role: [GM1] Moderator, ST
 * 199 - Role: [GM0] Player
 */
@@ -19,10 +19,10 @@ SET @GMLVL_PLAYER       := 0;
 SET @GMLVL_MODERATOR    := 1;
 SET @GMLVL_GM           := 2;
 SET @GMLVL_ADMIN        := 3;
-SET @PLAYER             := 199;
-SET @MODERATOR          := 198;
-SET @GM                 := 191;
-SET @ADMIN              := 190;
+SET @PLAYER             := 195;
+SET @MODERATOR          := 194;
+SET @GM                 := 193;
+SET @ADMIN              := 192;
 SET @CUSTOM_PERM_START  := 1000;
 
 -- [DELETION: LINKED PERMS TO DEFAULT SEC LEVELS]
@@ -64,7 +64,7 @@ INSERT INTO rbac_permissions (`id`, `name`) VALUES
 
 -- [RECREATION: LINKED PERMS]
 INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
--- [199 - Role: [GM0] Player]
+-- [195 - Role: [GM0] Player]
 -- [SPECIAL]
 (@PLAYER, 1),  -- Instant logout
 (@PLAYER, 2),  -- Skip Queue
@@ -107,6 +107,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@PLAYER, 505), -- gps
 (@PLAYER, 506), -- guid
 (@PLAYER, 507), -- help
+(@PLAYER, 777), -- mailbox
 
 -- [CUSTOM COMMANDS]
 (@PLAYER, 1000), -- freedom
@@ -116,7 +117,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@PLAYER, 1006), -- freedom spell
 (@PLAYER, 1008), -- freedom utility commands
 
--- [198 - Role: [GM1] Moderator, ST]
+-- [194 - Role: [GM1] Moderator, ST]
 (@MODERATOR, @PLAYER), -- Inherit player permissions
 -- [SPECIAL]
 (@MODERATOR, 31), -- Use params with .unstuck command
@@ -230,6 +231,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 772), -- wp unload
 (@MODERATOR, 773), -- wp reload
 (@MODERATOR, 774), -- wp show
+(@MODERATOR, 852), -- go offset
 
 -- [CUSTOM COMMANDS]
 (@MODERATOR, 1100), -- goto ...
@@ -237,7 +239,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 1200), -- cast player
 (@MODERATOR, 1202), -- playlocal
 
--- [191 - Role: [GM2] Gamemaster]
+-- [193 - Role: [GM2] Gamemaster]
 (@GM, @MODERATOR), -- Inherit moderator permissions
 -- [SPECIAL]
 (@GM, 32),   -- Can be assigned tickets with .assign ticket command
@@ -362,6 +364,17 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@GM, 764), -- titles remove
 (@GM, 765), -- titles set
 (@GM, 766), -- titles set mask
+(@GM, 794), -- guild info
+-- (@GM, 797), -- pvpstats
+(@GM, 830), -- bnetaccount listgameaccounts
+(@GM, 837), -- npc evade
+(@GM, 838), -- pet level
+(@GM, 844), -- scene
+(@GM, 845), -- scene debug
+(@GM, 846), -- scene play
+(@GM, 847), -- scene play package
+(@GM, 848), -- scene cancel
+(@GM, 849), -- list scenes
 
 -- [CUSTOM COMMANDS]
 (@GM, 9000), -- reload playercreateinfo_spell_custom
@@ -371,7 +384,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@GM, 1007), -- freedom spell add/del
 (@GM, 1009), -- freedom administration commands
 
--- [190 - Role: [GM3] Administrator]
+-- [192 - Role: [GM3] Administrator]
 (@ADMIN, @GM), -- Inherit GM permissions
 -- [DEFAULT COMMANDS]
 (@ADMIN, 200), -- rbac
@@ -569,9 +582,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 659), -- reload locales_creature_text
 (@ADMIN, 660), -- reload locales_gameobject
 (@ADMIN, 661), -- reload locales_gossip_menu_option
-(@ADMIN, 662), -- reload character_template
 (@ADMIN, 663), -- reload locales_item_set_name
-(@ADMIN, 664), -- reload quest_greeting
 (@ADMIN, 665), -- reload locales_page_text
 (@ADMIN, 666), -- reload locales_points_of_interest
 (@ADMIN, 667), -- reload quest_locale
@@ -599,7 +610,6 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 689), -- reload smart_scripts
 (@ADMIN, 690), -- reload spell_required
 (@ADMIN, 691), -- reload spell_area
-(@ADMIN, 692), -- debug send playscene
 (@ADMIN, 693), -- reload spell_group
 (@ADMIN, 694), -- reload spell_learn_spell
 (@ADMIN, 695), -- reload spell_loot_template
@@ -644,7 +654,21 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 734), -- server shutdown
 (@ADMIN, 735), -- server shutdown cancel
 (@ADMIN, 736), -- server motd
+(@ADMIN, 776), -- debug phase
+/* ahbot [778 - 793] */
+(@ADMIN, 798), -- mod xp
 (@ADMIN, 836), -- debug boundary
+(@ADMIN, 839), -- server shutdown force
+(@ADMIN, 840), -- server restart force
+(@ADMIN, 841), -- debug neargraveyard
+(@ADMIN, 842), -- reload character_template
+(@ADMIN, 843), -- reload quest_greeting
+(@ADMIN, 850), -- reload scenes
+(@ADMIN, 851), -- reload areatrigger_templates
+(@ADMIN, 853), -- reload conversation_template
+(@ADMIN, 854), -- debug conversation
+(@ADMIN, 868), -- modify power
+(@ADMIN, 869), -- debug send playerchoice
 
 -- [CUSTOM COMMANDS]
 (@ADMIN, 1201), -- cast all

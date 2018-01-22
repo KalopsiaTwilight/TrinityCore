@@ -17471,7 +17471,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     SetXP(fields[7].GetUInt32());
 
     _LoadIntoDataField(fields[65].GetString(), PLAYER_EXPLORED_ZONES_1, PLAYER_EXPLORED_ZONES_SIZE);
-    //LoadIntoDataField(fields[66].GetString(), PLAYER__FIELD_KNOWN_TITLES, KNOWN_TITLES_SIZE * 2);
+    _LoadIntoDataField(fields[66].GetString(), PLAYER__FIELD_KNOWN_TITLES, KNOWN_TITLES_SIZE * 2);
 
     SetObjectScale(1.0f);
     SetFloatValue(UNIT_FIELD_HOVERHEIGHT, 1.0f);
@@ -18027,8 +18027,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     // check PLAYER_CHOSEN_TITLE compatibility with PLAYER__FIELD_KNOWN_TITLES
     // note: PLAYER__FIELD_KNOWN_TITLES updated at quest status loaded
     uint32 curTitle = fields[52].GetUInt32();
-    //if (curTitle && !HasTitle(curTitle))
-    //    curTitle = 0;
+    if (curTitle && !HasTitle(curTitle))
+        curTitle = 0;
 
     SetUInt32Value(PLAYER_CHOSEN_TITLE, curTitle);
 
@@ -19892,8 +19892,8 @@ void Player::SaveToDB(bool create /*=false*/)
         stmt->setString(index++, ss.str());
 
         ss.str("");
-        //for (uint32 i = 0; i < KNOWN_TITLES_SIZE * 2; ++i)
-        //    ss << GetUInt32Value(PLAYER__FIELD_KNOWN_TITLES + i) << ' ';
+        for (uint32 i = 0; i < KNOWN_TITLES_SIZE * 2; ++i)
+            ss << GetUInt32Value(PLAYER__FIELD_KNOWN_TITLES + i) << ' ';
         stmt->setString(index++, ss.str());
 
         stmt->setUInt8(index++, GetByteValue(PLAYER_FIELD_BYTES, PLAYER_FIELD_BYTES_OFFSET_ACTION_BAR_TOGGLES));
@@ -21699,26 +21699,26 @@ void Player::AddSpellMod(SpellModifier* mod, bool apply)
 
         for (int eff = 0; eff < 128; ++eff)
         {
-                flag128 mask;
-                mask[eff / 32] = 1u << (eff % 32);
-                if (mod->mask & mask)
+            flag128 mask;
+            mask[eff / 32] = 1u << (eff % 32);
+            if (mod->mask & mask)
             {
                 WorldPackets::Spells::SpellModifierData modData;
 
-                    if (mod->type == SPELLMOD_FLAT)
-                    {
-                        modData.ModifierValue = 0.0f;
-                        for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_FLAT])
-                            if (spellMod->mask & mask)
-                                modData.ModifierValue += spellMod->value;
-                    }
-                    else
-                    {
-                        modData.ModifierValue = 1.0f;
-                        for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_PCT])
-                            if (spellMod->mask & mask)
-                                modData.ModifierValue *= 1.0f + CalculatePct(1.0f, spellMod->value);
-                    }
+                if (mod->type == SPELLMOD_FLAT)
+                {
+                    modData.ModifierValue = 0.0f;
+                    for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_FLAT])
+                        if (spellMod->mask & mask)
+                            modData.ModifierValue += spellMod->value;
+                }
+                else
+                {
+                    modData.ModifierValue = 1.0f;
+                    for (SpellModifier* spellMod : m_spellMods[mod->op][SPELLMOD_PCT])
+                        if (spellMod->mask & mask)
+                            modData.ModifierValue *= 1.0f + CalculatePct(1.0f, spellMod->value);
+                }
 
                 modData.ClassIndex = eff;
 
@@ -25482,23 +25482,23 @@ bool Player::HasTitle(CharTitlesEntry const* title) const
 
 void Player::SetTitle(CharTitlesEntry const* title, bool lost)
 {
-    //uint32 fieldIndexOffset = title->MaskID / 32;
-    //uint32 flag = 1 << (title->MaskID % 32);
+    uint32 fieldIndexOffset = title->MaskID / 32;
+    uint32 flag = 1 << (title->MaskID % 32);
 
-    //if (lost)
-    //{
-    //    if (!HasFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag))
-    //        return;
+    if (lost)
+    {
+        if (!HasFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag))
+            return;
 
-    //    RemoveFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag);
-    //}
-    //else
-    //{
-    //    if (HasFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag))
-    //        return;
+        RemoveFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag);
+    }
+    else
+    {
+        if (HasFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag))
+            return;
 
-    //    SetFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag);
-    //}
+        SetFlag(PLAYER__FIELD_KNOWN_TITLES + fieldIndexOffset, flag);
+    }
 
     WorldPackets::Character::TitleEarned packet(lost ? SMSG_TITLE_LOST : SMSG_TITLE_EARNED);
     packet.Index = title->MaskID;
@@ -26349,8 +26349,8 @@ void Player::_SaveEquipmentSets(SQLTransaction& trans)
                     stmt->setString(j++, eqSet.Data.SetIcon);
                     stmt->setUInt32(j++, eqSet.Data.IgnoreMask);
                     stmt->setInt32(j++, eqSet.Data.AssignedSpecIndex);
-                for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
-                    stmt->setUInt64(j++, eqSet.Data.Pieces[i].GetCounter());
+                    for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
+                        stmt->setUInt64(j++, eqSet.Data.Pieces[i].GetCounter());
                     stmt->setUInt64(j++, GetGUID().GetCounter());
                     stmt->setUInt64(j++, eqSet.Data.Guid);
                     stmt->setUInt32(j, eqSet.Data.SetID);
