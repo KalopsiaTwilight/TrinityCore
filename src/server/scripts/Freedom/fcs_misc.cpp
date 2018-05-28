@@ -1163,18 +1163,52 @@ public:
         if (!*args)
             return false;
 
-        char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
-        uint32 itemId = uint32(atol(id));
-        Player* player = handler->GetSession()->GetPlayer();
-        Player* playerTarget = handler->getSelectedPlayer();
-        if (!playerTarget || !handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION))
-            playerTarget = player;
+        uint32 itemId = 0;
 
-        if (!itemId)
+        if (args[0] == '[')                                        // [name] manual form
         {
-            handler->PSendSysMessage(FREEDOM_CMDE_INVALID_ARGUMENT_X, "$itemId/$shift-click-item-link");
-            return true;
+            char const* itemNameStr = strtok((char*)args, "]");
+
+            if (itemNameStr && itemNameStr[0])
+            {
+                std::string itemName = itemNameStr + 1;
+                auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* itemSparse)
+                {
+                    for (uint32 i = 0; i < MAX_LOCALES; ++i)
+                        if (itemName == itemSparse->Name->Str[i])
+                            return true;
+                    return false;
+                });
+
+                if (itr == sItemSparseStore.end())
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr + 1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+
+                itemId = itr->ID;
+            }
+            else
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_INVALID_ARGUMENT_X, "$itemId/$shift-click-item-link");
+                return true;
+            }
         }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
+            if (!id)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_INVALID_ARGUMENT_X, "$itemId/$shift-click-item-link");
+                return true;
+            }
+
+            itemId = atoul(id);
+        }
+
+        //char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
+        //uint32 itemId = uint32(atol(id));
 
         char const* ccount = strtok(NULL, " ");
 
@@ -1196,6 +1230,11 @@ public:
             for (char const* token : tokens)
                 bonusListIDs.push_back(atoul(token));
         }
+
+        Player* player = handler->GetSession()->GetPlayer();
+        Player* playerTarget = handler->getSelectedPlayer();
+        if (!playerTarget || !handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION))
+            playerTarget = player;
 
         TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_ADDITEM), itemId, count);
 
