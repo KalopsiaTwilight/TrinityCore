@@ -1098,10 +1098,12 @@ public:
         TC_LOG_INFO("misc", "Re-Loading Quest Locale ... ");
         sObjectMgr->LoadQuestTemplateLocale();
         sObjectMgr->LoadQuestObjectivesLocale();
+        sObjectMgr->LoadQuestGreetingLocales();
         sObjectMgr->LoadQuestOfferRewardLocale();
         sObjectMgr->LoadQuestRequestItemsLocale();
         handler->SendGlobalGMSysMessage("DB table `quest_template_locale` reloaded.");
         handler->SendGlobalGMSysMessage("DB table `quest_objectives_locale` reloaded.");
+        handler->SendGlobalGMSysMessage("DB table `quest_greeting_locale` reloaded.");
         handler->SendGlobalGMSysMessage("DB table `quest_offer_reward_locale` reloaded.");
         handler->SendGlobalGMSysMessage("DB table `quest_request_items_locale` reloaded.");
         return true;
@@ -1162,14 +1164,6 @@ public:
         TC_LOG_INFO("misc", "Reloading vehicle_template_accessory table...");
         sObjectMgr->LoadVehicleTemplateAccessories();
         handler->SendGlobalGMSysMessage("Vehicle template accessories reloaded.");
-        return true;
-    }
-
-    static bool HandleReloadPhaseDefinitionsCommand(ChatHandler* handler, const char* /*args*/)
-    {
-        TC_LOG_INFO("misc", "Reloading terrain_phase_info table...");
-        sObjectMgr->LoadTerrainPhaseInfo();
-        handler->SendGlobalGMSysMessage("Terrain phase infos reloaded.");
         return true;
     }
 

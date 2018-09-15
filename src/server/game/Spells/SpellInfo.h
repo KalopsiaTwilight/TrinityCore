@@ -38,6 +38,7 @@ struct SpellChainNode;
 struct SpellModifier;
 struct SpellTargetPosition;
 struct Condition;
+enum WeaponAttackType : uint8;
 
 enum SpellCastTargetFlags : uint32
 {
@@ -355,7 +356,7 @@ public:
                         RealPointsPerLevel(0), BasePoints(0), PointsPerResource(0), Amplitude(0), ChainAmplitude(0),
                         BonusCoefficient(0), MiscValue(0), MiscValueB(0), Mechanic(MECHANIC_NONE), PositionFacing(0),
                         RadiusEntry(NULL), ChainTargets(0), ItemType(0), TriggerSpell(0), BonusCoefficientFromAP(0.0f), ImplicitTargetConditions(NULL) { }
-    SpellEffectInfo(SpellEffectScalingEntry const* spellEffectScaling, SpellInfo const* spellInfo, uint8 effIndex, SpellEffectEntry const* effect);
+    SpellEffectInfo(SpellInfo const* spellInfo, uint8 effIndex, SpellEffectEntry const* effect);
 
     bool IsEffect() const;
     bool IsEffect(SpellEffectName effectName) const;
@@ -517,8 +518,7 @@ class TC_GAME_API SpellInfo
         uint32 ExplicitTargetMask;
         SpellChainNode const* ChainEntry;
 
-        SpellInfo(SpellInfoLoadHelper const& data, SpellEffectEntryMap const& effectsMap, SpellVisualMap&& visuals,
-            std::unordered_map<uint32, SpellEffectScalingEntry const*> const& effectScaling);
+        SpellInfo(SpellInfoLoadHelper const& data, SpellEffectEntryMap const& effectsMap, SpellVisualMap&& visuals);
         ~SpellInfo();
 
         uint32 GetCategory() const;
@@ -586,6 +586,10 @@ class TC_GAME_API SpellInfo
         bool IsRangedWeaponSpell() const;
         bool IsAutoRepeatRangedSpell() const;
         bool HasInitialAggro() const;
+
+        WeaponAttackType GetAttackType() const;
+
+        bool IsItemFitToSpellRequirements(Item const* item) const;
 
         bool IsAffected(uint32 familyName, flag128 const& familyFlags) const;
 
@@ -662,7 +666,7 @@ class TC_GAME_API SpellInfo
         // spell immunities
         void ApplyAllSpellImmunitiesTo(Unit* target, SpellEffectInfo const* effect, bool apply) const;
         bool CanSpellProvideImmunityAgainstAura(SpellInfo const* auraSpellInfo) const;
-        bool CanSpellCastOverrideAuraEffect(AuraEffect const* aurEff) const;
+        bool SpellCancelsAuraEffect(AuraEffect const* aurEff) const;
 
     private:
         // loading helpers

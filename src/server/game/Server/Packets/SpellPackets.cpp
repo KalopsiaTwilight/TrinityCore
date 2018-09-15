@@ -821,6 +821,11 @@ void WorldPackets::Spells::UnlearnSkill::Read()
     _worldPacket >> SkillLine;
 }
 
+void WorldPackets::Spells::SelfRes::Read()
+{
+    _worldPacket >> SpellID;
+}
+
 void WorldPackets::Spells::GetMirrorImageData::Read()
 {
     _worldPacket >> UnitGUID;
@@ -866,6 +871,13 @@ void WorldPackets::Spells::SpellClick::Read()
 WorldPacket const* WorldPackets::Spells::ResyncRunes::Write()
 {
     _worldPacket << Runes;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Spells::AddRunePower::Write()
+{
+    _worldPacket << uint32(AddedRunesMask);
 
     return &_worldPacket;
 }

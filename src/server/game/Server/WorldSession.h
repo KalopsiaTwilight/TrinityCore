@@ -31,7 +31,6 @@
 #include "QueryCallbackProcessor.h"
 #include "SharedDefines.h"
 #include <array>
-#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -334,6 +333,7 @@ namespace WorldPackets
         class RequestGuildRewardsList;
         class GuildQueryNews;
         class GuildNewsUpdateSticky;
+        class GuildReplaceGuildMaster;
         class GuildSetGuildMaster;
         class GuildChallengeUpdateRequest;
         class SaveGuildEmblem;
@@ -665,6 +665,7 @@ namespace WorldPackets
     namespace Talent
     {
         class LearnTalents;
+        class LearnPvpTalents;
         class ConfirmRespecWipe;
     }
 
@@ -907,7 +908,6 @@ class TC_GAME_API WorldSession
         void SendNotification(uint32 stringId, ...);
         void SendPetNameInvalid(uint32 error, std::string const& name, DeclinedName *declinedName);
         void SendPartyResult(PartyOperation operation, std::string const& member, PartyResult res, uint32 val = 0);
-        void SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<uint32> const& terrainswaps, std::set<uint32> const& worldMapAreaSwaps);
         void SendQueryTimeResponse();
 
         void SendAuthResponse(uint32 code, bool queued, uint32 queuePos = 0);
@@ -936,6 +936,7 @@ class TC_GAME_API WorldSession
         void SetSecurity(AccountTypes security) { _security = security; }
         std::string const& GetRemoteAddress() const { return m_Address; }
         void SetPlayer(Player* player);
+        uint8 GetAccountExpansion() const { return m_accountExpansion; }
         uint8 GetExpansion() const { return m_expansion; }
         std::string const& GetOS() const { return _os; }
 
@@ -982,6 +983,7 @@ class TC_GAME_API WorldSession
         void SendTabardVendorActivate(ObjectGuid guid);
         void SendSpiritResurrect();
         void SendBindPoint(Creature* npc);
+        void SendOpenTransmogrifier(ObjectGuid const& guid);
 
         void SendAttackStop(Unit const* enemy);
 
@@ -1291,6 +1293,7 @@ class TC_GAME_API WorldSession
         void HandleGuildAssignRank(WorldPackets::Guild::GuildAssignMemberRank& packet);
         void HandleGuildLeave(WorldPackets::Guild::GuildLeave& leave);
         void HandleGuildDelete(WorldPackets::Guild::GuildDelete& packet);
+        void HandleGuildReplaceGuildMaster(WorldPackets::Guild::GuildReplaceGuildMaster& replaceGuildMaster);
         void HandleGuildSetAchievementTracking(WorldPackets::Guild::GuildSetAchievementTracking& packet);
         void HandleGuildGetAchievementMembers(WorldPackets::Achievement::GuildGetAchievementMembers& getAchievementMembers);
         void HandleGuildSetGuildMaster(WorldPackets::Guild::GuildSetGuildMaster& packet);
@@ -1425,6 +1428,7 @@ class TC_GAME_API WorldSession
         void HandleMissileTrajectoryCollision(WorldPackets::Spells::MissileTrajectoryCollision& packet);
         void HandleUpdateMissileTrajectory(WorldPackets::Spells::UpdateMissileTrajectory& packet);
 
+        void HandleLearnPvpTalentsOpcode(WorldPackets::Talent::LearnPvpTalents& packet);
         void HandleLearnTalentsOpcode(WorldPackets::Talent::LearnTalents& packet);
         void HandleConfirmRespecWipeOpcode(WorldPackets::Talent::ConfirmRespecWipe& confirmRespecWipe);
         void HandleUnlearnSkillOpcode(WorldPackets::Spells::UnlearnSkill& packet);
@@ -1565,7 +1569,7 @@ class TC_GAME_API WorldSession
         void SendLfgOfferContinue(uint32 dungeonEntry);
         void SendLfgTeleportError(lfg::LfgTeleportResult err);
 
-        void HandleSelfResOpcode(WorldPackets::Spells::SelfRes& packet);
+        void HandleSelfResOpcode(WorldPackets::Spells::SelfRes& selfRes);
         void HandleRequestPetInfo(WorldPackets::Pet::RequestPetInfo& packet);
 
         // Socket gem
@@ -1797,6 +1801,7 @@ class TC_GAME_API WorldSession
         uint32 _accountId;
         std::string _accountName;
         uint32 _battlenetAccountId;
+        uint8 m_accountExpansion;
         uint8 m_expansion;
         std::string _os;
 

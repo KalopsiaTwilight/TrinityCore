@@ -62,7 +62,7 @@ void ConversationDataStore::LoadConversationTemplates()
         TC_LOG_INFO("server.loading", ">> Loaded 0 Conversation actor templates. DB table `conversation_actor_template` is empty.");
     }
 
-    if (QueryResult lineTemplates = WorldDatabase.Query("SELECT Id, StartTime, UiCameraID, ActorIdx, Unk FROM conversation_line_template"))
+    if (QueryResult lineTemplates = WorldDatabase.Query("SELECT Id, StartTime, UiCameraID, ActorIdx, Flags FROM conversation_line_template"))
     {
         uint32 oldMSTime = getMSTime();
 
@@ -82,8 +82,8 @@ void ConversationDataStore::LoadConversationTemplates()
             conversationLine.Id         = id;
             conversationLine.StartTime  = fields[1].GetUInt32();
             conversationLine.UiCameraID = fields[2].GetUInt32();
-            conversationLine.ActorIdx   = fields[3].GetUInt16();
-            conversationLine.Unk        = fields[4].GetUInt16();
+            conversationLine.ActorIdx   = fields[3].GetUInt8();
+            conversationLine.Flags      = fields[4].GetUInt8();
         }
         while (lineTemplates->NextRow());
 
@@ -178,10 +178,10 @@ void ConversationDataStore::LoadConversationTemplates()
                 else
                     TC_LOG_ERROR("sql.sql", "Table `conversation_line_template` has missing template for line (ID: %u) in Conversation %u, skipped", currentConversationLine->ID, conversationTemplate.Id);
 
-                if (!currentConversationLine->NextLineID)
+                if (!currentConversationLine->NextConversationLineID)
                     break;
 
-                currentConversationLine = sConversationLineStore.AssertEntry(currentConversationLine->NextLineID);
+                currentConversationLine = sConversationLineStore.AssertEntry(currentConversationLine->NextConversationLineID);
             }
 
             _conversationTemplateStore[conversationTemplate.Id] = conversationTemplate;

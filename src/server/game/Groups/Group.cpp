@@ -26,6 +26,7 @@
 #include "GameObject.h"
 #include "GroupMgr.h"
 #include "InstanceSaveMgr.h"
+#include "Item.h"
 #include "LFGMgr.h"
 #include "Log.h"
 #include "LootMgr.h"
@@ -96,8 +97,8 @@ Group::~Group()
     }
 
     // this may unload some instance saves
-    for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
-        for (BoundInstancesMap::iterator itr2 = m_boundInstances[i].begin(); itr2 != m_boundInstances[i].end(); ++itr2)
+    for (auto difficultyItr = m_boundInstances.begin(); difficultyItr != m_boundInstances.end(); ++difficultyItr)
+        for (auto itr2 = difficultyItr->second.begin(); itr2 != difficultyItr->second.end(); ++itr2)
             itr2->second.save->RemoveGroup(this);
 
     // Sub group counters clean up
@@ -707,9 +708,9 @@ void Group::ChangeLeader(ObjectGuid newLeaderGuid, int8 partyIndex)
         SQLTransaction trans = CharacterDatabase.BeginTransaction();
 
         // Remove the groups permanent instance bindings
-        for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
+        for (auto difficultyItr = m_boundInstances.begin(); difficultyItr != m_boundInstances.end(); ++difficultyItr)
         {
-            for (BoundInstancesMap::iterator itr = m_boundInstances[i].begin(); itr != m_boundInstances[i].end();)
+            for (auto itr = difficultyItr->second.begin(); itr != difficultyItr->second.end();)
             {
                 // Do not unbind saves of instances that already had map created (a newLeader entered)
                 // forcing a new instance with another leader requires group disbanding (confirmed on retail)
@@ -721,7 +722,7 @@ void Group::ChangeLeader(ObjectGuid newLeaderGuid, int8 partyIndex)
                     trans->Append(stmt);
 
                     itr->second.save->RemoveGroup(this);
-                    m_boundInstances[i].erase(itr++);
+                    difficultyItr->second.erase(itr++);
                 }
                 else
                     ++itr;
@@ -761,9 +762,9 @@ void Group::ConvertLeaderInstancesToGroup(Player* player, Group* group, bool swi
 {
     // copy all binds to the group, when changing leader it's assumed the character
     // will not have any solo binds
-    for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
+    for (auto difficultyItr = player->m_boundInstances.begin(); difficultyItr != player->m_boundInstances.end(); ++difficultyItr)
     {
-        for (Player::BoundInstancesMap::iterator itr = player->m_boundInstances[i].begin(); itr != player->m_boundInstances[i].end();)
+        for (auto itr = difficultyItr->second.begin(); itr != difficultyItr->second.end();)
         {
             if (!switchLeader || !group->GetBoundInstance(itr->second.save->GetDifficultyID(), itr->first))
                 if (itr->second.extendState) // not expired
@@ -773,7 +774,7 @@ void Group::ConvertLeaderInstancesToGroup(Player* player, Group* group, bool swi
             if (switchLeader && !itr->second.perm)
             {
                 // increments itr in call
-                player->UnbindInstance(itr, Difficulty(i), false);
+                player->UnbindInstance(itr, difficultyItr, false);
             }
             else
                 ++itr;
@@ -879,7 +880,11 @@ void Group::SendLootStartRollToPlayer(uint32 countDown, uint32 mapId, Player* p,
     startLootRoll.Method = GetLootMethod();
     r.FillPacket(startLootRoll.Item);
 
-    p->GetSession()->SendPacket(startLootRoll.Write());
+    if (ItemDisenchantLootEntry const* disenchant = r.GetItemDisenchantLoot(p))
+        if (m_maxEnchantingLevel >= disenchant->SkillRequired)
+            startLootRoll.ValidRolls |= ROLL_FLAG_TYPE_DISENCHANT;
+
+    p->SendDirectMessage(startLootRoll.Write());
 }
 
 void Group::SendLootRoll(ObjectGuid playerGuid, int32 rollNumber, uint8 rollType, Roll const& roll) const
@@ -1021,9 +1026,6 @@ void Group::GroupLoot(Loot* loot, WorldObject* lootedObject)
             {
                 r->setLoot(loot);
                 r->itemSlot = itemSlot;
-                if (item->DisenchantID && m_maxEnchantingLevel >= item->RequiredDisenchantSkill)
-                    r->rollVoteMask |= ROLL_FLAG_TYPE_DISENCHANT;
-
                 if (item->GetFlags2() & ITEM_FLAG2_CAN_ONLY_ROLL_GREED)
                     r->rollVoteMask &= ~ROLL_FLAG_TYPE_NEED;
 
@@ -1341,17 +1343,18 @@ void Group::CountTheRoll(Rolls::iterator rollI)
                     item->is_looted = true;
                     roll->getLoot()->NotifyItemRemoved(roll->itemSlot);
                     roll->getLoot()->unlootedCount--;
-                    ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(roll->itemid);
                     player->UpdateCriteria(CRITERIA_TYPE_CAST_SPELL, 13262); // Disenchant
+
+                    ItemDisenchantLootEntry const* disenchant = ASSERT_NOTNULL(roll->GetItemDisenchantLoot(player));
 
                     ItemPosCountVec dest;
                     InventoryResult msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, roll->itemid, item->count);
                     if (msg == EQUIP_ERR_OK)
-                        player->AutoStoreLoot(pProto->DisenchantID, LootTemplates_Disenchant, true);
+                        player->AutoStoreLoot(disenchant->ID, LootTemplates_Disenchant, true);
                     else // If the player's inventory is full, send the disenchant result in a mail.
                     {
                         Loot loot;
-                        loot.FillLoot(pProto->DisenchantID, LootTemplates_Disenchant, player, true);
+                        loot.FillLoot(disenchant->ID, LootTemplates_Disenchant, player, true);
 
                         uint32 max_slot = loot.GetMaxSlotInLootFor(player);
                         for (uint32 i = 0; i < max_slot; ++i)
@@ -1505,7 +1508,7 @@ void Group::SendUpdateToPlayer(ObjectGuid playerGUID, MemberSlot* slot)
             lfg::LfgDungeonSet const& selectedDungeons = sLFGMgr->GetSelectedDungeons(player->GetGUID());
             if (selectedDungeons.size() == 1)
                 if (LFGDungeonsEntry const* dungeon = sLFGDungeonsStore.LookupEntry(*selectedDungeons.begin()))
-                    if (dungeon->Type == lfg::LFG_TYPE_RANDOM)
+                    if (dungeon->TypeID == lfg::LFG_TYPE_RANDOM)
                         return dungeon->ID;
 
             return 0;
@@ -1797,7 +1800,7 @@ GroupJoinBattlegroundResult Group::CanJoinBattlegroundQueue(Battleground const* 
     // check for min / max count
     uint32 memberscount = GetMembersCount();
 
-    if (memberscount > bgEntry->MaxGroupSize)                // no MinPlayerCount for battlegrounds
+    if (int32(memberscount) > bgEntry->MaxGroupSize)                // no MinPlayerCount for battlegrounds
         return ERR_BATTLEGROUND_NONE;                        // ERR_GROUP_JOIN_BATTLEGROUND_TOO_MANY handled on client side
 
     // get a player as reference, to compare other players' stats to (arena team id, queue id based on level, etc.)
@@ -1886,6 +1889,24 @@ void Roll::FillPacket(WorldPackets::Loot::LootItemData& lootItem) const
         lootItem.CanTradeToTapList = lootItemInSlot->allowedGUIDs.size() > 1;
         lootItem.Loot.Initialize(*lootItemInSlot);
     }
+}
+
+ItemDisenchantLootEntry const* Roll::GetItemDisenchantLoot(Player const* player) const
+{
+    if (LootItem const* lootItemInSlot = (*this)->GetItemInSlot(itemSlot))
+    {
+        WorldPackets::Item::ItemInstance itemInstance;
+        itemInstance.Initialize(*lootItemInSlot);
+
+        BonusData bonusData;
+        bonusData.Initialize(itemInstance);
+
+        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemid);
+        uint32 itemLevel = Item::GetItemLevel(itemTemplate, bonusData, player->getLevel(), 0, lootItemInSlot->upgradeId, 0, 0, 0, false);
+        return Item::GetDisenchantLoot(itemTemplate, bonusData.Quality, itemLevel);
+    }
+
+    return nullptr;
 }
 
 void Group::SetDungeonDifficultyID(Difficulty difficulty)
@@ -1993,7 +2014,11 @@ void Group::ResetInstances(uint8 method, bool isRaid, bool isLegacy, Player* Sen
             diff = GetLegacyRaidDifficultyID();
     }
 
-    for (BoundInstancesMap::iterator itr = m_boundInstances[diff].begin(); itr != m_boundInstances[diff].end();)
+    auto difficultyItr = m_boundInstances.find(diff);
+    if (difficultyItr == m_boundInstances.end())
+        return;
+
+    for (auto itr = difficultyItr->second.begin(); itr != difficultyItr->second.end();)
     {
         InstanceSave* instanceSave = itr->second.save;
         const MapEntry* entry = sMapStore.LookupEntry(itr->first);
@@ -2059,9 +2084,7 @@ void Group::ResetInstances(uint8 method, bool isRaid, bool isLegacy, Player* Sen
             }
 
 
-            // i don't know for sure if hash_map iterators
-            m_boundInstances[diff].erase(itr);
-            itr = m_boundInstances[diff].begin();
+            itr = difficultyItr->second.erase(itr);
             // this unloads the instance save unless online players are bound to it
             // (eg. permanent binds or GM solo binds)
             instanceSave->RemoveGroup(this);
@@ -2097,11 +2120,15 @@ InstanceGroupBind* Group::GetBoundInstance(Difficulty difficulty, uint32 mapId)
     // some instances only have one difficulty
     sDB2Manager.GetDownscaledMapDifficultyData(mapId, difficulty);
 
-    BoundInstancesMap::iterator itr = m_boundInstances[difficulty].find(mapId);
-    if (itr != m_boundInstances[difficulty].end())
+    auto difficultyItr = m_boundInstances.find(difficulty);
+    if (difficultyItr == m_boundInstances.end())
+        return nullptr;
+
+    auto itr = difficultyItr->second.find(mapId);
+    if (itr != difficultyItr->second.end())
         return &itr->second;
     else
-        return NULL;
+        return nullptr;
 }
 
 InstanceGroupBind* Group::BindToInstance(InstanceSave* save, bool permanent, bool load)
@@ -2139,8 +2166,12 @@ InstanceGroupBind* Group::BindToInstance(InstanceSave* save, bool permanent, boo
 
 void Group::UnbindInstance(uint32 mapid, uint8 difficulty, bool unload)
 {
-    BoundInstancesMap::iterator itr = m_boundInstances[difficulty].find(mapid);
-    if (itr != m_boundInstances[difficulty].end())
+    auto difficultyItr = m_boundInstances.find(Difficulty(difficulty));
+    if (difficultyItr == m_boundInstances.end())
+        return;
+
+    auto itr = difficultyItr->second.find(mapid);
+    if (itr != difficultyItr->second.end())
     {
         if (!unload)
         {
@@ -2153,7 +2184,7 @@ void Group::UnbindInstance(uint32 mapid, uint8 difficulty, bool unload)
         }
 
         itr->second.save->RemoveGroup(this);                // save can become invalid
-        m_boundInstances[difficulty].erase(itr);
+        difficultyItr->second.erase(itr);
     }
 }
 
@@ -2580,9 +2611,14 @@ void Group::DelinkMember(ObjectGuid guid)
     }
 }
 
-Group::BoundInstancesMap& Group::GetBoundInstances(Difficulty difficulty)
+Group::BoundInstancesMap::iterator Group::GetBoundInstances(Difficulty difficulty)
 {
-    return m_boundInstances[difficulty];
+    return m_boundInstances.find(difficulty);
+}
+
+Group::BoundInstancesMap::iterator Group::GetBoundInstanceEnd()
+{
+    return m_boundInstances.end();
 }
 
 void Group::_initRaidSubGroupsCounter()

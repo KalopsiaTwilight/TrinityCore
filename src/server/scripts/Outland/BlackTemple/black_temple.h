@@ -27,7 +27,7 @@ uint32 const EncounterCount         = 9;
 
 enum BTDataTypes
 {
-    // Encounter States/Boss GUIDs
+    // Encounter States
     DATA_HIGH_WARLORD_NAJENTUS      = 0,
     DATA_SUPREMUS                   = 1,
     DATA_SHADE_OF_AKAMA             = 2,
@@ -49,6 +49,19 @@ enum BTDataTypes
     DATA_BLOOD_ELF_COUNCIL_VOICE    = 15,
 
     DATA_GO_ILLIDAN_GATE            = 16,
+
+    DATA_BLACK_TEMPLE_TRIGGER       = 17,
+    DATA_GO_DEN_OF_MORTAL_DOOR      = 18,
+
+    DATA_ESSENCE_OF_SUFFERING       = 19,
+    DATA_ESSENCE_OF_DESIRE          = 20,
+    DATA_ESSENCE_OF_ANGER           = 21
+};
+
+enum TriggerEmotes
+{
+    EMOTE_HIGH_WARLORD_NAJENTUS_DIED = 0,
+    EMOTE_DEN_OF_MORTAL_DOOR_OPEN    = 1
 };
 
 enum BTCreatureIds
@@ -72,7 +85,17 @@ enum BTCreatureIds
     NPC_BLOOD_ELF_COUNCIL_VOICE     = 23499,
     NPC_AKAMA                       = 23089, // This is the Akama that starts the Illidan encounter.
     NPC_AKAMA_SHADE                 = 23191, // This is the Akama that starts the Shade of Akama encounter.
-    NPC_SUPREMUS_VOLCANO            = 23085
+    NPC_SUPREMUS_VOLCANO            = 23085,
+    NPC_BLACK_TEMPLE_TRIGGER        = 22984,
+    NPC_RELIQUARY_WORLD_TRIGGER     = 23472,
+    NPC_ENSLAVED_SOUL               = 23469,
+    NPC_ASHTONGUE_STALKER           = 23374,
+    NPC_ASHTONGUE_BATTLELORD        = 22844,
+    NPC_ASHTONGUE_MYSTIC            = 22845,
+    NPC_ASHTONGUE_PRIMALIST         = 22847,
+    NPC_ASHTONGUE_STORMCALLER       = 22846,
+    NPC_ASHTONGUE_FERAL_SPIRIT      = 22849,
+    NPC_STORM_FURY                  = 22848
 };
 
 enum BTGameObjectIds
@@ -84,13 +107,19 @@ enum BTGameObjectIds
     GO_TERON_DOOR_1                 = 185480,
     GO_TERON_DOOR_2                 = 186153,
     GO_GURTOGG_DOOR                 = 185892,
-    GO_TEMPLE_DOOR                  = 185479,
+    GO_DEN_OF_MORTAL_DOOR           = 185479,
     GO_MOTHER_SHAHRAZ_DOOR          = 185482,
     GO_COUNCIL_DOOR_1               = 185481,
     GO_COUNCIL_DOOR_2               = 186152,
     GO_ILLIDAN_GATE                 = 185905,
     GO_ILLIDAN_DOOR_R               = 186261,
     GO_ILLIDAN_DOOR_L               = 186262
+};
+
+enum BlackTempleFactions
+{
+    ASHTONGUE_FACTION_FRIEND        = 1820,
+    AKAMA_FACTION_COMBAT            = 1868
 };
 
 template<typename AI>

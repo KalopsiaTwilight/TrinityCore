@@ -1291,9 +1291,9 @@ class spell_gen_despawn_self : public SpellScriptLoader
                 return GetCaster()->GetTypeId() == TYPEID_UNIT;
             }
 
-            void HandleDummy(SpellEffIndex effIndex)
+            void HandleDummy(SpellEffIndex /*effIndex*/)
             {
-                if (GetSpellInfo()->GetEffect(effIndex)->Effect == SPELL_EFFECT_DUMMY || GetSpellInfo()->GetEffect(effIndex)->Effect == SPELL_EFFECT_SCRIPT_EFFECT)
+                if (GetEffectInfo()->IsEffect(SPELL_EFFECT_DUMMY) || GetEffectInfo()->IsEffect(SPELL_EFFECT_SCRIPT_EFFECT))
                     GetCaster()->ToCreature()->DespawnOrUnsummon();
             }
 
@@ -2457,8 +2457,8 @@ class spell_gen_oracle_wolvar_reputation : public SpellScriptLoader
             void HandleDummy(SpellEffIndex effIndex)
             {
                 Player* player = GetCaster()->ToPlayer();
-                uint32 factionId = GetSpellInfo()->GetEffect(effIndex)->CalcValue();
-                int32  repChange = GetSpellInfo()->GetEffect(EFFECT_1)->CalcValue();
+                uint32 factionId = GetEffectInfo(effIndex)->CalcValue();
+                int32  repChange = GetEffectInfo(EFFECT_1)->CalcValue();
 
                 FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionId);
                 if (!factionEntry)
@@ -2527,6 +2527,46 @@ class spell_gen_orc_disguise : public SpellScriptLoader
         SpellScript* GetSpellScript() const override
         {
             return new spell_gen_orc_disguise_SpellScript();
+        }
+};
+
+enum ParalyticPoison
+{
+    SPELL_PARALYSIS = 35202
+};
+
+// 35201 - Paralytic Poison
+class spell_gen_paralytic_poison : public SpellScriptLoader
+{
+    public:
+        spell_gen_paralytic_poison() : SpellScriptLoader("spell_gen_paralytic_poison") { }
+
+        class spell_gen_paralytic_poison_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_paralytic_poison_AuraScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                return ValidateSpellInfo({ SPELL_PARALYSIS });
+            }
+
+            void HandleStun(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+            {
+                if (GetTargetApplication()->GetRemoveMode() != AURA_REMOVE_BY_EXPIRE)
+                    return;
+
+                GetTarget()->CastSpell((Unit*)nullptr, SPELL_PARALYSIS, true, nullptr, aurEff);
+            }
+
+            void Register() override
+            {
+                AfterEffectRemove += AuraEffectRemoveFn(spell_gen_paralytic_poison_AuraScript::HandleStun, EFFECT_0, SPELL_AURA_PERIODIC_DAMAGE, AURA_EFFECT_HANDLE_REAL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_paralytic_poison_AuraScript();
         }
 };
 
@@ -2892,10 +2932,8 @@ class spell_gen_replenishment : public SpellScriptLoader
         }
 };
 
-
 enum RunningWildMountIds
 {
-    RUNNING_WILD_MODEL          = 73200,
     SPELL_ALTERED_FORM          = 97709
 };
 
@@ -2910,7 +2948,7 @@ class spell_gen_running_wild : public SpellScriptLoader
 
             bool Validate(SpellInfo const* /*spell*/) override
             {
-                if (!sCreatureDisplayInfoStore.LookupEntry(RUNNING_WILD_MODEL))
+                if (!sCreatureDisplayInfoStore.LookupEntry(DISPLAYID_HIDDEN_MOUNT))
                     return false;
                 return true;
             }
@@ -2920,11 +2958,11 @@ class spell_gen_running_wild : public SpellScriptLoader
                 Unit* target = GetTarget();
                 PreventDefaultAction();
 
-                target->Mount(RUNNING_WILD_MODEL, 0, 0);
+                target->Mount(DISPLAYID_HIDDEN_MOUNT, 0, 0);
 
                 // cast speed aura
                 if (MountCapabilityEntry const* mountCapability = sMountCapabilityStore.LookupEntry(aurEff->GetAmount()))
-                    target->CastSpell(target, mountCapability->SpeedModSpell, TRIGGERED_FULL_MASK);
+                    target->CastSpell(target, mountCapability->ModSpellAuraID, TRIGGERED_FULL_MASK);
             }
 
             void Register() override
@@ -4668,6 +4706,7 @@ void AddSC_generic_spell_scripts()
     new spell_gen_on_tournament_mount();
     new spell_gen_oracle_wolvar_reputation();
     new spell_gen_orc_disguise();
+    new spell_gen_paralytic_poison();
     new spell_gen_proc_below_pct_damaged("spell_item_soul_harvesters_charm");
     new spell_gen_proc_below_pct_damaged("spell_item_commendation_of_kaelthas");
     new spell_gen_proc_below_pct_damaged("spell_item_corpse_tongue_coin");

@@ -202,9 +202,9 @@ void WorldSession::HandleQueryCorpseLocation(WorldPackets::Query::QueryCorpseLoc
                 if (Map const* entranceMap = sMapMgr->CreateBaseMap(corpseMapEntry->CorpseMapID))
                 {
                     mapID = corpseMapEntry->CorpseMapID;
-                    x = corpseMapEntry->CorpsePos.X;
-                    y = corpseMapEntry->CorpsePos.Y;
-                    z = entranceMap->GetHeight(player->GetPhases(), x, y, MAX_HEIGHT);
+                    x = corpseMapEntry->Corpse.X;
+                    y = corpseMapEntry->Corpse.Y;
+                    z = entranceMap->GetHeight(player->GetPhaseShift(), x, y, MAX_HEIGHT);
                 }
             }
         }
@@ -375,6 +375,7 @@ void WorldSession::HandleQuestPOIQuery(WorldPackets::Query::QuestPOIQuery& quest
                     questPOIBlobData.WorldEffectID      = data->WorldEffectID;
                     questPOIBlobData.PlayerConditionID  = data->PlayerConditionID;
                     questPOIBlobData.UnkWoD1            = data->UnkWoD1;
+                    questPOIBlobData.AlwaysAllowMergingBlobs = data->AlwaysAllowMergingBlobs;
 
                     for (QuestPOIPoint const& point : data->points)
                     {

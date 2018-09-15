@@ -70,9 +70,9 @@ uint8 const WorldSocket::AuthCheckSeed[16] = { 0xC5, 0xC6, 0x98, 0x95, 0x76, 0x3
 uint8 const WorldSocket::SessionKeySeed[16] = { 0x58, 0xCB, 0xCF, 0x40, 0xFE, 0x2E, 0xCE, 0xA6, 0x5A, 0x90, 0xB8, 0x01, 0x68, 0x6C, 0x28, 0x0B };
 uint8 const WorldSocket::ContinuedSessionSeed[16] = { 0x16, 0xAD, 0x0C, 0xD4, 0x46, 0xF9, 0x4F, 0xB2, 0xEF, 0x7D, 0xEA, 0x2A, 0x17, 0x66, 0x4D, 0x2F };
 
-uint32 const ClientTypeSeed_Win[4] = { 0xC34F59FE, 0xFF9A7F5E, 0x8A9DD986, 0x97B24A36 };
-uint32 const ClientTypeSeed_Wn64[4] = { 0x4E625212, 0xFAD6CBD8, 0x5D3FD3C7, 0xF335A567 };
-uint32 const ClientTypeSeed_Mc64[4] = { 0x95EFC66, 0x266170B8, 0x3145F79, 0xD8C1C808 };
+uint8 const ClientTypeSeed_Win[16] = { 0x79, 0x7E, 0xCC, 0x19, 0x66, 0x2D, 0xCB, 0xD5, 0x09, 0x0A, 0x44, 0x81, 0x17, 0x3F, 0x1D, 0x26 };
+uint8 const ClientTypeSeed_Wn64[16] = { 0x6E, 0x21, 0x2D, 0xEF, 0x6A, 0x01, 0x24, 0xA3, 0xD9, 0xAD, 0x07, 0xF5, 0xE3, 0x22, 0xF7, 0xAE };
+uint8 const ClientTypeSeed_Mc64[16] = { 0x34, 0x1C, 0xFE, 0xFE, 0x3D, 0x72, 0xAC, 0xA9, 0xA4, 0x40, 0x7D, 0xC5, 0x35, 0xDE, 0xD6, 0x6A };
 
 WorldSocket::WorldSocket(tcp::socket&& socket) : Socket(std::move(socket)),
     _type(CONNECTION_TYPE_REALM), _key(0), _OverSpeedPings(0),
@@ -633,13 +633,9 @@ struct AccountInfo
         Game.OS = fields[9].GetString();
         BattleNet.Id = fields[10].GetUInt32();
         Game.Security = AccountTypes(fields[11].GetUInt8());
-        BattleNet.IsBanned = fields[12].GetUInt64() != 0;
-        Game.IsBanned = fields[13].GetUInt64() != 0;
+        BattleNet.IsBanned = fields[12].GetUInt32() != 0;
+        Game.IsBanned = fields[13].GetUInt32() != 0;
         Game.IsRectuiter = fields[14].GetUInt32() != 0;
-
-        uint32 world_expansion = sWorld->getIntConfig(CONFIG_EXPANSION);
-        if (Game.Expansion > world_expansion)
-            Game.Expansion = world_expansion;
 
         if (BattleNet.Locale >= TOTAL_LOCALES)
             BattleNet.Locale = LOCALE_enUS;
@@ -675,11 +671,11 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<WorldPackets::Auth::
     SHA256Hash digestKeyHash;
     digestKeyHash.UpdateData(account.Game.KeyData.data(), account.Game.KeyData.size());
     if (account.Game.OS == "Win")
-        digestKeyHash.UpdateData(reinterpret_cast<uint8 const*>(ClientTypeSeed_Win), 16);
+        digestKeyHash.UpdateData(ClientTypeSeed_Win, 16);
     else if (account.Game.OS == "Wn64")
-        digestKeyHash.UpdateData(reinterpret_cast<uint8 const*>(ClientTypeSeed_Wn64), 16);
+        digestKeyHash.UpdateData(ClientTypeSeed_Wn64, 16);
     else if (account.Game.OS == "Mc64")
-        digestKeyHash.UpdateData(reinterpret_cast<uint8 const*>(ClientTypeSeed_Mc64), 16);
+        digestKeyHash.UpdateData(ClientTypeSeed_Mc64, 16);
 
     digestKeyHash.Finalize();
 
@@ -758,7 +754,7 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<WorldPackets::Auth::
     {
         if (account.BattleNet.LastIP != address)
         {
-            SendAuthResponseError(ERROR_DENIED);
+            SendAuthResponseError(ERROR_RISK_ACCOUNT_LOCKED);
             TC_LOG_DEBUG("network", "WorldSocket::HandleAuthSession: Sent Auth Response (Account IP differs. Original IP: %s, new IP: %s).", account.BattleNet.LastIP.c_str(), address.c_str());
             // We could log on hook only instead of an additional db log, however action logger is config based. Better keep DB logging as well
             sScriptMgr->OnFailedAccountLogin(account.Game.Id);
@@ -770,7 +766,7 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<WorldPackets::Auth::
     {
         if (account.BattleNet.LockCountry != _ipCountry)
         {
-            SendAuthResponseError(ERROR_DENIED);
+            SendAuthResponseError(ERROR_RISK_ACCOUNT_LOCKED);
             TC_LOG_DEBUG("network", "WorldSocket::HandleAuthSession: Sent Auth Response (Account country differs. Original country: %s, new country: %s).", account.BattleNet.LockCountry.c_str(), _ipCountry.c_str());
             // We could log on hook only instead of an additional db log, however action logger is config based. Better keep DB logging as well
             sScriptMgr->OnFailedAccountLogin(account.Game.Id);
@@ -793,7 +789,7 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<WorldPackets::Auth::
 
     if (account.IsBanned())
     {
-        SendAuthResponseError(ERROR_DENIED);
+        SendAuthResponseError(ERROR_GAME_ACCOUNT_BANNED);
         TC_LOG_ERROR("network", "WorldSocket::HandleAuthSession: Sent Auth Response (Account banned).");
         sScriptMgr->OnFailedAccountLogin(account.Game.Id);
         DelayedCloseSocket();
@@ -805,7 +801,7 @@ void WorldSocket::HandleAuthSessionCallback(std::shared_ptr<WorldPackets::Auth::
     TC_LOG_DEBUG("network", "Allowed Level: %u Player Level %u", allowedAccountType, account.Game.Security);
     if (allowedAccountType > SEC_PLAYER && account.Game.Security < allowedAccountType)
     {
-        SendAuthResponseError(ERROR_DENIED);
+        SendAuthResponseError(ERROR_SERVER_IS_PRIVATE);
         TC_LOG_DEBUG("network", "WorldSocket::HandleAuthSession: User tries to login but his security level is not enough");
         sScriptMgr->OnFailedAccountLogin(account.Game.Id);
         DelayedCloseSocket();

@@ -450,6 +450,13 @@ class TC_GAME_API PetAura
 };
 typedef std::map<uint32, PetAura> SpellPetAuraMap;
 
+enum SpellAreaFlag
+{
+    SPELL_AREA_FLAG_AUTOCAST                                = 0x1, // if has autocast, spell is applied on enter
+    SPELL_AREA_FLAG_AUTOREMOVE                              = 0x2, // if has autoremove, spell is remove automatically inside zone/area (always removed on leaving area or zone)
+    SPELL_AREA_FLAG_IGNORE_AUTOCAST_ON_QUEST_STATUS_CHANGE  = 0x4, // if this flag is set then spell will not be applied automatically on quest status change
+};
+
 struct TC_GAME_API SpellArea
 {
     uint32 spellId;
@@ -461,7 +468,7 @@ struct TC_GAME_API SpellArea
     Gender gender;                                          // can be applied only to gender
     uint32 questStartStatus;                                // QuestStatus that quest_start must have in order to keep the spell
     uint32 questEndStatus;                                  // QuestStatus that the quest_end must have in order to keep the spell (if the quest_end's status is different than this, the spell will be dropped)
-    bool autocast;                                          // if true then auto applied at area enter, in other case just allowed to cast
+    uint8 flags;                                            // if SPELL_AREA_FLAG_AUTOCAST then auto applied at area enter, in other case just allowed to cast || if SPELL_AREA_FLAG_AUTOREMOVE then auto removed inside area (will allways be removed on leaved even without flag)
 
     // helpers
     bool IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const;
@@ -587,6 +594,8 @@ struct SpellInfoLoadHelper
     SpellTotemsEntry const* Totems = nullptr;
 };
 
+typedef std::map<std::pair<uint32 /*SpellId*/, uint8 /*RaceId*/>, uint32 /*DisplayId*/> SpellTotemModelMap;
+
 class TC_GAME_API SpellMgr
 {
     // Constructors
@@ -679,6 +688,8 @@ class TC_GAME_API SpellMgr
 
         void LoadPetFamilySpellsStore();
 
+        uint32 GetModelForTotem(uint32 spellId, uint8 race) const;
+
     private:
         SpellInfo* _GetSpellInfo(uint32 spellId) { return spellId < GetSpellInfoStoreSize() ?  mSpellInfoMap[spellId] : NULL; }
 
@@ -712,6 +723,7 @@ class TC_GAME_API SpellMgr
         void LoadSpellInfoSpellSpecificAndAuraState();
         void LoadSpellInfoDiminishing();
         void LoadSpellInfoImmunities();
+        void LoadSpellTotemModel();
 
     private:
         SpellDifficultySearcherMap mSpellDifficultySearcherMap;
@@ -740,6 +752,7 @@ class TC_GAME_API SpellMgr
         PetLevelupSpellMap         mPetLevelupSpellMap;
         PetDefaultSpellsMap        mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
         SpellInfoMap               mSpellInfoMap;
+        SpellTotemModelMap         mSpellTotemModel;
 };
 
 #define sSpellMgr SpellMgr::instance()

@@ -135,6 +135,7 @@ namespace WorldPackets
                 {
                     uint32 BillingPlan = 0;
                     uint32 TimeRemain = 0;
+                    uint32 Unknown735 = 0;
                     bool InGameRoom = false;
                 };
 
@@ -153,7 +154,6 @@ namespace WorldPackets
                 std::vector<CharacterTemplate const*> Templates; ///< list of pre-made character templates.
 
                 std::unordered_map<uint8, uint8> const* AvailableClasses = nullptr; ///< the minimum AccountExpansion required to select the classes
-                std::unordered_map<uint8, uint8> const* AvailableRaces = nullptr; ///< the minimum AccountExpansion required to select the races
 
                 bool IsExpansionTrial = false;
                 bool ForceCharacterTemplate = false; ///< forces the client to always use a character template when creating a new character. @see Templates. @todo implement

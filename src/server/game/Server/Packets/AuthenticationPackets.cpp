@@ -130,17 +130,10 @@ WorldPacket const* WorldPackets::Auth::AuthResponse::Write()
         _worldPacket << uint8(SuccessInfo->ActiveExpansionLevel);
         _worldPacket << uint8(SuccessInfo->AccountExpansionLevel);
         _worldPacket << uint32(SuccessInfo->TimeSecondsUntilPCKick);
-        _worldPacket << uint32(SuccessInfo->AvailableRaces->size());
         _worldPacket << uint32(SuccessInfo->AvailableClasses->size());
         _worldPacket << uint32(SuccessInfo->Templates.size());
         _worldPacket << uint32(SuccessInfo->CurrencyID);
         _worldPacket << int32(SuccessInfo->Time);
-
-        for (auto const& race : *SuccessInfo->AvailableRaces)
-        {
-            _worldPacket << uint8(race.first); /// the current race
-            _worldPacket << uint8(race.second); /// the required Expansion
-        }
 
         for (auto const& klass : *SuccessInfo->AvailableClasses)
         {
@@ -157,6 +150,7 @@ WorldPacket const* WorldPackets::Auth::AuthResponse::Write()
         {
             _worldPacket << uint32(SuccessInfo->Billing.BillingPlan);
             _worldPacket << uint32(SuccessInfo->Billing.TimeRemain);
+            _worldPacket << uint32(SuccessInfo->Billing.Unknown735);
             // 3x same bit is not a mistake - preserves legacy client behavior of BillingPlanFlags::SESSION_IGR
             _worldPacket.WriteBit(SuccessInfo->Billing.InGameRoom); // inGameRoom check in function checking which lua event to fire when remaining time is near end - BILLING_NAG_DIALOG vs IGR_BILLING_NAG_DIALOG
             _worldPacket.WriteBit(SuccessInfo->Billing.InGameRoom); // inGameRoom lua return from Script_GetBillingPlan

@@ -20,6 +20,7 @@
 #include "AccountMgr.h"
 #include "ArenaTeam.h"
 #include "ArenaTeamMgr.h"
+#include "ArtifactPackets.h"
 #include "AuthenticationPackets.h"
 #include "Battleground.h"
 #include "BattlegroundPackets.h"
@@ -229,6 +230,10 @@ bool LoginQueryHolder::Initialize()
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_TALENTS, stmt);
 
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER_PVP_TALENTS);
+    stmt->setUInt64(0, lowGuid);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_PVP_TALENTS, stmt);
+
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PLAYER_ACCOUNT_DATA);
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_ACCOUNT_DATA, stmt);
@@ -301,8 +306,9 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
     {
         do
         {
-            Field* fields = result->Fetch();
-            WorldPackets::Character::EnumCharactersResult::CharacterInfo charInfo(fields);
+            charEnum.Characters.emplace_back(result->Fetch());
+
+            WorldPackets::Character::EnumCharactersResult::CharacterInfo& charInfo = charEnum.Characters.back();
 
             TC_LOG_INFO("network", "Loading char guid %s from account %u.", charInfo.Guid.ToString().c_str(), GetAccountId());
 
@@ -338,15 +344,21 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
             else
                 charEnum.HasDemonHunterOnRealm = false;
 
-            if (charInfo.Level >= sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_MIN_LEVEL_FOR_DEMON_HUNTER) || canAlwaysCreateDemonHunter)
-                charEnum.HasLevel70OnRealm = true;
-
-            charEnum.Characters.emplace_back(charInfo);
+            charEnum.MaxCharacterLevel = std::max<int32>(charEnum.MaxCharacterLevel, charInfo.Level);
         }
         while (result->NextRow());
     }
 
-    charEnum.IsDemonHunterCreationAllowed = (!charEnum.HasDemonHunterOnRealm && charEnum.HasLevel70OnRealm) || canAlwaysCreateDemonHunter;
+    charEnum.IsDemonHunterCreationAllowed = GetAccountExpansion() >= EXPANSION_LEGION || canAlwaysCreateDemonHunter;
+    charEnum.IsAlliedRacesCreationAllowed = GetAccountExpansion() >= EXPANSION_BATTLE_FOR_AZEROTH;
+
+    for (std::pair<uint8 const, RaceUnlockRequirement> const& requirement : sObjectMgr->GetRaceUnlockRequirements())
+    {
+        WorldPackets::Character::EnumCharactersResult::RaceUnlock raceUnlock;
+        raceUnlock.RaceID = requirement.first;
+        raceUnlock.HasExpansion = GetAccountExpansion() >= requirement.second.Expansion;
+        charEnum.RaceUnlockData.push_back(raceUnlock);
+    }
 
     SendPacket(charEnum.Write());
 }
@@ -458,19 +470,36 @@ void WorldSession::HandleCharCreateOpcode(WorldPackets::Character::CreateCharact
     }
 
     // prevent character creating Expansion race without Expansion account
-    uint8 raceExpansionRequirement = sObjectMgr->GetRaceExpansionRequirement(charCreate.CreateInfo->Race);
-    if (raceExpansionRequirement > GetExpansion())
+    RaceUnlockRequirement const* raceExpansionRequirement = sObjectMgr->GetRaceUnlockRequirement(charCreate.CreateInfo->Race);
+    if (!raceExpansionRequirement)
     {
-        TC_LOG_ERROR("entities.player.cheat", "Expansion %u account:[%d] tried to Create character with expansion %u race (%u)", GetExpansion(), GetAccountId(), raceExpansionRequirement, charCreate.CreateInfo->Race);
+        TC_LOG_ERROR("entities.player.cheat", "Account %u tried to create character with unavailable race %u", GetAccountId(), charCreate.CreateInfo->Race);
+        SendCharCreate(CHAR_CREATE_FAILED);
+        return;
+    }
+
+    if (raceExpansionRequirement->Expansion > GetAccountExpansion())
+    {
+        TC_LOG_ERROR("entities.player.cheat", "Expansion %u account:[%d] tried to Create character with expansion %u race (%u)",
+            GetAccountExpansion(), GetAccountId(), raceExpansionRequirement->Expansion, charCreate.CreateInfo->Race);
         SendCharCreate(CHAR_CREATE_EXPANSION);
         return;
     }
 
+    //if (raceExpansionRequirement->AchievementId && !)
+    //{
+    //    TC_LOG_ERROR("entities.player.cheat", "Expansion %u account:[%d] tried to Create character without achievement %u race (%u)",
+    //        GetAccountExpansion(), GetAccountId(), raceExpansionRequirement->AchievementId, charCreate.CreateInfo->Race);
+    //    SendCharCreate(CHAR_CREATE_ALLIED_RACE_ACHIEVEMENT);
+    //    return;
+    //}
+
     // prevent character creating Expansion class without Expansion account
     uint8 classExpansionRequirement = sObjectMgr->GetClassExpansionRequirement(charCreate.CreateInfo->Class);
-    if (classExpansionRequirement > GetExpansion())
+    if (classExpansionRequirement > GetAccountExpansion())
     {
-        TC_LOG_ERROR("entities.player.cheat", "Expansion %u account:[%d] tried to Create character with expansion %u class (%u)", GetExpansion(), GetAccountId(), classExpansionRequirement, charCreate.CreateInfo->Class);
+        TC_LOG_ERROR("entities.player.cheat", "Expansion %u account:[%d] tried to Create character with expansion %u class (%u)",
+            GetAccountExpansion(), GetAccountId(), classExpansionRequirement, charCreate.CreateInfo->Class);
         SendCharCreate(CHAR_CREATE_EXPANSION_CLASS);
         return;
     }
@@ -665,7 +694,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPackets::Character::CreateCharact
 
             if (checkDemonHunterReqs && !hasDemonHunterReqLevel)
             {
-                SendCharCreate(CHAR_CREATE_FAILED);
+                SendCharCreate(CHAR_CREATE_LEVEL_REQUIREMENT_DEMON_HUNTER);
                 return;
             }
 
@@ -928,24 +957,30 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
     {
         Field* fields = resultGuild->Fetch();
         pCurrChar->SetInGuild(fields[0].GetUInt64());
-        pCurrChar->SetRank(fields[1].GetUInt8());
+        pCurrChar->SetGuildRank(fields[1].GetUInt8());
         if (Guild* guild = sGuildMgr->GetGuildById(pCurrChar->GetGuildId()))
             pCurrChar->SetGuildLevel(guild->GetLevel());
     }
     else if (pCurrChar->GetGuildId())                        // clear guild related fields in case wrong data about non existed membership
     {
         pCurrChar->SetInGuild(UI64LIT(0));
-        pCurrChar->SetRank(0);
+        pCurrChar->SetGuildRank(0);
         pCurrChar->SetGuildLevel(0);
     }
-
-    //WorldPacket data(SMSG_LEARNED_DANCE_MOVES, 4+4);
-    //data << uint64(0);
-    //SendPacket(&data);
 
     // TODO: Move this to BattlePetMgr::SendJournalLock() just to have all packets in one file
     WorldPackets::BattlePet::BattlePetJournalLockAcquired lock;
     SendPacket(lock.Write());
+
+    WorldPackets::Artifact::ArtifactKnowledge artifactKnowledge;
+    artifactKnowledge.ArtifactCategoryID = ARTIFACT_CATEGORY_PRIMARY;
+    artifactKnowledge.KnowledgeLevel = sWorld->getIntConfig(CONFIG_CURRENCY_START_ARTIFACT_KNOWLEDGE);
+    SendPacket(artifactKnowledge.Write());
+
+    WorldPackets::Artifact::ArtifactKnowledge artifactKnowledgeFishingPole;
+    artifactKnowledgeFishingPole.ArtifactCategoryID = ARTIFACT_CATEGORY_FISHING;
+    artifactKnowledgeFishingPole.KnowledgeLevel = 0;
+    SendPacket(artifactKnowledgeFishingPole.Write());
 
     pCurrChar->SendInitialPacketsBeforeAddToMap();
 
@@ -1597,16 +1632,20 @@ void WorldSession::HandleEquipmentSetSave(WorldPackets::EquipmentSet::SaveEquipm
                 saveEquipmentSet.Set.Appearances[i] = 0;
 
                 ObjectGuid const& itemGuid = saveEquipmentSet.Set.Pieces[i];
+                if (!itemGuid.IsEmpty())
+                {
+                    Item* item = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
 
-                Item* item = _player->GetItemByPos(INVENTORY_SLOT_BAG_0, i);
+                    /// cheating check 1 (item equipped but sent empty guid)
+                    if (!item)
+                        return;
 
-                /// cheating check 1 (item equipped but sent empty guid)
-                if (!item && !itemGuid.IsEmpty())
-                    return;
-
-                /// cheating check 2 (sent guid does not match equipped item)
-                if (item && item->GetGUID() != itemGuid)
-                    return;
+                    /// cheating check 2 (sent guid does not match equipped item)
+                    if (item->GetGUID() != itemGuid)
+                        return;
+                }
+                else
+                    saveEquipmentSet.Set.IgnoreMask |= 1 << i;
             }
             else
             {
@@ -1621,6 +1660,8 @@ void WorldSession::HandleEquipmentSetSave(WorldPackets::EquipmentSet::SaveEquipm
                     if (!hasAppearance)
                         return;
                 }
+                else
+                    saveEquipmentSet.Set.IgnoreMask |= 1 << i;
             }
         }
         else
@@ -1647,7 +1688,7 @@ void WorldSession::HandleEquipmentSetSave(WorldPackets::EquipmentSet::SaveEquipm
             if (!illusion->ItemVisual || !(illusion->Flags & ENCHANTMENT_COLLECTABLE))
                 return false;
 
-            if (PlayerConditionEntry const* condition = sPlayerConditionStore.LookupEntry(illusion->PlayerConditionID))
+            if (PlayerConditionEntry const* condition = sPlayerConditionStore.LookupEntry(illusion->TransmogPlayerConditionID))
                 if (!sConditionMgr->IsPlayerMeetingCondition(_player, condition))
                     return false;
 
@@ -1675,7 +1716,7 @@ void WorldSession::HandleDeleteEquipmentSet(WorldPackets::EquipmentSet::DeleteEq
 void WorldSession::HandleUseEquipmentSet(WorldPackets::EquipmentSet::UseEquipmentSet& useEquipmentSet)
 {
     ObjectGuid ignoredItemGuid;
-    ignoredItemGuid.SetRawValue(0, 1);
+    ignoredItemGuid.SetRawValue(0x0C00040000000000, 0xFFFFFFFFFFFFFFFF);
 
     for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
     {
@@ -1932,6 +1973,7 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
                     stmt->setUInt16(1, 111);
                     break;
                 case RACE_DRAENEI:
+                case RACE_LIGHTFORGED_DRAENEI:
                     stmt->setUInt16(1, 759);
                     break;
                 case RACE_GNOME:
@@ -1947,17 +1989,26 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
                     stmt->setUInt16(1, 673);
                     break;
                 case RACE_TAUREN:
+                case RACE_HIGHMOUNTAIN_TAUREN:
                     stmt->setUInt16(1, 115);
                     break;
                 case RACE_TROLL:
                     stmt->setUInt16(1, 315);
                     break;
                 case RACE_BLOODELF:
+                case RACE_VOID_ELF:
                     stmt->setUInt16(1, 137);
                     break;
                 case RACE_GOBLIN:
                     stmt->setUInt16(1, 792);
                     break;
+                case RACE_NIGHTBORNE:
+                    stmt->setUInt16(1, 2464);
+                    break;
+                default:
+                    TC_LOG_ERROR("entities.player", "Could not find language data for race (%u).", factionChangeInfo->RaceID);
+                    SendCharFactionChange(CHAR_CREATE_ERROR, factionChangeInfo.get());
+                    return;
             }
 
             trans->Append(stmt);
@@ -1977,7 +2028,7 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
                 // this doesn't seem to be 100% blizzlike... but it can't really be helped.
                 std::ostringstream taximaskstream;
                 TaxiMask const& factionMask = newTeamId == TEAM_HORDE ? sHordeTaxiNodesMask : sAllianceTaxiNodesMask;
-                for (uint8 i = 0; i < TaxiMaskSize; ++i)
+                for (std::size_t i = 0; i < TaxiMaskSize; ++i)
                 {
                     // i = (315 - 1) / 8 = 39
                     // m = 1 << ((315 - 1) % 8) = 4
@@ -2000,7 +2051,7 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
 
                 if (PreparedQueryResult memberResult = CharacterDatabase.Query(stmt))
                     if (Guild* guild = sGuildMgr->GetGuildById(memberResult->Fetch()[0].GetUInt64()))
-                        guild->DeleteMember(factionChangeInfo->Guid, false, false, true);
+                        guild->DeleteMember(trans, factionChangeInfo->Guid, false, false, true);
 
                 Player::LeaveAllArenaTeams(factionChangeInfo->Guid);
             }
@@ -2112,8 +2163,8 @@ void WorldSession::HandleCharRaceOrFactionChangeCallback(std::shared_ptr<WorldPa
                 for (ObjectMgr::QuestMap::const_iterator iter = questTemplates.begin(); iter != questTemplates.end(); ++iter)
                 {
                     Quest const* quest = iter->second;
-                    uint32 newRaceMask = (newTeamId == TEAM_ALLIANCE) ? RACEMASK_ALLIANCE : RACEMASK_HORDE;
-                    if (quest->GetAllowableRaces() != -1 && !(quest->GetAllowableRaces() & newRaceMask))
+                    uint64 newRaceMask = (newTeamId == TEAM_ALLIANCE) ? RACEMASK_ALLIANCE : RACEMASK_HORDE;
+                    if (quest->GetAllowableRaces() != uint64(-1) && !(quest->GetAllowableRaces() & newRaceMask))
                     {
                         stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHAR_QUESTSTATUS_REWARDED_ACTIVE_BY_QUEST);
                         stmt->setUInt64(0, lowGuid);
@@ -2276,7 +2327,7 @@ void WorldSession::HandleRandomizeCharNameOpcode(WorldPackets::Character::Genera
 
     WorldPackets::Character::GenerateRandomCharacterNameResult result;
     result.Success = true;
-    result.Name = sDB2Manager.GetNameGenEntry(packet.Race, packet.Sex, GetSessionDbcLocale(), sWorld->GetDefaultDbcLocale());
+    result.Name = sDB2Manager.GetNameGenEntry(packet.Race, packet.Sex);
 
     SendPacket(result.Write());
 }

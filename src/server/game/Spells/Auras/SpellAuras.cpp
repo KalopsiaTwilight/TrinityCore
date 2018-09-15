@@ -353,7 +353,7 @@ m_lastProcAttemptTime(std::chrono::steady_clock::now() - Seconds(10)), m_lastPro
 {
     std::vector<SpellPowerEntry const*> powers = sDB2Manager.GetSpellPowers(GetId(), caster ? caster->GetMap()->GetDifficultyID() : DIFFICULTY_NONE);
     for (SpellPowerEntry const* power : powers)
-        if (power->ManaCostPerSecond != 0 || power->ManaCostPercentagePerSecond > 0.0f)
+        if (power->ManaPerSecond != 0 || power->PowerPctPerSecond > 0.0f)
             m_periodicCosts.push_back(power);
 
     if (!m_periodicCosts.empty())
@@ -569,11 +569,11 @@ void Aura::UpdateTargetMap(Unit* caster, bool apply)
         // check target immunities
         for (uint8 effIndex = 0; effIndex < MAX_SPELL_EFFECTS; ++effIndex)
         {
-            if (itr->first->IsImmunedToSpellEffect(GetSpellInfo(), effIndex))
+            if (itr->first->IsImmunedToSpellEffect(GetSpellInfo(), effIndex, caster))
                 itr->second &= ~(1 << effIndex);
         }
         if (!itr->second
-            || itr->first->IsImmunedToSpell(GetSpellInfo())
+            || itr->first->IsImmunedToSpell(GetSpellInfo(), caster)
             || !CanBeAppliedOn(itr->first))
             addUnit = false;
 
@@ -728,15 +728,15 @@ void Aura::Update(uint32 diff, Unit* caster)
 
                     for (SpellPowerEntry const* power : m_periodicCosts)
                     {
-                        if (power->RequiredAura && !caster->HasAura(power->RequiredAura))
+                        if (power->RequiredAuraSpellID && !caster->HasAura(power->RequiredAuraSpellID))
                             continue;
 
-                        int32 manaPerSecond = power->ManaCostPerSecond;
+                        int32 manaPerSecond = power->ManaPerSecond;
                         Powers powertype = Powers(power->PowerType);
                         if (powertype != POWER_HEALTH)
-                            manaPerSecond += int32(CalculatePct(caster->GetMaxPower(powertype), power->ManaCostPercentagePerSecond));
+                            manaPerSecond += int32(CalculatePct(caster->GetMaxPower(powertype), power->PowerPctPerSecond));
                         else
-                            manaPerSecond += int32(CalculatePct(caster->GetMaxHealth(), power->ManaCostPercentagePerSecond));
+                            manaPerSecond += int32(CalculatePct(caster->GetMaxHealth(), power->PowerPctPerSecond));
 
                         if (manaPerSecond)
                         {
@@ -923,11 +923,13 @@ void Aura::SetStackAmount(uint8 stackAmount)
             effect->ChangeAmount(effect->CalculateAmount(caster), false, true);
 
     for (std::list<AuraApplication*>::const_iterator apptItr = applications.begin(); apptItr != applications.end(); ++apptItr)
+    {
         if (!(*apptItr)->GetRemoveMode())
         {
-            HandleAuraSpecificMods(*apptItr, caster, true, true);
             HandleAuraSpecificPeriodics(*apptItr, caster);
+            HandleAuraSpecificMods(*apptItr, caster, true, true);
         }
+    }
 
     SetNeedClientUpdateForTargets();
 }
@@ -959,7 +961,6 @@ bool Aura::ModStackAmount(int32 num, AuraRemoveMode removeMode /*= AURA_REMOVE_B
 
     if (refresh)
     {
-        RefreshSpellMods();
         RefreshTimers(resetPeriodicTimer);
 
         // reset charges
@@ -968,13 +969,6 @@ bool Aura::ModStackAmount(int32 num, AuraRemoveMode removeMode /*= AURA_REMOVE_B
 
     SetNeedClientUpdateForTargets();
     return false;
-}
-
-void Aura::RefreshSpellMods()
-{
-    for (Aura::ApplicationMap::const_iterator appIter = m_applications.begin(); appIter != m_applications.end(); ++appIter)
-        if (Player* player = appIter->second->GetTarget()->ToPlayer())
-            player->RestoreAllSpellMods(0, this);
 }
 
 bool Aura::HasMoreThanOneEffectForType(AuraType auraType) const
@@ -1084,7 +1078,7 @@ void Aura::UnregisterSingleTarget()
     SetIsSingleTarget(false);
 }
 
-int32 Aura::CalcDispelChance(Unit* auraTarget, bool offensive) const
+int32 Aura::CalcDispelChance(Unit const* auraTarget, bool offensive) const
 {
     // we assume that aura dispel chance is 100% on start
     // need formula for level difference based chance
@@ -1212,10 +1206,10 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
         for (SpellAreaForAreaMap::const_iterator itr = saBounds.first; itr != saBounds.second; ++itr)
         {
             // some auras remove at aura remove
-            if (!itr->second->IsFitToRequirements(target->ToPlayer(), zone, area))
+            if (itr->second->flags & SPELL_AREA_FLAG_AUTOREMOVE && !itr->second->IsFitToRequirements(target->ToPlayer(), zone, area))
                 target->RemoveAurasDueToSpell(itr->second->spellId);
             // some auras applied at aura apply
-            else if (itr->second->autocast)
+            else if (itr->second->flags & SPELL_AREA_FLAG_AUTOCAST)
             {
                 if (!target->HasAura(itr->second->spellId))
                     target->CastSpell(target, itr->second->spellId, true);
