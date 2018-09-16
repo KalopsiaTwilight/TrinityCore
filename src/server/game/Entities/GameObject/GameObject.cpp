@@ -265,7 +265,7 @@ bool GameObject::Create(uint32 entry, Map* map, Position const& pos, QuaternionD
     if (extraData)
     {
         float scale = extraData->scale;
-        SetObjectScale(scale < 0 ? goinfo->size : scale);
+        SetObjectScale(scale < 0 ? goInfo->size : scale);
     }
     else
     {
@@ -1007,14 +1007,14 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
 
     PhasingHandler::InitDbPhaseShift(GetPhaseShift(), data->phaseUseFlags, data->phaseId, data->phaseGroup);
     PhasingHandler::InitDbVisibleMapId(GetPhaseShift(), data->terrainSwapMap);
-
+    /*
     if (data->phaseGroup)
     {
         // Set the gameobject in all the phases of the phasegroup
         for (auto ph : sDB2Manager.GetPhasesForGroup(data->phaseGroup))
             SetInPhase(ph, false, true);
     }
-    /*else if (GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(GetSpawnId()))
+    else if (GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(GetSpawnId()))
     {
         for (int i = 1; i < 512; i = i << 1)
         {
@@ -1029,8 +1029,8 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
     else
     {
         SetPhaseMask(1, false);
-    }*/
-
+    }
+    */
     if (data->spawntimesecs >= 0)
     {
         m_spawnedByDefault = true;
