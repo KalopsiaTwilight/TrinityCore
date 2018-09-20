@@ -1,19 +1,20 @@
-#include "FreedomMgr.h"
-#include "Player.h"
-#include "ObjectMgr.h"
 #include "AccountMgr.h"
+#include "Config.h"
+#include "Creature.h"
+#include "DatabaseEnv.h"
+#include "GameObject.h"
+#include "Log.h"
+#include "MapManager.h"
+#include "MotionMaster.h"
 #include "MovementPackets.h"
 #include "MoveSpline.h"
-#include "MapManager.h"
-#include "GameObject.h"
-#include "Creature.h"
-#include "Config.h"
+#include "ObjectMgr.h"
+#include "PhasingHandler.h"
+#include "Player.h"
 #include "Transport.h"
-#include "DatabaseEnv.h"
-#include "Log.h"
 #include "World.h"
 #include "Unit.h"
-#include "MotionMaster.h"
+#include "FreedomMgr.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/tokenizer.hpp>
@@ -124,14 +125,15 @@ void FreedomMgr::CreaturePhase(Creature* creature, uint32 phaseMask)
     if (!phaseMask)
         phaseMask = 1;
 
-    creature->ClearPhases();
+    PhasingHandler::ResetPhaseShift(creature);
 
     for (int i = 1; i < 512; i = i << 1)
     {
         uint32 phase = phaseMask & i;
 
         if (phase)
-            creature->SetInPhase(GetPhaseId(phase), false, true);
+            //creature->SetInPhase(GetPhaseId(phase), false, true);
+            PhasingHandler::AddPhase(creature, phase, true);
     }
 
 //    creature->SetPhaseMask(phaseMask, true);
@@ -144,14 +146,15 @@ void FreedomMgr::GameObjectPhase(GameObject* go, uint32 phaseMask)
     if (!phaseMask)
         phaseMask = 1;
 
-    go->ClearPhases();
+    PhasingHandler::ResetPhaseShift(go);
 
     for (int i = 1; i < 512; i = i << 1)
     {
         uint32 phase = phaseMask & i;
         
         if (phase)
-            go->SetInPhase(GetPhaseId(phase), false, true);
+            //go->SetInPhase(GetPhaseId(phase), false, true);
+            PhasingHandler::AddPhase(go, phase, true);
     }
 
 //    go->SetPhaseMask(phaseMask, true);
@@ -164,14 +167,15 @@ void FreedomMgr::PlayerPhase(Player* player, uint32 phaseMask)
     if (!phaseMask)
         phaseMask = 1;
 
-    player->ClearPhases();
+    PhasingHandler::ResetPhaseShift(player);
 
     for (int i = 1; i < 512; i = i << 1)
     {
         uint32 phase = phaseMask & i;
 
         if (phase)
-            player->SetInPhase(GetPhaseId(phase), false, true);
+            //player->SetInPhase(GetPhaseId(phase), false, true);
+            PhasingHandler::AddPhase(player, phase, true);
     }
 
 //    player->SetPhaseMask(phaseMask, true);
@@ -575,10 +579,6 @@ void FreedomMgr::CreatureDelete(Creature* creature)
 Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* creatureTemplate)
 {
     uint32 entryId = creatureTemplate->Entry;
-    float x = creator->GetPositionX();
-    float y = creator->GetPositionY();
-    float z = creator->GetPositionZ();
-    float o = creator->GetOrientation();
     Map* map = creator->GetMap();
 
     if (Transport* trans = creator->GetTransport())
@@ -593,21 +593,18 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
 
         Creature* creature = trans->CreateNPCPassenger(guid, &data);
 
-        creature->SaveToDB(trans->GetGOInfo()->moTransport.SpawnMap, UI64LIT(1) << map->GetSpawnMode());
+        creature->SaveToDB(trans->GetGOInfo()->moTransport.SpawnMap, { map->GetDifficultyID() });
 
         sObjectMgr->AddCreatureToGrid(guid, &data);
         return creature;
     }
 
-    Creature* creature = new Creature();
-    if (!creature->Create(map->GenerateLowGuid<HighGuid::Creature>(), map, entryId, x, y, z, o))
-    {
-        delete creature;
+    Creature* creature = Creature::CreateCreature(entryId, map, creator->GetPosition());
+    if (!creature)
         return nullptr;
-    }
 
-    creature->CopyPhaseFrom(creator);
-    creature->SaveToDB(map->GetId(), (UI64LIT(1) << map->GetSpawnMode()));
+    PhasingHandler::InheritPhaseShift(creature, creator);
+    creature->SaveToDB(map->GetId(), { map->GetDifficultyID() });
     
     ObjectGuid::LowType db_guid = creature->GetSpawnId();
 
@@ -618,12 +615,10 @@ Creature* FreedomMgr::CreatureCreate(Player* creator, CreatureTemplate const* cr
     // current "creature" variable is deleted and created fresh new, otherwise old values might trigger asserts or cause undefined behavior
     creature->CleanupsBeforeDelete();
     delete creature;
-    creature = new Creature();
-    if (!creature->LoadCreatureFromDB(db_guid, map))
-    {
-        delete creature;
+
+    creature = Creature::CreateCreatureFromDB(db_guid, map);
+    if (!creature)
         return nullptr;
-    }
 
     // Creation history and straight update
     CreatureExtraData data;
@@ -921,12 +916,9 @@ GameObject* FreedomMgr::GameObjectRefresh(GameObject* go)
     ObjectGuid::LowType guidLow = go->GetSpawnId();
     Map* map = go->GetMap();
     go->Delete();
-    go = new GameObject();
-    if (!go->LoadGameObjectFromDB(guidLow, map))
-    {
-        delete go;
+    go = GameObject::CreateGameObjectFromDB(guidLow, map);
+    if (!go)
         return nullptr;
-    }
 
     return go;
 }
@@ -1130,14 +1122,14 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     G3D::Quat rot = G3D::Matrix3::fromEulerAnglesZYX(creator->GetOrientation(), 0.f, 0.f);
 
     GameObject* object = new GameObject;
-    //if (!object->Create(gobTemplate->entry, map, 0, x, y, z, o, 0.0f, 0.0f, 0.0f, 0.0f, 0, GO_STATE_READY))
-    if (!object->Create(gobTemplate->entry, map, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY))
+    object = GameObject::CreateGameObject(gobTemplate->entry, map, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY);
+    if (!object)
     {
         delete object;
         return nullptr;
     }
 
-    object->CopyPhaseFrom(player);
+    PhasingHandler::InheritPhaseShift(object, player);
 
     if (spawnTimeSecs)
     {
@@ -1145,7 +1137,7 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     }
 
     // fill the gameobject data and save to the db
-    object->SaveToDB(map->GetId(), (UI64LIT(1) << map->GetSpawnMode()));
+    object->SaveToDB(map->GetId(), { map->GetDifficultyID() });
     ObjectGuid::LowType spawnId = object->GetSpawnId();
 
     sFreedomMgr->GameObjectScale(object, object->GetObjectScale());
@@ -1154,9 +1146,9 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     // this is required to avoid weird behavior and memory leaks
     delete object;
 
-    object = new GameObject();
+    object = GameObject::CreateGameObjectFromDB(spawnId, map);
     // this will generate a new guid if the object is in an instance
-    if (!object->LoadGameObjectFromDB(spawnId, map))
+    if (!object)
     {
         delete object;
         return nullptr;
