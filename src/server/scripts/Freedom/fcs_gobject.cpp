@@ -367,7 +367,7 @@ public:
         std::string name = goTemplate->name;
         std::string aiName = object->GetAIName();
         //uint32 phaseMask = object->GetPhaseMask();
-        auto phaseList = object->GetPhases();
+        //auto phaseList = object->GetPhases();  TO UPDATE
         float ox, oy, oz, oo;
         object->GetPosition(ox, oy, oz, oo);
         uint32 mapId = object->GetMapId();
@@ -437,7 +437,7 @@ public:
 
         handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_DISTANCE, distance);
         handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_SCALE, scale);
-
+        /* TO UPDATE
         if (!phaseList.empty())
         {
             handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASELIST);
@@ -447,7 +447,7 @@ public:
                 handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASE_LI, phaseId, sFreedomMgr->GetPhaseMask(phaseId));
             }
         }
-
+        */
         if (historyInfo)
         {
             if (!extraData)

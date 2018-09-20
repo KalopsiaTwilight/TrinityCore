@@ -28,6 +28,7 @@ EndScriptData */
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
+#include "PhasingHandler.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "ReputationMgr.h"
@@ -1040,9 +1041,6 @@ public:
             return false;
 
         target->SetDisplayId(display_id);
-        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
-        if (Creature* crea = target->ToCreature())
-            crea->SetOutfit(display_id);
 
         return true;
     }
@@ -1051,92 +1049,51 @@ public:
     static bool HandleModifyPhaseCommand(ChatHandler* handler, const char* args)
     {
         if (!*args)
+            return false;
+
+        char* phaseText = strtok((char*)args, " ");
+        if (!phaseText)
+            return false;
+
+        uint32 phaseId = uint32(strtoul(phaseText, nullptr, 10));
+        uint32 visibleMapId = 0;
+
+        char* visibleMapIdText = strtok(nullptr, " ");
+        if (visibleMapIdText)
+            visibleMapId = uint32(strtoul(visibleMapIdText, nullptr, 10));
+
+        if (phaseId && !sPhaseStore.LookupEntry(phaseId))
         {
-            handler->PSendSysMessage(FREEDOM_CMDH_MODIFY_PHASE);
-            return true;
+            handler->SendSysMessage(LANG_PHASE_NOTFOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
         }
 
-        Player* source = handler->GetSession()->GetPlayer();
         Unit* target = handler->getSelectedUnit();
-        bool parseAsPhaseMasks = true;
 
-        if (!target)
-            target = source;
-
-        ArgumentTokenizer tokenizer(args);
-        tokenizer.LoadModifier("-ids", 0);
-        tokenizer.LoadModifier("-guid", 1);
-
-        if (tokenizer.ModifierExists("-guid"))
+        if (visibleMapId)
         {
-            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
-            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
-            ObjectGuid::LowType guidLow = atoul(guidKey.c_str());
-            Creature* creature = NULL;
-            if (auto data = sObjectMgr->GetCreatureData(guidLow))
-                creature = sFreedomMgr->GetAnyCreature(source->GetMap(), guidLow, data->id);
-
-            if (!creature)
+            MapEntry const* visibleMap = sMapStore.LookupEntry(visibleMapId);
+            if (!visibleMap || visibleMap->ParentMapID != int32(target->GetMapId()))
             {
-                handler->PSendSysMessage(FREEDOM_CMDE_CREATURE_NOT_FOUND);
-                return true;
+                handler->SendSysMessage(LANG_PHASE_NOTFOUND);
+                handler->SetSentErrorMessage(true);
+                return false;
             }
 
-            target = creature;
-        }
-
-        if (tokenizer.ModifierExists("-ids"))
-        {
-            parseAsPhaseMasks = false;
-        }
-
-        std::string phases = "";
-        uint32 phaseMask = 0;
-
-        for (auto phaseElem : tokenizer)
-        {
-            uint32 phase = atoul(phaseElem.c_str());
-
-            if (!phase)
-                continue;
-
-            if (parseAsPhaseMasks)
-            {
-                if (!sFreedomMgr->IsValidPhaseMask(phase))
-                    continue;
-
-                phaseMask |= phase;
-                phases += " " + phaseElem;
-            }
+            if (!target->GetPhaseShift().HasVisibleMapId(visibleMapId))
+                PhasingHandler::AddVisibleMapId(target, visibleMapId);
             else
-            {
-                if (!sFreedomMgr->IsValidPhaseId(phase))
-                    continue;
-
-                phaseMask |= sFreedomMgr->GetPhaseMask(phase);
-                phases += " " + phaseElem;
-            }
+                PhasingHandler::RemoveVisibleMapId(target, visibleMapId);
         }
 
-        if (phaseMask)
+        if (phaseId)
         {
-            if (target->GetTypeId() == TYPEID_PLAYER)
-            {
-                sFreedomMgr->PlayerPhase(target->ToPlayer(), phaseMask);
-                target->ToPlayer()->SendUpdatePhasing();
-            }
-            else if (target->ToCreature())
-            {
-                sFreedomMgr->CreaturePhase(target->ToCreature(), phaseMask);
-            }
+            if (!target->GetPhaseShift().HasPhase(phaseId))
+                PhasingHandler::AddPhase(target, phaseId, true);
+            else
+                PhasingHandler::RemovePhase(target, phaseId, true);
         }
-
-        if (phases.empty())
-            handler->PSendSysMessage(FREEDOM_CMDE_MODIFY_PHASE_NOT_SET);
-        else if (parseAsPhaseMasks)
-            handler->PSendSysMessage(FREEDOM_CMDI_MODIFY_PHASE_BITFIELDS, phases);
-        else
-            handler->PSendSysMessage(FREEDOM_CMDI_MODIFY_PHASE_PHASEIDS, phases);
 
         return true;
     }

@@ -1058,7 +1058,7 @@ public:
         for (auto titleEntry : sCharTitlesStore)
         {
             int32 locale = handler->GetSessionDbcLocale();
-            std::string titleName = (gender == GENDER_MALE ? titleEntry->NameMale : titleEntry->NameFemale)->Str[locale];
+            std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)->Str[locale];
 
             if (boost::icontains(titleName, namePart))
             {
@@ -1125,7 +1125,7 @@ public:
 
         Gender gender = (Gender)source->getGender();
         int32 locale = handler->GetSessionDbcLocale();
-        std::string titleName = (gender == GENDER_MALE ? titleEntry->NameMale : titleEntry->NameFemale)->Str[locale];
+        std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)->Str[locale];
 
         handler->PSendSysMessage(FREEDOM_CMDI_FREEDOM_TITLE_SET, 
             titleEntry->ID, 

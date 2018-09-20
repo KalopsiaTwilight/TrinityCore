@@ -972,10 +972,10 @@ public:
             // send taxinode in "id - [name] (Map:m X:x Y:y Z:z)" format
             if (handler->GetSession())
                 handler->PSendSysMessage(LANG_TAXINODE_ENTRY_LIST_CHAT, nodeEntry->ID, nodeEntry->ID, name.c_str(), "",
-                    nodeEntry->MapID, nodeEntry->Pos.X, nodeEntry->Pos.Y, nodeEntry->Pos.Z);
+                    nodeEntry->ContinentID, nodeEntry->Pos.X, nodeEntry->Pos.Y, nodeEntry->Pos.Z);
             else
                 handler->PSendSysMessage(LANG_TAXINODE_ENTRY_LIST_CONSOLE, nodeEntry->ID, name.c_str(), "",
-                    nodeEntry->MapID, nodeEntry->Pos.X, nodeEntry->Pos.Y, nodeEntry->Pos.Z);
+                    nodeEntry->ContinentID, nodeEntry->Pos.X, nodeEntry->Pos.Y, nodeEntry->Pos.Z);
 
             if (!found)
                 found = true;
@@ -1079,7 +1079,7 @@ public:
                         continue;
 
                     int32 locale = handler->GetSessionDbcLocale();
-                    std::string name = (gender == GENDER_MALE ? titleInfo->NameMale : titleInfo->NameFemale)->Str[locale];
+                    std::string name = (gender == GENDER_MALE ? titleInfo->Name : titleInfo->Name1)->Str[locale];
 
                     if (name.empty())
                         continue;

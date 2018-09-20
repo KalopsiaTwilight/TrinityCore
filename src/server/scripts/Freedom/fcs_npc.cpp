@@ -1649,7 +1649,7 @@ public:
         uint32 displayId = target->GetDisplayId();
         uint32 nativeId = target->GetNativeDisplayId();
         uint32 entryId = cInfo->Entry;
-        auto phaseList = target->GetPhases();
+        //auto phaseList = target->GetPhases(); -- To Update
 
         int64 curRespawnDelay = target->GetRespawnTimeEx() - time(NULL);
         if (curRespawnDelay < 0)
@@ -1663,7 +1663,7 @@ public:
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_GUID, guidLow);
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_ENTRY, entryId, sFreedomMgr->ToChatLink("Hcreature_entry", entryId, "Spawn link"));
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_DISPLAY_ID, displayId, nativeId);
-
+        /*  TO UPDATE
         if (!phaseList.empty())
         {
             handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASELIST);
@@ -1673,7 +1673,7 @@ public:
                 handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASE_LI, phaseId, sFreedomMgr->GetPhaseMask(phaseId));
             }
         }
-
+        */
         if (advancedInfo)
         {
             //handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_PHASEMASK, extraData ? extraData->phaseMask : target->GetPhaseMask());
@@ -2038,8 +2038,6 @@ public:
 
         target->SetDisplayId(displayId);
         target->SetNativeDisplayId(displayId);
-        target->SetOutfit(displayId);
-        target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
 
         target->SaveToDB();
 
