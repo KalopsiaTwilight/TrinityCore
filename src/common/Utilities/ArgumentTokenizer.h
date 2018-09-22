@@ -28,10 +28,10 @@ public:
     std::string GetUntokenizedString() { return normalParamString; }
 
     template<typename T = std::string>
-    T TryGetParam(uint32 index) {(void)index}
+    T TryGetParam(uint32 index) { (void)index; }
 
     template<typename T = std::string>
-    T TryGetParam(uint32 index, std::string keyType) {(void)index, (void)keyType}
+    T TryGetParam(uint32 index, std::string keyType) { (void)index, (void)keyType; }
 
     ModifierStorageType const* modifiers() { return &m_modifiers; }
     const_iterator begin() const { return m_storage.begin(); }
