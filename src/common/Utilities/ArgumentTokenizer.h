@@ -28,10 +28,10 @@ public:
     std::string GetUntokenizedString() { return normalParamString; }
 
     template<typename T = std::string>
-    T TryGetParam(uint32 index) { }
+    T TryGetParam(uint32 index) {(void)index}
 
     template<typename T = std::string>
-    T TryGetParam(uint32 index, std::string keyType) { }
+    T TryGetParam(uint32 index, std::string keyType) {(void)index, (void)keyType}
 
     ModifierStorageType const* modifiers() { return &m_modifiers; }
     const_iterator begin() const { return m_storage.begin(); }
@@ -51,23 +51,23 @@ protected:
     std::string normalParamString;
 };
 
-template<>inline
-std::string ArgumentTokenizer::TryGetParam<std::string>(uint32 index) { return (m_storage.size() > index) ? m_storage[index] : ""; }
+template<>
+inline std::string ArgumentTokenizer::TryGetParam<std::string>(uint32 index) { return (m_storage.size() > index) ? m_storage[index] : ""; }
 
-template<>inline
-float ArgumentTokenizer::TryGetParam<float>(uint32 index) { return atof(TryGetParam<std::string>(index).c_str()); }
+template<>
+inline float ArgumentTokenizer::TryGetParam<float>(uint32 index) { return atof(TryGetParam<std::string>(index).c_str()); }
 
-template<>inline
-uint32 ArgumentTokenizer::TryGetParam<uint32>(uint32 index) { return strtoul(TryGetParam<std::string>(index).c_str(), nullptr, 10); }
+template<>
+inline uint32 ArgumentTokenizer::TryGetParam<uint32>(uint32 index) { return strtoul(TryGetParam<std::string>(index).c_str(), nullptr, 10); }
 
-template<>inline
-uint64 ArgumentTokenizer::TryGetParam<uint64>(uint32 index) { return strtoull(TryGetParam<std::string>(index).c_str(), nullptr, 10); }
+template<>
+inline uint64 ArgumentTokenizer::TryGetParam<uint64>(uint32 index) { return strtoull(TryGetParam<std::string>(index).c_str(), nullptr, 10); }
 
-template<>inline
-std::string ArgumentTokenizer::TryGetParam<std::string>(uint32 index, std::string keyType) { return ExtractChatLinkKey(TryGetParam<std::string>(index), keyType); }
+template<>
+inline std::string ArgumentTokenizer::TryGetParam<std::string>(uint32 index, std::string keyType) { return ExtractChatLinkKey(TryGetParam<std::string>(index), keyType); }
 
-template<>inline
-uint32 ArgumentTokenizer::TryGetParam<uint32>(uint32 index, std::string keyType) { return strtoul(ExtractChatLinkKey(TryGetParam<std::string>(index), keyType).c_str(), nullptr, 10); }
+template<>
+inline uint32 ArgumentTokenizer::TryGetParam<uint32>(uint32 index, std::string keyType) { return strtoul(ExtractChatLinkKey(TryGetParam<std::string>(index), keyType).c_str(), nullptr, 10); }
 
-template<>inline
-uint64 ArgumentTokenizer::TryGetParam<uint64>(uint32 index, std::string keyType) { return strtoull(ExtractChatLinkKey(TryGetParam<std::string>(index), keyType).c_str(), nullptr, 10); }
+template<> 
+inline uint64 ArgumentTokenizer::TryGetParam<uint64>(uint32 index, std::string keyType) { return strtoull(ExtractChatLinkKey(TryGetParam<std::string>(index), keyType).c_str(), nullptr, 10); }
