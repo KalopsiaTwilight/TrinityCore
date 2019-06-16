@@ -1030,7 +1030,7 @@ public:
         if (!*args)
             return false;
 
-        uint16 display_id = (uint16)atoi((char*)args);
+        uint32 display_id = atoul(args);
 
         Unit* target = handler->getSelectedUnit();
         if (!target)
