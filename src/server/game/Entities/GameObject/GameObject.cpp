@@ -1165,6 +1165,16 @@ bool GameObject::IsGenericGO() const
     return gInfo->type == GAMEOBJECT_TYPE_GENERIC;
 }
 
+bool GameObject::IsGarrisonGO() const
+{
+    // If something is marked as a generic object, don't transmit an out of range packet for it.
+    GameObjectTemplate const* gInfo = GetGOInfo();
+    if (!gInfo)
+        return false;
+
+    return gInfo->type == GAMEOBJECT_TYPE_GARRISON_BUILDING;
+}
+
 Unit* GameObject::GetOwner() const
 {
     return ObjectAccessor::GetUnit(*this, GetOwnerGUID());
@@ -1198,7 +1208,7 @@ bool GameObject::IsAlwaysVisibleFor(WorldObject const* seer) const
     if (IsTransport() || IsDestructibleBuilding())
         return true;
     
-    if (IsStaticMO() && sWorld->getBoolConfig(CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO)) // CUSTOM
+    if ((IsStaticMO() || IsGarrisonGO()) && sWorld->getBoolConfig(CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO_GARRISON))
         return true;
     
     if (IsGenericGO() && sWorld->getBoolConfig(CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_GENERIC)) // CUSTOM

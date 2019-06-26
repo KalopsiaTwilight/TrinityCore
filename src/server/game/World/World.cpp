@@ -1306,7 +1306,7 @@ void World::LoadConfigSettings(bool reload)
     }
 
     // Visibility AlwaysVisible
-    m_bool_configs[CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO] = sConfigMgr->GetBoolDefault("Visibility.AlwaysVisible.Gameobject.WMO", false);
+    m_bool_configs[CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_WMO_GARRISON] = sConfigMgr->GetBoolDefault("Visibility.AlwaysVisible.Gameobject.WMO_Garrison", false);
     m_bool_configs[CONFIG_VISIBILITY_ALWAYSVISIBLE_GOB_GENERIC] = sConfigMgr->GetBoolDefault("Visibility.AlwaysVisible.Gameobject.Generic", false);
 
     ///- Read the "Data" directory from the config file
