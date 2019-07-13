@@ -1,5 +1,6 @@
-#include "ScriptMgr.h"
 #include "AccountMgr.h"
+#include "BattlenetAccountMgr.h"
+#include "BigNumber.h"
 #include "CharacterPackets.h"
 #include "Config.h"
 #include "Chat.h"
@@ -16,6 +17,7 @@
 #include "Pet.h"
 #include "Player.h"
 #include "RBAC.h"
+#include "ScriptMgr.h"
 #include "SocialMgr.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -145,6 +147,7 @@ public:
             { "recall",         rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomRecallCommand,             "" },
             { "guild",          rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, NULL,                                    "", freedomGuildCommandTable },
             { "petscale",       rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomPetScaleCommand,           "" },
+            { "gameaccount",    rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomGameAccountCreateCommand,  "" },
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -1667,6 +1670,71 @@ public:
             pet->SetPetAddon(source, Scale);
             pet->SetObjectScale(Scale);
             return true;
+        }
+
+        return true;
+    }
+
+    static bool HandleFreedomGameAccountCreateCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->SendSysMessage(FREEDOM_CMDI_GAMEACCOUNTCREATE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string bnetAccountName;
+        uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
+        bnetAccountName = Battlenet::AccountMgr::GetName(accountId, bnetAccountName);
+
+        uint8 indexVerify = (uint8)atoul(args);
+        if (indexVerify != Battlenet::AccountMgr::GetMaxIndex(accountId))
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_ACCT_INDEX_NO_MATCH);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint8 index = Battlenet::AccountMgr::GetMaxIndex(accountId) + 1;
+        std::string accountName = std::to_string(accountId) + '#' + std::to_string(uint32(index));
+
+        // Generate random hex string for password, these accounts must not be logged on with GRUNT
+        BigNumber randPassword;
+        randPassword.SetRand(8 * 16);
+
+        switch (sAccountMgr->CreateAccount(accountName, ByteArrayToHexStr(randPassword.AsByteArray().get(), randPassword.GetNumBytes()), bnetAccountName, accountId, index))
+        {
+        case AccountOpResult::AOR_OK:
+            handler->PSendSysMessage(LANG_ACCOUNT_CREATED, accountName.c_str());
+            if (handler->GetSession())
+            {
+                TC_LOG_INFO("entities.player.character", "Account: %u (IP: %s) Character:[%s] (%s) created Account %s (Email: '%s')",
+                    handler->GetSession()->GetAccountId(), handler->GetSession()->GetRemoteAddress().c_str(),
+                    handler->GetSession()->GetPlayer()->GetName().c_str(), handler->GetSession()->GetPlayer()->GetGUID().ToString().c_str(),
+                    accountName.c_str(), bnetAccountName.c_str());
+            }
+            break;
+        case AccountOpResult::AOR_NAME_TOO_LONG:
+            handler->SendSysMessage(LANG_ACCOUNT_NAME_TOO_LONG);
+            handler->SetSentErrorMessage(true);
+            return false;
+        case AccountOpResult::AOR_PASS_TOO_LONG:
+            handler->SendSysMessage(LANG_ACCOUNT_PASS_TOO_LONG);
+            handler->SetSentErrorMessage(true);
+            return false;
+        case AccountOpResult::AOR_NAME_ALREADY_EXIST:
+            handler->SendSysMessage(LANG_ACCOUNT_ALREADY_EXIST);
+            handler->SetSentErrorMessage(true);
+            return false;
+        case AccountOpResult::AOR_DB_INTERNAL_ERROR:
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_CREATED_SQL_ERROR, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        default:
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_CREATED, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
         }
 
         return true;
