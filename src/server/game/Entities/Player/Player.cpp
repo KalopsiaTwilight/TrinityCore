@@ -22425,8 +22425,9 @@ void Player::InitDisplayIds()
     {
         uint32 display = (*result)[0].GetUInt32();
         SetDisplayId(display);
+        SetNativeDisplayId(display);
 
-        uint8 gender = GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER);
+        /*uint8 gender = GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER);
         switch (gender)
         {
         case GENDER_FEMALE:
@@ -22437,7 +22438,7 @@ void Player::InitDisplayIds()
             break;
         default:
             TC_LOG_ERROR("entities.player", "Player::InitDisplayIds: Player '%s' (%s) has invalid gender %u", GetName().c_str(), GetGUID().ToString().c_str(), gender);
-        }
+        }*/
     }
     else
     {

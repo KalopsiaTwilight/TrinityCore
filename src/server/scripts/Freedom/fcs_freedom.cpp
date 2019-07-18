@@ -385,6 +385,7 @@ public:
             FreedomDatabase.PExecute("INSERT INTO character_extra(guid,display) VALUES ('%u','%u')", source->GetGUID().GetCounter(), morphData->displayId);
 
         source->SetDisplayId(morphData->displayId);
+        source->SetNativeDisplayId(morphData->displayId);
         handler->PSendSysMessage(FREEDOM_CMDI_MORPH, morphData->name, morphData->displayId);
         return true;
     }
@@ -1684,12 +1685,19 @@ public:
             return false;
         }
 
+        char* indexVer = strtok((char*)args, " ");
+        char* password = strtok(NULL, " ");
+
+        if (!indexVer || !password)
+            return false;
+
         std::string bnetAccountName;
         uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
         bnetAccountName = Battlenet::AccountMgr::GetName(accountId, bnetAccountName);
 
-        uint8 indexVerify = (uint8)atoul(args);
-        if (indexVerify != Battlenet::AccountMgr::GetMaxIndex(accountId))
+        uint8 indexVerify = atoi(indexVer);
+        //uint8 indexVerify = (uint8)atoul(args);
+        if (indexVerify != Battlenet::AccountMgr::GetMaxIndex(accountId) || indexVerify > 9)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_ACCT_INDEX_NO_MATCH);
             handler->SetSentErrorMessage(true);
@@ -1700,10 +1708,11 @@ public:
         std::string accountName = std::to_string(accountId) + '#' + std::to_string(uint32(index));
 
         // Generate random hex string for password, these accounts must not be logged on with GRUNT
-        BigNumber randPassword;
+        /*BigNumber randPassword;
         randPassword.SetRand(8 * 16);
 
-        switch (sAccountMgr->CreateAccount(accountName, ByteArrayToHexStr(randPassword.AsByteArray().get(), randPassword.GetNumBytes()), bnetAccountName, accountId, index))
+        switch (sAccountMgr->CreateAccount(accountName, ByteArrayToHexStr(randPassword.AsByteArray().get(), randPassword.GetNumBytes()), bnetAccountName, accountId, index))*/
+        switch (sAccountMgr->CreateAccount(accountName, password, bnetAccountName, accountId, index))
         {
         case AccountOpResult::AOR_OK:
             handler->PSendSysMessage(LANG_ACCOUNT_CREATED, accountName.c_str());
