@@ -120,7 +120,6 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         int64 GetPackedWorldRotation() const { return m_packedRotation; }
         Quat GetRotationQuat();
 
-
         // overwrite WorldObject function for proper name localization
         std::string const& GetNameForLocaleIdx(LocaleConstant locale_idx) const override;
 

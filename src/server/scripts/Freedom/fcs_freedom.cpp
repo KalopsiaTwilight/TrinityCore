@@ -1693,7 +1693,6 @@ public:
 
         std::string bnetAccountName;
         uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
-        bnetAccountName = Battlenet::AccountMgr::GetName(accountId, bnetAccountName);
 
         uint8 indexVerify = atoi(indexVer);
         //uint8 indexVerify = (uint8)atoul(args);
@@ -1703,6 +1702,14 @@ public:
             handler->SetSentErrorMessage(true);
             return false;
         }
+
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EMAIL_BY_ID);
+        stmt->setUInt32(0, accountId);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
+        if (!result)
+            return false;
+
+        bnetAccountName = (*result)[0].GetString();
 
         uint8 index = Battlenet::AccountMgr::GetMaxIndex(accountId) + 1;
         std::string accountName = std::to_string(accountId) + '#' + std::to_string(uint32(index));

@@ -1007,30 +1007,7 @@ bool GameObject::LoadGameObjectFromDB(ObjectGuid::LowType spawnId, Map* map, boo
 
     PhasingHandler::InitDbPhaseShift(GetPhaseShift(), data->phaseUseFlags, data->phaseId, data->phaseGroup);
     PhasingHandler::InitDbVisibleMapId(GetPhaseShift(), data->terrainSwapMap);
-    /*
-    if (data->phaseGroup)
-    {
-        // Set the gameobject in all the phases of the phasegroup
-        for (auto ph : sDB2Manager.GetPhasesForGroup(data->phaseGroup))
-            SetInPhase(ph, false, true);
-    }
-    else if (GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(GetSpawnId()))
-    {
-        for (int i = 1; i < 512; i = i << 1)
-        {
-            uint32 phase = extraData->phaseMask & i;
 
-            if (phase)
-                SetInPhase(sFreedomMgr->GetPhaseId(phase), false, true);
-        }
-
-        SetPhaseMask(extraData->phaseMask, false);            
-    }
-    else
-    {
-        SetPhaseMask(1, false);
-    }
-    */
     if (data->spawntimesecs >= 0)
     {
         m_spawnedByDefault = true;

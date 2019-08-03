@@ -11667,23 +11667,23 @@ InventoryResult Player::CanUseItem(ItemTemplate const* proto) const
     if (proto->GetRequiredSkill() != 0)
     {
         if (GetSkillValue(proto->GetRequiredSkill()) == 0)
-            return EQUIP_ERR_PROFICIENCY_NEEDED;
+            return EQUIP_ERR_OK;
         else if (GetSkillValue(proto->GetRequiredSkill()) < proto->GetRequiredSkillRank())
-            return EQUIP_ERR_CANT_EQUIP_SKILL;
+            return EQUIP_ERR_OK;
     }
 
     if (proto->GetRequiredSpell() != 0 && !HasSpell(proto->GetRequiredSpell()))
-        return EQUIP_ERR_PROFICIENCY_NEEDED;
+        return EQUIP_ERR_OK;
 
     if (getLevel() < proto->GetBaseRequiredLevel())
-        return EQUIP_ERR_CANT_EQUIP_LEVEL_I;
+        return EQUIP_ERR_OK;
 
     // If World Event is not active, prevent using event dependant items
     if (proto->GetHolidayID() && !IsHolidayActive(proto->GetHolidayID()))
-        return EQUIP_ERR_CLIENT_LOCKED_OUT;
+        return EQUIP_ERR_OK;
 
     if (proto->GetRequiredReputationFaction() && uint32(GetReputationRank(proto->GetRequiredReputationFaction())) < proto->GetRequiredReputationRank())
-        return EQUIP_ERR_CANT_EQUIP_REPUTATION;
+        return EQUIP_ERR_OK;
 
     // learning (recipes, mounts, pets, etc.)
     if (proto->Effects.size() >= 2)
