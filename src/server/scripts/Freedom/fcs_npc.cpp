@@ -9,13 +9,14 @@
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
+#include "PhasingHandler.h"
 #include "Player.h"
 #include "RBAC.h"
 #include "Transport.h"
 #include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
 #include "World.h"
-#include "FreedomMgr.h"
 #include "WorldSession.h"
+#include "FreedomMgr.h"
 #include "Utilities/ArgumentTokenizer.h"
 
 template<typename E, typename T = char const*>
@@ -198,6 +199,7 @@ public:
             { "model",          rbac::RBAC_PERM_COMMAND_NPC_SET_MODEL,              false, &HandleNpcSetModelCommand,           "" },
             { "movetype",       rbac::RBAC_PERM_COMMAND_NPC_SET_MOVETYPE,           false, &HandleNpcSetMoveTypeCommand,        "" },
             { "phase",          rbac::RBAC_PERM_COMMAND_NPC_SET_PHASE,              false, &HandleNpcSetPhaseCommand,           "" },
+            { "phasegroup",     rbac::RBAC_PERM_COMMAND_NPC_SET_PHASE,              false, &HandleNpcSetPhaseGroup,             "" },
             { "scale",          rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSetScaleCommand,           "" },
             { "spawndist",      rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleNpcSetSpawnDistCommand,       "" },
             { "spawntime",      rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleNpcSetSpawnTimeCommand,       "" },
@@ -213,6 +215,7 @@ public:
             { "gravity",        rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSetGravityCommand,         "" },
             { "swim",           rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSetSwimCommand,            "" },
             { "flystate",       rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSetFlyStateCommand,        "" },
+            { "data",           rbac::RBAC_PERM_COMMAND_NPC_SET_DATA,               false, &HandleNpcSetDataCommand,            "" },
         };
         static std::vector<ChatCommand> npcCommandTable =
         {
@@ -225,13 +228,15 @@ public:
             { "textemote",  rbac::RBAC_PERM_COMMAND_NPC_TEXTEMOTE,              false, &HandleNpcTextEmoteCommand,          "" },
             { "whisper",    rbac::RBAC_PERM_COMMAND_NPC_WHISPER,                false, &HandleNpcWhisperCommand,            "" },
             { "yell",       rbac::RBAC_PERM_COMMAND_NPC_YELL,                   false, &HandleNpcYellCommand,               "" },
+            { "tame",       rbac::RBAC_PERM_COMMAND_NPC_TAME,                   false, &HandleNpcTameCommand,               "" },
             { "select",     rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcSelectCommand,             "" },
             { "spawn",      rbac::RBAC_PERM_COMMAND_NPC_ADD,                    false, &HandleNpcAddCommand,                "" },
             { "return",     rbac::RBAC_PERM_COMMAND_NPC,                        false, &HandleNpcReturnCommand,             "" },
-            { "add",        rbac::RBAC_PERM_COMMAND_NPC_ADD,                    false, NULL,                                "", npcAddCommandTable },
-            { "delete",     rbac::RBAC_PERM_COMMAND_NPC_DELETE,                 false, NULL,                                "", npcDeleteCommandTable },
-            { "follow",     rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,                 false, NULL,                                "", npcFollowCommandTable },
-            { "set",        rbac::RBAC_PERM_COMMAND_NPC_SET,                    false, NULL,                                "", npcSetCommandTable },
+            { "add",        rbac::RBAC_PERM_COMMAND_NPC_ADD,                    false, NULL,            "", npcAddCommandTable },
+            { "delete",     rbac::RBAC_PERM_COMMAND_NPC_DELETE,                 false, NULL,         "", npcDeleteCommandTable },
+            { "follow",     rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,                 false, NULL,         "", npcFollowCommandTable },
+            { "set",        rbac::RBAC_PERM_COMMAND_NPC_SET,                    false, NULL,            "", npcSetCommandTable },
+            { "evade",      rbac::RBAC_PERM_COMMAND_NPC_EVADE,                  false, &HandleNpcEvadeCommand,              "" },
         };
         static std::vector<ChatCommand> commandTable =
         {
@@ -1677,6 +1682,11 @@ public:
         if (advancedInfo)
         {
             //handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_PHASEMASK, extraData ? extraData->phaseMask : target->GetPhaseMask());
+            if (CreatureData const* data = sObjectMgr->GetCreatureData(target->GetSpawnId()))
+            {
+                handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_PHASESHIFT, data->phaseId, data->phaseGroup);
+                PhasingHandler::PrintToChat(handler, target->GetPhaseShift());
+            }
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_FACTION_ID, faction);
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_NAME, name);
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_AI_INFO, target->GetAIName());
@@ -2047,7 +2057,7 @@ public:
 
     //npc phase handling
     //change phase of creature
-    static bool HandleNpcSetPhaseCommand(ChatHandler* handler, char const* args)
+    /*static bool HandleNpcSetPhaseCommand(ChatHandler* handler, char const* args)
     {
         if (!*args)
         {
@@ -2131,6 +2141,59 @@ public:
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_PHASE_BITFIELDS, phases);
         else
             handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_PHASE_PHASEIDS, phases);
+
+        return true;
+    }*/
+    static bool HandleNpcSetPhaseGroup(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        int32 phaseGroupId = atoi(args);
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->IsPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        PhasingHandler::ResetPhaseShift(creature);
+        PhasingHandler::AddPhaseGroup(creature, phaseGroupId, true);
+        creature->SetDBPhase(-phaseGroupId);
+
+        creature->SaveToDB();
+
+        return true;
+    }
+
+    static bool HandleNpcSetPhaseCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 phaseID = atoul(args);
+        if (!sPhaseStore.LookupEntry(phaseID))
+        {
+            handler->SendSysMessage(LANG_PHASE_NOTFOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Creature* creature = handler->getSelectedCreature();
+        if (!creature || creature->IsPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        PhasingHandler::ResetPhaseShift(creature);
+        PhasingHandler::AddPhase(creature, phaseID, true);
+        creature->SetDBPhase(phaseID);
+
+        creature->SaveToDB();
 
         return true;
     }
@@ -2275,6 +2338,118 @@ public:
 
         handler->PSendSysMessage(FREEDOM_CMDI_NPC_UNFOLLOW,
             sFreedomMgr->ToChatLink("Hcreature", target->GetSpawnId(), target->GetName()));
+        return true;
+    }
+
+    //npc tame handling
+    static bool HandleNpcTameCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Creature* creatureTarget = handler->getSelectedCreature();
+        if (!creatureTarget || creatureTarget->IsPet())
+        {
+            handler->PSendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* player = handler->GetSession()->GetPlayer();
+
+        if (!player->GetPetGUID().IsEmpty())
+        {
+            handler->SendSysMessage(LANG_YOU_ALREADY_HAVE_PET);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        CreatureTemplate const* cInfo = creatureTarget->GetCreatureTemplate();
+
+        if (!cInfo->IsTameable(player->CanTameExoticPets()))
+        {
+            handler->PSendSysMessage(LANG_CREATURE_NON_TAMEABLE, cInfo->Entry);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // Everything looks OK, create new pet
+        Pet* pet = player->CreateTamedPetFrom(creatureTarget);
+        if (!pet)
+        {
+            handler->PSendSysMessage(LANG_CREATURE_NON_TAMEABLE, cInfo->Entry);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // place pet before player
+        float x, y, z;
+        player->GetClosePoint(x, y, z, creatureTarget->GetObjectSize(), CONTACT_DISTANCE);
+        pet->Relocate(x, y, z, float(M_PI) - player->GetOrientation());
+
+        // set pet to defensive mode by default (some classes can't control controlled pets in fact).
+        pet->SetReactState(REACT_DEFENSIVE);
+
+        // calculate proper level
+        uint8 level = (creatureTarget->getLevel() < (player->getLevel() - 5)) ? (player->getLevel() - 5) : creatureTarget->getLevel();
+
+        // prepare visual effect for levelup
+        pet->SetUInt32Value(UNIT_FIELD_LEVEL, level - 1);
+
+        // add to world
+        pet->GetMap()->AddToMap(pet->ToCreature());
+
+        // visual effect for levelup
+        pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
+
+        // caster have pet now
+        player->SetMinion(pet, true);
+
+        pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+        player->PetSpellInitialize();
+
+        return true;
+    }
+
+    static bool HandleNpcEvadeCommand(ChatHandler* handler, char const* args)
+    {
+        Creature* creatureTarget = handler->getSelectedCreature();
+        if (!creatureTarget || creatureTarget->IsPet())
+        {
+            handler->PSendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (!creatureTarget->IsAIEnabled)
+        {
+            handler->PSendSysMessage(LANG_CREATURE_NOT_AI_ENABLED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        char* type_str = args ? strtok((char*)args, " ") : nullptr;
+        char* force_str = args ? strtok(nullptr, " ") : nullptr;
+
+        CreatureAI::EvadeReason why = CreatureAI::EVADE_REASON_OTHER;
+        bool force = false;
+        if (type_str)
+        {
+            if (stricmp(type_str, "NO_HOSTILES") == 0 || stricmp(type_str, "EVADE_REASON_NO_HOSTILES") == 0)
+                why = CreatureAI::EVADE_REASON_NO_HOSTILES;
+            else if (stricmp(type_str, "BOUNDARY") == 0 || stricmp(type_str, "EVADE_REASON_BOUNDARY") == 0)
+                why = CreatureAI::EVADE_REASON_BOUNDARY;
+            else if (stricmp(type_str, "SEQUENCE_BREAK") == 0 || stricmp(type_str, "EVADE_REASON_SEQUENCE_BREAK") == 0)
+                why = CreatureAI::EVADE_REASON_SEQUENCE_BREAK;
+            else if (stricmp(type_str, "FORCE") == 0)
+                force = true;
+
+            if (!force && force_str)
+                if (stricmp(force_str, "FORCE") == 0)
+                    force = true;
+        }
+
+        if (force)
+            creatureTarget->ClearUnitState(UNIT_STATE_EVADE);
+        creatureTarget->AI()->EnterEvadeMode(why);
+
         return true;
     }
 

@@ -148,6 +148,7 @@ public:
             { "guild",          rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, NULL,                                    "", freedomGuildCommandTable },
             { "petscale",       rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomPetScaleCommand,           "" },
             { "gameaccount",    rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomGameAccountCreateCommand,  "" },
+            { "accountaccess",  rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomAccountAccessCommand,      "" },
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -1695,7 +1696,6 @@ public:
         uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
 
         uint8 indexVerify = atoi(indexVer);
-        //uint8 indexVerify = (uint8)atoul(args);
         if (indexVerify != Battlenet::AccountMgr::GetMaxIndex(accountId) || indexVerify > 9)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_ACCT_INDEX_NO_MATCH);
@@ -1752,6 +1752,40 @@ public:
             handler->SetSentErrorMessage(true);
             return false;
         }
+
+        AccountTypes gmlevel = handler->GetSession()->GetSecurity();
+        rbac::RBACData* rbac = handler->getSelectedPlayer()->GetSession()->GetRBACData();
+        sAccountMgr->UpdateAccountAccess(rbac, AccountMgr::GetId(accountName), uint8(gmlevel), -1);
+
+        return true;
+    }
+
+    static bool HandleFreedomAccountAccessCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->SendSysMessage(FREEDOM_CMDI_ACCOUNTACCESS);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string confirm = (char*)args;
+
+        std::string bnetAccountName;
+        uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
+
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EMAIL_BY_ID);
+        stmt->setUInt32(0, accountId);
+        PreparedQueryResult result = LoginDatabase.Query(stmt);
+        if (!result)
+            return false;
+
+        bnetAccountName = (*result)[0].GetString();
+
+        std::string accountName = std::to_string(accountId) + "#1";
+        uint32 maingmlevel = sAccountMgr->GetSecurity(AccountMgr::GetId(accountName));
+        rbac::RBACData* rbac = handler->getSelectedPlayer()->GetSession()->GetRBACData();
+        sAccountMgr->UpdateAccountAccess(rbac, AccountMgr::GetId(accountName), uint8(maingmlevel), -1);
 
         return true;
     }
