@@ -1771,21 +1771,27 @@ public:
 
         std::string confirm = (char*)args;
 
-        std::string bnetAccountName;
-        uint32 accountId = handler->GetSession()->GetBattlenetAccountId();
-
-        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BNET_ACCOUNT_EMAIL_BY_ID);
-        stmt->setUInt32(0, accountId);
-        PreparedQueryResult result = LoginDatabase.Query(stmt);
-        if (!result)
+        if (confirm != "1")
+        {
+            handler->SendSysMessage(FREEDOM_CMDE_ACCOUNTACCESS_CONFIRM);
+            handler->SetSentErrorMessage(true);
             return false;
+        }
 
-        bnetAccountName = (*result)[0].GetString();
+        uint32 BNetAccountId = handler->GetSession()->GetBattlenetAccountId();
+        std::string AccountName = std::to_string(BNetAccountId) + "#1";
+        uint32 maingmlevel = sAccountMgr->GetSecurity(AccountMgr::GetId(AccountName));
 
-        std::string accountName = std::to_string(accountId) + "#1";
-        uint32 maingmlevel = sAccountMgr->GetSecurity(AccountMgr::GetId(accountName));
+        if (maingmlevel == handler->GetSession()->GetSecurity())
+        {
+            handler->SendSysMessage(FREEDOM_CMDE_ACCOUNTACCESS_SAMELEVEL);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
         rbac::RBACData* rbac = handler->getSelectedPlayer()->GetSession()->GetRBACData();
-        sAccountMgr->UpdateAccountAccess(rbac, AccountMgr::GetId(accountName), uint8(maingmlevel), -1);
+        sAccountMgr->UpdateAccountAccess(rbac, handler->GetSession()->GetAccountId(), uint8(maingmlevel), -1);
+        handler->SendSysMessage(FREEDOM_CMDE_ACCOUNTACCESS_DONE);
 
         return true;
     }
