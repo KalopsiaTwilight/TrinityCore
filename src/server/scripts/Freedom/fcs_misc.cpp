@@ -1273,18 +1273,18 @@ public:
 
             if (itemNameStr && itemNameStr[0])
             {
-                std::string itemName = itemNameStr + 1;
-                auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* itemSparse)
+                std::string itemName = itemNameStr+1;
+                auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* sparse)
                 {
                     for (uint32 i = 0; i < MAX_LOCALES; ++i)
-                        if (itemName == itemSparse->Display->Str[i])
+                        if (itemName == sparse->Display->Str[i])
                             return true;
                     return false;
                 });
 
                 if (itr == sItemSparseStore.end())
                 {
-                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr + 1);
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr+1);
                     handler->SetSentErrorMessage(true);
                     return false;
                 }
@@ -1346,7 +1346,7 @@ public:
         // Blacklist check
         ItemTemplateExtraData const* itemExtra = sFreedomMgr->GetItemTemplateExtraById(itemId);
 
-        if (!handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION) && itemExtra->hidden)
+        if (!handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION) && itemExtra && itemExtra->hidden)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_X_IS_BLACKLISTED, "Item");
             return true;

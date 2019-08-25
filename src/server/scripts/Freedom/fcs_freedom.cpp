@@ -75,6 +75,7 @@ public:
             { "extra",          rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleFreedomReloadCreatureExtraCommand,   "" },
             { "addon",          rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleFreedomReloadCreatureAddonCommand,   "" },
             { "base",           rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleFreedomReloadCreatureBaseCommand,    "" },
+            { "equip",          rbac::RBAC_FPERM_ADMINISTRATION,                    false, &HandleFreedomReloadCreatureEquipCommand,   "" },
         };
 
         static std::vector<ChatCommand> freedomReloadGameobjectCommandTable =
@@ -386,7 +387,6 @@ public:
             FreedomDatabase.PExecute("INSERT INTO character_extra(guid,display) VALUES ('%u','%u')", source->GetGUID().GetCounter(), morphData->displayId);
 
         source->SetDisplayId(morphData->displayId);
-        source->SetNativeDisplayId(morphData->displayId);
         handler->PSendSysMessage(FREEDOM_CMDI_MORPH, morphData->name, morphData->displayId);
         return true;
     }
@@ -878,6 +878,16 @@ public:
         handler->SendGlobalGMSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_WORLD_DB, "creature_equip_template").c_str());
         sObjectMgr->LoadCreatures();
         handler->SendGlobalGMSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_WORLD_DB, "creature").c_str());
+        handler->SendGlobalSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_FINISH, GetMSTimeDiffToNow(oldMSTime)).c_str());
+        return true;
+    }
+
+    static bool HandleFreedomReloadCreatureEquipCommand(ChatHandler* handler, char const* args)
+    {
+        handler->SendGlobalSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_EXECUTOR, "creature equip", handler->GetNameLink()).c_str());
+        uint32 oldMSTime = getMSTime();
+        sObjectMgr->LoadEquipmentTemplates();
+        handler->SendGlobalGMSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_WORLD_DB, "creature_equip_template").c_str());
         handler->SendGlobalSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_FINISH, GetMSTimeDiffToNow(oldMSTime)).c_str());
         return true;
     }
