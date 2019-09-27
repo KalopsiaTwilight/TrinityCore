@@ -1790,9 +1790,9 @@ public:
 
         uint32 BNetAccountId = handler->GetSession()->GetBattlenetAccountId();
         std::string AccountName = std::to_string(BNetAccountId) + "#1";
-        uint32 maingmlevel = sAccountMgr->GetSecurity(AccountMgr::GetId(AccountName));
+        uint32 maingmlevel = sAccountMgr->GetSecurity(AccountMgr::GetId(AccountName), -1);
 
-        if (maingmlevel == handler->GetSession()->GetSecurity())
+        if (maingmlevel == AccountMgr::GetSecurity(handler->GetSession()->GetAccountId(), -1))
         {
             handler->SendSysMessage(FREEDOM_CMDE_ACCOUNTACCESS_SAMELEVEL);
             handler->SetSentErrorMessage(true);
