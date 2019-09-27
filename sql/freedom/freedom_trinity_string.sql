@@ -1,4 +1,4 @@
-DELETE FROM wod_world.trinity_string
+DELETE FROM trinity_string
 WHERE entry >= 100000;
 
 -- Colors and color closure
@@ -15,7 +15,7 @@ SET @T_CMD_ERROR := CONCAT(@C_ERR, 'ERROR: ', @C_CLOSE);
 SET @T_GLOBAL_GM := CONCAT(@C_LINK, '[GM-NOTIFY] ', @C_CLOSE);
 SET @T_GLOBAL    := CONCAT(@C_LINK, '[GLOBAL NOTIFY] ', @C_CLOSE);
 
-INSERT INTO wod_world.trinity_string (entry, content_default) VALUES
+INSERT INTO trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDE_NOT_YET_IMPLEMENTED                         */ (100000, CONCAT(@T_CMD_ERROR, @C_TEXT, 'This command isn\'t implemented yet.', @C_CLOSE)),
 /* FREEDOM_CMDI_MONEY_RESET                                 */ (100001, CONCAT(@T_CMD_INFO, @C_TEXT, 'Your money has been reset.', @C_CLOSE)),
 /* FREEDOM_CMDE_NOT_ENOUGH_PARAMS                           */ (100002, CONCAT(@T_CMD_ERROR, @C_TEXT, 'Not enough parameters.', @C_CLOSE)),
@@ -370,11 +370,22 @@ INSERT INTO wod_world.trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDI_REMOVEITEM_ALL                              */ (100351, CONCAT(@T_CMD_INFO, 'Mass-removed itemID = %i, amount = %i')),
 /* FREEDOM_CMDI_PLAYED_LOCALLY                              */ (100352, CONCAT(@T_CMD_INFO, 'Sound %u played to nearby (in sight) players.')),
 /* FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C          */ (100353, CONCAT(@T_CMD_ERROR, 'Encountered error when trying to spawn gameobject with entry %u (Invalid display: cannot find display with id %u), but still attempting to spawn! Contact developers about this!')),
-
-
-
+/* FREEDOM_CMDI_TOBEREADDED                                 */ (100354, CONCAT(@T_CMD_INFO, 'Changed your model to: %u')),
+/* FREEDOM_CMDH_TOBEREADDED                                 */ (100355, CONCAT(@T_CMD_SYNTAX, '.npc set dynflags $dynflags [$guid]')),
+/* FREEDOM_CMDI_TOBEREADDED                                 */ (100356, CONCAT(@T_CMD_INFO, 'Creature OBJECT_DYNAMIC_FLAGS set')),
+/* FREEDOM_CMDH_TOBEREADDED                                 */ (100357, CONCAT(@T_CMD_SYNTAX, '.npc set unitflags $unitflags [$guid]')),
+/* FREEDOM_CMDI_TOBEREADDED                                 */ (100358, CONCAT(@T_CMD_INFO, 'Creature UNIT_FIELD_FLAGS set')),
+/* FREEDOM_CMDE_ACCT_INDEX_NO_MATCH                         */ (100359, CONCAT(@T_CMD_ERROR, 'Value entered does not match total amount of game accounts you currently have!  This check is simply for you to acknowledge how many accounts you have and to consider whether another account is necessary (especially if you already have many of them!).')),
+/* FREEDOM_CMDH_GAMEACCOUNTCREATE                           */ (100360, CONCAT(@T_CMD_INFO, '.freedom gameaccount $currentamountofgameaccounts $randompassword\r\nThis command will create another game account for you to use that will be associated with your main BattleNet account.\r\n$currentamountofgameaccounts is just for you to acknowledge how many game accounts you have currently (and to also help ensure you do not \'accidentally\' keep creating more game accounts).\r\n$randompassword is just a random password (not actually used to log in) to generate the account.  Must be less than 16 characters.')),
+/* FREEDOM_CMDI_CREATURE_INFO_PHASESHIFT                    */ (100361, '> PhaseID: %u, PhaseGroup: %u'),
+/* FREEDOM_CMDH_ACCOUNTACCESS                               */ (100362, CONCAT(@T_CMD_INFO, '.freedom accountaccess 1\r\nThis command will set your access level to that of your main (first) game account.  This is only useful when using this command on an additional game account.')),
+/* FREEDOM_CMDE_ACCOUNTACCESS_SAMELEVEL                     */ (100363, CONCAT(@T_CMD_ERROR, 'Your account access level is already the same as your main account!')),
+/* FREEDOM_CMDE_ACCOUNTACCESS_CONFIRM                       */ (100364, CONCAT(@T_CMD_ERROR, 'Be sure to type a 1 after the accountaccess command (this is just to ensure you read the command info).')),
+/* FREEDOM_CMDI_ACCOUNTACCESS_DONE                          */ (100365, CONCAT(@T_CMD_INFO, 'Account access updated!')),
+/* FREEDOM_CMDH_CHANGEACCOUNT                               */ (100366, CONCAT(@T_CMD_SYNTAX, '.freedom changeaccount $character $account\n\nTransfers named character from one game account to another on your BNet account.  When designating target account, use just the number (first account = 1, second = 2, etc)')),
+/* FREEDOM_CMDE_CHANGEACCOUNT_DIFFBNETACCT                  */ (100367, CONCAT(@T_CMD_ERROR, 'Either the character is not on your BNet account or the destination game account is not yours!  Please check the spelling of the given character name.')),
 
 (200000, 'Dummy');
 -- Select new changes
-SELECT * FROM wod_world.trinity_string
+SELECT * FROM trinity_string
 WHERE entry >= 100000 ORDER BY entry DESC;

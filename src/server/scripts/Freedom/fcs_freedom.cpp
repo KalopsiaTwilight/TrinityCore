@@ -150,6 +150,7 @@ public:
             { "petscale",       rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomPetScaleCommand,           "" },
             { "gameaccount",    rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomGameAccountCreateCommand,  "" },
             { "accountaccess",  rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomAccountAccessCommand,      "" },
+            { "changeaccount",  rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomChangeAccountCommand,      "" },
         };
 
         static std::vector<ChatCommand> commandTable =
@@ -1691,7 +1692,7 @@ public:
     {
         if (!*args)
         {
-            handler->SendSysMessage(FREEDOM_CMDI_GAMEACCOUNTCREATE);
+            handler->SendSysMessage(FREEDOM_CMDH_GAMEACCOUNTCREATE);
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -1774,7 +1775,7 @@ public:
     {
         if (!*args)
         {
-            handler->SendSysMessage(FREEDOM_CMDI_ACCOUNTACCESS);
+            handler->SendSysMessage(FREEDOM_CMDH_ACCOUNTACCESS);
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -1801,10 +1802,98 @@ public:
 
         rbac::RBACData* rbac = handler->getSelectedPlayer()->GetSession()->GetRBACData();
         sAccountMgr->UpdateAccountAccess(rbac, handler->GetSession()->GetAccountId(), uint8(maingmlevel), -1);
-        handler->SendSysMessage(FREEDOM_CMDE_ACCOUNTACCESS_DONE);
+        handler->SendSysMessage(FREEDOM_CMDI_ACCOUNTACCESS_DONE);
 
         return true;
     }
+
+    static bool HandleFreedomChangeAccountCommand(ChatHandler* handler, char const* args)
+    {
+        char* playerNameStr;
+        char* accountNameStr;
+        handler->extractOptFirstArg(const_cast<char*>(args), &playerNameStr, &accountNameStr);
+        if (!accountNameStr)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_CHANGEACCOUNT);
+            return true;
+        }
+
+        ObjectGuid targetGuid;
+        std::string targetName;
+        if (!handler->extractPlayerTarget(playerNameStr, nullptr, &targetGuid, &targetName))
+            return false;
+
+        CharacterInfo const* characterInfo = sWorld->GetCharacterInfo(targetGuid);
+        if (!characterInfo)
+        {
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 userBNetAccountId = handler->GetSession()->GetBattlenetAccountId();
+
+        uint32 oldAccountId = characterInfo->AccountId;
+        uint32 newAccountId = oldAccountId;
+
+        //std::string accountName(accountNameStr);
+        std::string accountName = std::to_string(userBNetAccountId) + accountNameStr;
+        if (!Utf8ToUpperOnlyLatin(accountName))
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_ACCOUNT_ID_BY_NAME);
+        stmt->setString(0, accountName);
+        if (PreparedQueryResult result = LoginDatabase.Query(stmt))
+            newAccountId = (*result)[0].GetUInt32();
+        else
+        {
+            handler->PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, accountName.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // nothing to do :)
+        if (newAccountId == oldAccountId)
+            return true;
+
+        uint32 oldBNetAccountId = Battlenet::AccountMgr::GetIdByGameAccount(oldAccountId);
+        uint32 newBNetAccountId = Battlenet::AccountMgr::GetIdByGameAccount(newAccountId);
+
+        if (userBNetAccountId != oldBNetAccountId || userBNetAccountId != newBNetAccountId)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_CHANGEACCOUNT_DIFFBNETACCT);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (uint32 charCount = AccountMgr::GetCharactersCount(newAccountId))
+        {
+            if (charCount >= sWorld->getIntConfig(CONFIG_CHARACTERS_PER_REALM))
+            {
+                handler->PSendSysMessage(LANG_ACCOUNT_CHARACTER_LIST_FULL, accountName.c_str(), newAccountId);
+                handler->SetSentErrorMessage(true);
+                return false;
+            }
+        }
+
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ACCOUNT_BY_GUID);
+        stmt->setUInt32(0, newAccountId);
+        stmt->setUInt32(1, targetGuid.GetCounter());
+        CharacterDatabase.DirectExecute(stmt);
+
+        sWorld->UpdateRealmCharCount(oldAccountId);
+        sWorld->UpdateRealmCharCount(newAccountId);
+
+        sWorld->UpdateCharacterInfoAccount(targetGuid, newAccountId);
+
+        handler->PSendSysMessage(LANG_CHANGEACCOUNT_SUCCESS, targetName.c_str(), accountName.c_str());
+        return true;
+    }
+
 #pragma endregion
 };
 
