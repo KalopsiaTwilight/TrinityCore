@@ -632,7 +632,6 @@ public:
         return true;
     }
 
-
     static bool HandleCharacterReputationCommand(ChatHandler* handler, char const* args)
     {
         Player* target;
