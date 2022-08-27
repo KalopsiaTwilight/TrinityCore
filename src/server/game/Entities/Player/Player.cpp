@@ -2477,7 +2477,15 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetModTimeRate(1.0f);
 
     // reset size before reapply auras
-    SetObjectScale(1.0f);
+    // TODO: Figure out how to get player id to fix player scaling
+    // QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
+    // if (result)
+    // {
+    //     float scale = (*result)[0].GetFloat();
+    //     SetObjectScale(scale);
+    // }
+    // else
+        SetObjectScale(1.0f);
 
     // save base values (bonuses already included in stored stats
     for (uint8 i = STAT_STRENGTH; i < MAX_STATS; ++i)
@@ -4194,6 +4202,19 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
             Corpse::DeleteFromDB(playerguid, trans);
 
             Garrison::DeleteFromDB(guid, trans);
+
+            // Delete character-related entries in Freedom tables
+            FreedomDatabaseTransaction transF = FreedomDatabase.BeginTransaction();
+
+            FreedomDatabasePreparedStatement * fstmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_EXTRA);
+            fstmt->setUInt64(0, guid);
+            transF->Append(fstmt);
+
+            fstmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_MORPHS);
+            fstmt->setUInt64(0, guid);
+            transF->Append(fstmt);
+
+            FreedomDatabase.CommitTransaction(transF);
 
             sCharacterCache->DeleteCharacterCacheEntry(playerguid, name);
             break;

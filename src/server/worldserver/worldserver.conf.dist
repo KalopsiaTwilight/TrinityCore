@@ -7,6 +7,7 @@
 # SECTION INDEX
 #
 #    EXAMPLE CONFIG
+#    FREEDOM CONFIG
 #    CONNECTIONS AND DIRECTORIES
 #    PERFORMANCE SETTINGS
 #    SERVER LOGGING
@@ -60,6 +61,48 @@
 ###################################################################################################
 
 ###################################################################################################
+# Freedom Connections
+#
+#    Freedom.Modify.MaxSpeed
+#    Freedom.Modify.MinSpeed
+#        Description: Controls max/min values for .freedom speed modification command.
+#        Default:     MaxSpeed = 10.0
+#                     MinSpeed = 0.01
+
+Freedom.Modify.MaxSpeed = 10.0
+Freedom.Modify.MinSpeed = 0.01
+
+#
+#    Freedom.Modify.MaxScale
+#    Freedom.Modify.MinScale
+#        Description: Controls max/min values for .freedom scale modification command.
+#        Default:     MaxScale = 10.0
+#                     MinScale = 0.1
+
+Freedom.Modify.MaxScale = 10.0
+Freedom.Modify.MinScale = 0.1
+
+#
+#    Freedom.Gameobject.MaxScale
+#    Freedom.Gameobject.MinScale
+#        Description: Controls max/min values for .gobject scale command.
+#        Default:     MaxScale = 15.0
+#                     MinScale = 0.0
+
+Freedom.Gameobject.MaxScale = 15.0
+Freedom.Gameobject.MinScale = 0.0
+
+#
+#    Freedom.Creature.MaxScale
+#    Freedom.Creature.MinScale
+#        Description: Controls max/min values for .npc set scale command.
+#        Default:     MaxScale = 15.0
+#                     MinScale = 0.0
+
+Freedom.Creature.MaxScale = 15.0
+Freedom.Creature.MinScale = 0.0
+
+###################################################################################################
 # CONNECTIONS AND DIRECTORIES
 #
 #    RealmID
@@ -92,6 +135,7 @@ LogsDir = ""
 #    WorldDatabaseInfo
 #    CharacterDatabaseInfo
 #    HotfixDatabaseInfo
+#    FreedomDatabaseInfo
 #        Description: Database connection settings for the world server.
 #        Example:     "hostname;port;username;password;database;ssl"
 #                     ".;some_number;username;password;database" - (Use named pipes on Windows
@@ -103,6 +147,7 @@ LogsDir = ""
 #                     "127.0.0.1;3306;trinity;trinity;world"      - (WorldDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;characters" - (CharacterDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;hotfixes"   - (HotfixDatabaseInfo)
+#                     "127.0.0.1;3306;trinity;trinity;freedom"    - (FreedomDatabaseInfo)
 #
 #    Don't change hostname unless you are hosting MySQL on a different machine, if you need help
 #    with configuration allowing to connect from different machine than the one running server
@@ -116,12 +161,14 @@ LoginDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;auth"
 WorldDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;world"
 CharacterDatabaseInfo = "127.0.0.1;3306;trinity;trinity;characters"
 HotfixDatabaseInfo    = "127.0.0.1;3306;trinity;trinity;hotfixes"
+FreedomDatabaseInfo   = "127.0.0.1;3306;trinity;trinity;freedom"
 
 #
 #    LoginDatabase.WorkerThreads
 #    WorldDatabase.WorkerThreads
 #    CharacterDatabase.WorkerThreads
 #    HotfixDatabase.WorkerThreads
+#    FreedomDatabase.WorkerThreads
 #        Description: The amount of worker threads spawned to handle asynchronous (delayed) MySQL
 #                     statements. Each worker thread is mirrored with its own connection to the
 #                     MySQL server and their own thread on the MySQL server.
@@ -129,27 +176,32 @@ HotfixDatabaseInfo    = "127.0.0.1;3306;trinity;trinity;hotfixes"
 #                     1 - (WorldDatabase.WorkerThreads)
 #                     1 - (CharacterDatabase.WorkerThreads)
 #                     1 - (HotfixDatabase.WorkerThreads)
+#                     1 - (FreedomDatabase.WorkerThreads)
 
 LoginDatabase.WorkerThreads     = 1
 WorldDatabase.WorkerThreads     = 1
 CharacterDatabase.WorkerThreads = 1
 HotfixDatabase.WorkerThreads    = 1
+FreedomDatabase.WorkerThreads   = 1
 
 #
 #    LoginDatabase.SynchThreads
 #    WorldDatabase.SynchThreads
 #    CharacterDatabase.SynchThreads
 #    HotfixDatabase.SynchThreads
+#    FreedomDatabase.SynchThreads
 #        Description: The amount of MySQL connections spawned to handle.
 #        Default:     1 - (LoginDatabase.SynchThreads)
 #                     1 - (WorldDatabase.SynchThreads)
 #                     2 - (CharacterDatabase.SynchThreads)
 #                     1 - (HotfixDatabase.SynchThreads)
+#                     1 - (FreedomDatabase.SynchThreads)
 
 LoginDatabase.SynchThreads     = 1
 WorldDatabase.SynchThreads     = 1
 CharacterDatabase.SynchThreads = 2
 HotfixDatabase.SynchThreads    = 1
+FreedomDatabase.SynchThreads   = 1
 
 #
 #    MaxPingTime
@@ -1413,12 +1465,14 @@ TOTPMasterSecret =
 #           DATABASE_CHARACTER = 2, // Character database
 #           DATABASE_WORLD     = 4, // World database
 #           DATABASE_HOTFIX    = 8, // Hotfixes database
+#           DATABASE_FREEDOM   = 16, // Freedom database
 #
-#        Default:     15 - (All enabled)
+#        Default:     31 - (All enabled + Freedom Database, not implemented)
+#                     15 - (All trinity enabled)
 #                     4  - (Enable world only)
 #                     0  - (All Disabled)
 
-Updates.EnableDatabases = 15
+Updates.EnableDatabases = 31
 
 #
 #    Updates.AutoSetup

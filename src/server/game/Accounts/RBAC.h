@@ -752,6 +752,33 @@ enum RBACPermissions
     // IF YOU ADD NEW PERMISSIONS, ADD THEM IN 3.3.5 BRANCH AS WELL!
     //
     // custom permissions 1000+
+        // .freedom permissions 1000-1099
+    RBAC_FPERM_COMMAND_FREEDOM                               = 1000,
+    RBAC_FPERM_COMMAND_FREEDOM_MORPH                         = 1001,
+    RBAC_FPERM_COMMAND_FREEDOM_MORPH_MODIFY                  = 1002,
+    RBAC_FPERM_COMMAND_FREEDOM_TELE                          = 1003,
+    RBAC_FPERM_COMMAND_FREEDOM_TELE_MODIFY                   = 1004,
+    RBAC_FPERM_COMMAND_FREEDOM_PTELE                         = 1005,
+    RBAC_FPERM_COMMAND_FREEDOM_SPELL                         = 1006,
+    RBAC_FPERM_COMMAND_FREEDOM_SPELL_MODIFY                  = 1007,
+    RBAC_FPERM_COMMAND_FREEDOM_UTILITIES                     = 1008,
+    RBAC_FPERM_ADMINISTRATION                                = 1009,
+    RBAC_FPERM_MODERATOR                                     = 1010,
+
+    // .goto permissions 1100-1199
+    RBAC_FPERM_COMMAND_GOTO                                  = 1100,
+
+    // Kret port permissions 1200-1299
+    RBAC_FPERM_COMMAND_CAST_PLAYER                           = 1200,
+    RBAC_FPERM_COMMAND_CAST_ALL                              = 1201,
+    RBAC_FPERM_COMMAND_PLAYLOCAL                             = 1202,
+    RBAC_FPERM_COMMAND_ADDITEMALL                            = 1203,
+    RBAC_FPERM_COMMAND_UNAURAALL                             = 1204,
+
+    // custom .reload permissions 9000-9099
+    RBAC_FPERM_COMMAND_RELOAD_PLAYERCREATEINFO_SPELL_CUSTOM  = 9000,
+    RBAC_FPERM_COMMAND_RELOAD_PLAYERCREATEINFO_SKILL_CUSTOM  = 9001,
+
     RBAC_PERM_MAX
 };
 

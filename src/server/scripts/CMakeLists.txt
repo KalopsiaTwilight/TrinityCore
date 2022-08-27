@@ -32,7 +32,7 @@ endif()
 if(SCRIPTS MATCHES "minimal")
   set(SCRIPTS_USE_WHITELIST ON)
   # Whitelist which is used when minimal is selected
-  list(APPEND SCRIPTS_WHITELIST Commands Spells)
+  list(APPEND SCRIPTS_WHITELIST Freedom Commands Spells)
 endif()
 
 # Set the SCRIPTS_${SCRIPT_MODULE} variables from the

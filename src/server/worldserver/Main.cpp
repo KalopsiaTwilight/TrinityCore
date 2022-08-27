@@ -615,7 +615,8 @@ bool StartDB()
         .AddDatabase(LoginDatabase, "Login")
         .AddDatabase(CharacterDatabase, "Character")
         .AddDatabase(WorldDatabase, "World")
-        .AddDatabase(HotfixDatabase, "Hotfix");
+        .AddDatabase(HotfixDatabase, "Hotfix")
+        .AddDatabase(FreedomDatabase, "Freedom");
 
     if (!loader.Load())
         return false;

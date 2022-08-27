@@ -122,6 +122,23 @@ BaseLocation DBUpdater<WorldDatabaseConnection>::GetBaseLocationType()
 {
     return LOCATION_DOWNLOAD;
 }
+// Freedom Database
+template<>
+std::string DBUpdater<FreedomDatabaseConnection>::GetConfigEntry()
+{
+	return "Updates.Freedom";
+}
+
+template<>
+std::string DBUpdater<FreedomDatabaseConnection>::GetTableName()
+{
+	return "Freedom";
+}
+template<>
+std::string DBUpdater<FreedomDatabaseConnection>::GetBaseFile()
+{
+	return BuiltInConfig::GetSourceDirectory() + "/sql/freedom/base/freedom_database.sql";
+}
 
 // Character Database
 template<>
@@ -129,6 +146,14 @@ std::string DBUpdater<CharacterDatabaseConnection>::GetConfigEntry()
 {
     return "Updates.Character";
 }
+
+template<>
+bool DBUpdater<FreedomDatabaseConnection>::IsEnabled(uint32 const updateMask)
+{
+	// This way silences warnings under msvc
+	return (updateMask & DatabaseLoader::DATABASE_FREEDOM) ? true : false;
+}
+
 
 template<>
 std::string DBUpdater<CharacterDatabaseConnection>::GetTableName()
@@ -443,3 +468,4 @@ template class TC_DATABASE_API DBUpdater<LoginDatabaseConnection>;
 template class TC_DATABASE_API DBUpdater<WorldDatabaseConnection>;
 template class TC_DATABASE_API DBUpdater<CharacterDatabaseConnection>;
 template class TC_DATABASE_API DBUpdater<HotfixDatabaseConnection>;
+template class TC_DATABASE_API DBUpdater<FreedomDatabaseConnection>;

@@ -456,6 +456,18 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
         // must be after SetMinion (owner guid check)
         LoadTemplateImmunities();
         m_loading = false;
+
+        // TODO:  Fix this for pet scaling. Currently can't find an id for pets since refactor
+        // QueryResult result2 = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE id='%u'", petInfo->PetNumber);
+        // // update for case of current pet "slot = 0"
+        // if (result2)
+        // {
+        //     PetAddon& petAddon = _petAddonStore[petId];
+        //     petAddon.scale = (*result2)[0].GetFloat();
+        //     //petAddon.scale = fields[2].GetFloat();
+        //     if (petAddon.scale && petAddon.scale > 0.1)
+        //         SetObjectScale(petAddon.scale);
+        // }
     });
 
     return true;
@@ -606,6 +618,12 @@ void Pet::DeleteFromDB(uint32 petNumber)
     trans->Append(stmt);
 
     CharacterDatabase.CommitTransaction(trans);
+
+    // TODO: Fix this if Pet number = pet id to clean up pet scaling
+    // trans = FreedomDatabase.BeginTransaction();
+    //fstmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_CHAR_PET_BY_ID);
+    //fstmt->setUInt32(0, guidlow);
+    //trans->Append(stmt);
 }
 
 void Pet::setDeathState(DeathState s)                       // overwrite virtual Creature::setDeathState and Unit::setDeathState
@@ -1960,3 +1978,25 @@ std::string Pet::GetDebugInfo() const
         << "PetNumber: " << m_charmInfo->GetPetNumber();
     return sstr.str();
 }
+
+
+// TODO: Pet scaling stuff, is this necessary here?
+// void Pet::SetPetAddon(Player* owner, float Scale)
+// {
+//     uint32 petId = m_charmInfo->GetPetNumber();
+//     uint64 ownerId = owner->GetGUID().GetCounter();
+//     if (petId && ownerId)
+//     {
+//         if (Scale == 0)
+//         {
+//             FreedomDatabase.PExecute("DELETE FROM pet_extra WHERE owner='%u' AND id='%u'", ownerId, petId);
+//             return;
+//         }
+
+//         QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM pet_extra WHERE owner='%u' AND id='%u'", ownerId, petId);
+//         if (result)
+//             FreedomDatabase.PExecute("UPDATE pet_extra SET scale='%f' WHERE owner='%u' AND id='%u'", Scale, ownerId, petId);
+//         else
+//             FreedomDatabase.PExecute("INSERT INTO pet_extra(id,owner,scale) VALUES ('%u','%u','%f')", petId, ownerId, Scale);
+//     }
+// }

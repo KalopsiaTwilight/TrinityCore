@@ -29,3 +29,5 @@
 #include "SpellMgr.h"
 #include "World.h"
 #include "WorldSession.h"
+
+#include "FreedomMgr.h"

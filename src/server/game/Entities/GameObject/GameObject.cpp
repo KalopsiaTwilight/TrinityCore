@@ -51,6 +51,7 @@
 #include "SpellMgr.h"
 #include "Transport.h"
 #include "World.h"
+#include "FreedomMgr.h"
 #include <G3D/Box.h>
 #include <G3D/CoordinateFrame.h>
 #include <G3D/Quat.h>
@@ -697,6 +698,7 @@ bool GameObject::Create(uint32 entry, Map* map, Position const& pos, QuaternionD
 
     SetLocalRotation(rotation.x, rotation.y, rotation.z, rotation.w);
     GameObjectAddon const* gameObjectAddon = sObjectMgr->GetGameObjectAddon(GetSpawnId());
+    GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(GetSpawnId());
 
     // For most of gameobjects is (0, 0, 0, 1) quaternion, there are only some transports with not standard rotation
     QuaternionData parentRotation;
@@ -704,8 +706,14 @@ bool GameObject::Create(uint32 entry, Map* map, Position const& pos, QuaternionD
         parentRotation = gameObjectAddon->ParentRotation;
 
     SetParentRotation(parentRotation);
-
-    SetObjectScale(goInfo->size);
+    if (extraData)
+    {
+        float scale = extraData->scale;
+        SetObjectScale(scale < 0 ? goInfo->size : scale);
+    }
+    {
+        SetObjectScale(goInfo->size);
+    }
 
     if (GameObjectOverride const* goOverride = GetGameObjectOverride())
     {
@@ -1690,6 +1698,10 @@ bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap
 
     WorldDatabase.CommitTransaction(trans);
 
+    FreedomDatabasePreparedStatement* fstmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_GAMEOBJECTEXTRA);
+    fstmt->setUInt64(0, spawnId);
+
+    FreedomDatabase.Execute(fstmt);
     return true;
 }
 

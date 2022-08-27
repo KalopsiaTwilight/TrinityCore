@@ -1836,6 +1836,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Initializing PlayerDump tables...");
     PlayerDump::InitializeTables();
 
+    TC_LOG_INFO("server.loading", "Loading FreedomMgr tables...");
+    sFreedomMgr->LoadAllTables();
+
     TC_LOG_INFO("server.loading", "Loading SpellInfo store...");
     sSpellMgr->LoadSpellInfoStore();
 

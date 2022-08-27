@@ -36,6 +36,7 @@
 #include "SharedDefines.h"
 #include "Trainer.h"
 #include "VehicleDefines.h"
+#include "FreedomMgr.h"
 #include <iterator>
 #include <map>
 #include <unordered_map>
@@ -1067,11 +1068,13 @@ enum QueryDataGroup
 };
 
 class PlayerDumpReader;
+class FreedomMgr;
 
 class TC_GAME_API ObjectMgr
 {
     friend class PlayerDumpReader;
     friend class UnitTestDataLoader;
+    friend class FreedomMgr;
 
     private:
         ObjectMgr();
