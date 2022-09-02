@@ -1,3 +1,5 @@
+# Old Freedom update scripts
+
 ### How to deploy Freedom DB changes
 1. Execute all sql scripts under ../sql/freedom/base folder
 2. Execute and deploy default TrinityCore's database data for respective databases mentioned in ../sql/freedom/base/freedom_base.sql script file
@@ -8,9 +10,9 @@
 5. Execute all sql scripts under ../sql/freedom/updates sequentally (by timestamps appended to filenames) for respective databses
 6. Execute following scripts under ../sql/freedom folder:
  * freedom_commands.sql for "freedom" database
- * freedom_trinity_string.sql for "wod_world" database 
+ * freedom_trinity_string.sql for "wod_world" database
  * rbac_permissions.sql for "wod_auth" database
- 
+
 ### Some script descriptions
 * customize_charsections.sql : SQL script to unlock and globalize special skins, facials, hairstyle and etc. for character creation, what are mostly used for NPCs
 * freedom_commands.sql : Frequently updated SQL script, what contains command help data to be displayed in mini-manager command list

@@ -29,6 +29,7 @@
 #include "ObjectGuid.h"
 #include "SharedDefines.h"
 #include "Timer.h"
+#include "DBCEnums.h"
 
 #include <atomic>
 #include <list>
@@ -819,6 +820,12 @@ class TC_GAME_API World
         // War mode balancing
         void SetForcedWarModeFactionBalanceState(TeamId team, int32 reward = 0);
         void DisableForcedWarModeFactionBalanceState();
+
+        //Custom
+        void CastAll(uint32 spell, bool triggered);
+        void AddItemAll(uint32 itemId, int32 count, std::vector<int32> bonusListIDs, ItemContext itemContext);
+        void MassUnaura(uint32 spellId);
+        void MassUnauraAll();
 
     protected:
         void _UpdateGameTime();

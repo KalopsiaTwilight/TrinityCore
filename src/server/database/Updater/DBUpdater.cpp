@@ -137,7 +137,7 @@ std::string DBUpdater<FreedomDatabaseConnection>::GetTableName()
 template<>
 std::string DBUpdater<FreedomDatabaseConnection>::GetBaseFile()
 {
-	return BuiltInConfig::GetSourceDirectory() + "/sql/freedom/base/freedom_database.sql";
+	return BuiltInConfig::GetSourceDirectory() + "/sql/base/freedom_database.sql";
 }
 
 // Character Database

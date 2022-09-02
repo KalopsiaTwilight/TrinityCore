@@ -5,7 +5,6 @@
 #include "GameObject.h"
 #include "Creature.h"
 #include "Log.h"
-#include <G3d/Quat.h>
 
 struct GameObjectTemplateExtraData
 {
@@ -140,7 +139,6 @@ typedef std::vector<std::pair<uint32, uint32>> PhaseListContainer;
 
 class Map;
 
-using G3D::Quat;
 using G3D::Vector3;
 
 enum RotationAxis

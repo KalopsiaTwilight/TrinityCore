@@ -94,6 +94,16 @@ void WorldDatabaseConnection::DoPrepareStatements()
     PrepareStatement(WORLD_DEL_SPAWNGROUP_MEMBER, "DELETE FROM spawn_group WHERE spawnType = ? AND spawnId = ?", CONNECTION_ASYNC);
     PrepareStatement(WORLD_DEL_GAMEOBJECT_ADDON, "DELETE FROM gameobject_addon WHERE guid = ?", CONNECTION_ASYNC);
     PrepareStatement(WORLD_SEL_GUILD_REWARDS_REQ_ACHIEVEMENTS, "SELECT AchievementRequired FROM guild_rewards_req_achievements WHERE ItemID = ?", CONNECTION_SYNCH);
+
+    // CUSTOM FREEDOM DB STMT
+    PrepareStatement(WORLD_SEL_NEAREST_GAMEOBJECT_BY_EID, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM gameobject WHERE map = ? AND id = ? ORDER BY distance LIMIT 1", CONNECTION_SYNCH);
+    PrepareStatement(WORLD_SEL_NEAREST_GAMEOBJECT, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM gameobject WHERE map = ? ORDER BY distance LIMIT 1", CONNECTION_SYNCH);
+    PrepareStatement(WORLD_SEL_NEAREST_GAMEOBJECTS, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM gameobject WHERE map = ? AND (POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) <= ? ORDER BY distance DESC LIMIT ?", CONNECTION_SYNCH);
+    PrepareStatement(WORLD_SEL_NEAREST_CREATURE_BY_EID, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM creature WHERE map = ? AND id = ? ORDER BY distance LIMIT 1", CONNECTION_SYNCH);
+    PrepareStatement(WORLD_SEL_NEAREST_CREATURE, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM creature WHERE map = ? ORDER BY distance LIMIT 1", CONNECTION_SYNCH);
+    PrepareStatement(WORLD_SEL_NEAREST_CREATURES, "SELECT guid, id, SQRT(POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) AS distance FROM creature WHERE map = ? AND (POW(position_x - ?, 2) + POW(position_y - ?, 2) + POW(position_z - ?, 2)) <= ? ORDER BY distance DESC LIMIT ?", CONNECTION_SYNCH);
+
+    PrepareStatement(WORLD_REP_CREATURE_ADDON_FULL, "REPLACE INTO creature_addon(guid, path_id, mount, bytes1, bytes2, emote, auras) VALUES (?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 }
 
 WorldDatabaseConnection::WorldDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)

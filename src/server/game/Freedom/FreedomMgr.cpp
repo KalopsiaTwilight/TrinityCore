@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/tokenizer.hpp>
+#include <G3D/Quat.h>
 
 #pragma region FREEDOM_MANAGER
 FreedomMgr::FreedomMgr()
@@ -662,7 +663,7 @@ void FreedomMgr::CreatureRefresh(Creature* creature)
     if (!creature)
         return;
 
-    ObjectGuid::LowType guidLow = creature->GetSpawnId();
+    // ObjectGuid::LowType guidLow = creature->GetSpawnId();
     Map* map = creature->GetMap();
     map->GetObjectsStore().Remove<Creature>(creature->GetGUID());
     creature->DestroyForNearbyPlayers();
@@ -712,8 +713,8 @@ Creature* FreedomMgr::GetAnyCreature(ObjectGuid::LowType lowguid)
     if (!data)
         return nullptr;
 
-    auto objectGuid = ObjectGuid::Create<HighGuid::Creature>(data->mapid, data->id, lowguid);
-    Map* map = sMapMgr->FindMap(data->mapid, 0);
+    auto objectGuid = ObjectGuid::Create<HighGuid::Creature>(data->mapId, data->id, lowguid);
+    Map* map = sMapMgr->FindMap(data->mapId, 0);
 
     if (!map)
         return nullptr;
@@ -888,7 +889,7 @@ GameObject* FreedomMgr::GetAnyGameObject(Map* objMap, ObjectGuid::LowType lowgui
     obj = objMap->GetGameObject(ObjectGuid::Create<HighGuid::GameObject>(objMap->GetId(), entry, lowguid));
 
     // guid is DB guid of object
-    if (!obj && sObjectMgr->GetGOData(lowguid))
+    if (!obj && sObjectMgr->GetGameObjectData(lowguid))
     {
         auto bounds = objMap->GetGameObjectBySpawnIdStore().equal_range(lowguid);
         if (bounds.first == bounds.second)
@@ -936,11 +937,12 @@ void FreedomMgr::GameObjectMove(GameObject* go, float x, float y, float z, float
 
         // Preserve roll and pitch, use new orientation (z angle) for yaw
         extraData->yaw = o;
-        go->SetWorldRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
+        // TODO: check if localRotationAngles works same as worldRotationAngles previously
+        go->SetLocalRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
     }
     else
     {
-        go->SetWorldRotationAngles(z, y, x);
+        go->SetLocalRotationAngles(z, y, x);
     }
 }
 
@@ -962,8 +964,8 @@ void FreedomMgr::GameObjectRotate(GameObject* go, float deg_x, float deg_y, floa
     if (addDeg)
     {
         float roll, pitch, yaw;
-        auto quat = go->GetRotationQuat();
-        quat.toRotationMatrix().toEulerAnglesZYX(yaw, pitch, roll);
+        auto quat = go->GetWorldRotation();
+        quat.toEulerAnglesZYX(yaw, pitch, roll);
 
         if (firstTimeQuat)
         {
@@ -986,7 +988,8 @@ void FreedomMgr::GameObjectRotate(GameObject* go, float deg_x, float deg_y, floa
     }
 
     go->Relocate(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), extraData->yaw);
-    go->SetWorldRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
+    // TODO Check if localrotationangle works same as WorldRotationAngles previously
+    go->SetLocalRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
 }
 
 void FreedomMgr::GameObjectRotateSingleAxis(GameObject* go, float deg, RotationAxis axis, bool addDeg)
@@ -1018,7 +1021,8 @@ void FreedomMgr::GameObjectRotateSingleAxis(GameObject* go, float deg, RotationA
     }
 
     go->Relocate(go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), extraData->yaw);
-    go->SetWorldRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
+    // TODO Check if localrotationangle works same as WorldRotationAngles previously
+    go->SetLocalRotationAngles(extraData->yaw, extraData->pitch, extraData->roll);
 }
 
 void FreedomMgr::GetGameObjectEulerAnglesDeg(GameObject* go, float &deg_x, float &deg_y, float &deg_z)
@@ -1093,7 +1097,7 @@ void FreedomMgr::GameObjectDelete(GameObject* go)
 {
     go->SetRespawnTime(0);
     go->Delete();
-    go->DeleteFromDB();
+    go->DeleteFromDB(go->GetSpawnId());
 }
 
 void FreedomMgr::GameObjectSetModifyHistory(GameObject* go, Player* modifier)
@@ -1158,7 +1162,7 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     }
 
     /// @todo is it really necessary to add both the real and DB table guid here ?
-    sObjectMgr->AddGameobjectToGrid(spawnId, ASSERT_NOTNULL(sObjectMgr->GetGOData(spawnId)));
+    sObjectMgr->AddGameobjectToGrid(ASSERT_NOTNULL(sObjectMgr->GetGameObjectData(spawnId)));
 
     // Creation history and straight update
     GameObjectExtraData data;
@@ -1261,7 +1265,7 @@ void FreedomMgr::SetItemTemplateExtraHiddenFlag(uint32 itemId, bool hidden)
 void FreedomMgr::RemoveHoverFromPlayer(Player* player)
 {
     Unit* source_unit = player->ToUnit();
-    float hoverHeight = source_unit->GetFloatValue(UNIT_FIELD_HOVERHEIGHT);
+    float hoverHeight = source_unit->GetHoverOffset();
 
     source_unit->RemoveUnitMovementFlag(MOVEMENTFLAG_HOVER);
 
@@ -1298,7 +1302,8 @@ void FreedomMgr::RemoveFlyFromPlayer(Player* player)
     Unit* source_unit = player->ToUnit();
     source_unit->RemoveUnitMovementFlag(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_MASK_MOVING_FLY);
 
-    if (!source_unit->IsLevitating())
+    //TODO: Used to be isLevitating, check if works the same
+    if (!source_unit->HasUnitMovementFlag(MOVEMENTFLAG_DISABLE_GRAVITY))
         source_unit->SetFall(true);
 
     WorldPackets::Movement::MoveSetFlag packet(SMSG_MOVE_UNSET_CAN_FLY);
@@ -1314,7 +1319,7 @@ std::string FreedomMgr::GetMapName(uint32 mapId)
     const MapEntry* map = sMapStore.LookupEntry(mapId);
 
     if (map)
-        return map->MapName->Str[sWorld->GetDefaultDbcLocale()];
+        return map->MapName[sWorld->GetDefaultDbcLocale()];
     else
         return "Unknown";
 }

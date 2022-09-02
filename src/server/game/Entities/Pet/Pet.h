@@ -39,6 +39,13 @@ enum PetStableinfo
 typedef std::unordered_map<uint32, PetSpell> PetSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
+struct PetAddon
+{
+    float scale;
+};
+
+typedef std::unordered_map<uint32, PetAddon> PetAddonContainer;
+
 class Player;
 class PetAura;
 
@@ -152,6 +159,11 @@ class TC_GAME_API Pet : public Guardian
 
         std::string GetDebugInfo() const override;
 
+        // Custom, for persistent pet scaling
+        PetAddon const* GetPetAddon();
+        PetAddon const* GetPetAddonDB(uint32 GUIDlow);
+        void SetPetAddon(Player* owner, float Scale);
+
     protected:
         PetType m_petType;
         int32   m_duration;                                 // time until unsummon (used mostly for summoned guardians and not used for controlled pets)
@@ -168,5 +180,7 @@ class TC_GAME_API Pet : public Guardian
         {
             ABORT();
         }
+
+        PetAddonContainer _petAddonStore;
 };
 #endif

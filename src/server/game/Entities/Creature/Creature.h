@@ -386,6 +386,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         std::string GetDebugInfo() const override;
 
         void ExitVehicle(Position const* exitPosition = nullptr) override;
+        void SetGuid(ObjectGuid const& guid);
 
     protected:
         bool CreateFromProto(ObjectGuid::LowType guidlow, uint32 entry, CreatureData const* data = nullptr, uint32 vehId = 0);

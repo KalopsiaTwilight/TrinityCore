@@ -23,6 +23,7 @@ Category: commandscripts
 EndScriptData */
 
 #include "ScriptMgr.h"
+#include "CharacterCache.h"
 #include "Chat.h"
 #include "ChatCommand.h"
 #include "DatabaseEnv.h"
@@ -43,6 +44,11 @@ EndScriptData */
 #include "RBAC.h"
 #include "WorldSession.h"
 #include <sstream>
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
+#include "World.h"
+#include "BattlenetAccountMgr.h"
+#include "Config.h"
 
 using namespace Trinity::ChatCommands;
 
@@ -60,6 +66,11 @@ public:
 
     ChatCommandTable GetCommands() const override
     {
+        static ChatCommandTable addCommandTable =
+        {
+            { "",     HandleGameObjectAddCommand,     rbac::RBAC_PERM_COMMAND_GOBJECT_ADD,      Console::No },
+            { "temp", HandleGameObjectAddTempCommand, rbac::RBAC_PERM_COMMAND_GOBJECT_ADD_TEMP, Console::No}
+        };
         static ChatCommandTable gobjectCommandTable =
         {
             { "activate",       HandleGameObjectActivateCommand,  rbac::RBAC_PERM_COMMAND_GOBJECT_ACTIVATE,       Console::No },
@@ -71,10 +82,18 @@ public:
             { "turn",           HandleGameObjectTurnCommand,      rbac::RBAC_PERM_COMMAND_GOBJECT_TURN,           Console::No },
             { "spawngroup",     HandleNpcSpawnGroup,              rbac::RBAC_PERM_COMMAND_GOBJECT_SPAWNGROUP,     Console::No },
             { "despawngroup",   HandleNpcDespawnGroup,            rbac::RBAC_PERM_COMMAND_GOBJECT_DESPAWNGROUP,   Console::No },
-            { "add temp",       HandleGameObjectAddTempCommand,   rbac::RBAC_PERM_COMMAND_GOBJECT_ADD_TEMP,       Console::No },
-            { "add",            HandleGameObjectAddCommand,       rbac::RBAC_PERM_COMMAND_GOBJECT_ADD,            Console::No },
+            { "add",            addCommandTable                                                                               },
+            { "spawn",          addCommandTable                                                                               },
             { "set phase",      HandleGameObjectSetPhaseCommand,  rbac::RBAC_PERM_COMMAND_GOBJECT_SET_PHASE,      Console::No },
             { "set state",      HandleGameObjectSetStateCommand,  rbac::RBAC_PERM_COMMAND_GOBJECT_SET_STATE,      Console::No },
+
+            { "phase",          HandleGameObjectPhaseCommand,     rbac::RBAC_FPERM_COMMAND_GOBJECT_PHASE,         Console::No},
+            { "select",         HandleGameObjectSelectCommand,    rbac::RBAC_FPERM_COMMAND_GOBJECT_SELECT,        Console::No },
+            { "scale",          HandleGameObjectScaleCommand,     rbac::RBAC_FPERM_COMMAND_GOBJECT_SCALE,         Console::No},
+            { "axial",          HandleGameObjectAxialCommand,     rbac::RBAC_FPERM_COMMAND_GOBJECT_AXIAL,         Console::No},
+            { "roll",           HandleGameObjectRollCommand,      rbac::RBAC_FPERM_COMMAND_GOBJECT_ROLL,          Console::No},
+            { "pitch",          HandleGameObjectPitchCommand,     rbac::RBAC_FPERM_COMMAND_GOBJECT_PITCH,         Console::No},
+            { "yaw",            HandleGameObjectYawCommand,       rbac::RBAC_FPERM_COMMAND_GOBJECT_YAW,           Console::No}
         };
         static ChatCommandTable commandTable =
         {
@@ -83,79 +102,116 @@ public:
         return commandTable;
     }
 
-    static bool HandleGameObjectActivateCommand(ChatHandler* handler, GameObjectSpawnId guidLow)
+    static bool HandleGameObjectActivateCommand(ChatHandler* handler, char const* args)
     {
-        GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
-        if (!object)
-        {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(*guidLow).c_str());
-            handler->SetSentErrorMessage(true);
-            return false;
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
+        if (id)
+            guidLow = atoul(id);
+
+        if (!guidLow) {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
         }
 
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        GameObjectTemplate const* goTemplate = sObjectMgr->GetGameObjectTemplate(goData->id);
+
+        if (!goTemplate)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_TEMPLATE_DOES_NOT_EXIST, guidLow, goData->id);
+            return true;
+        }
         uint32_t const autoCloseTime = object->GetGOInfo()->GetAutoCloseTime() ? 10000u : 0u;
 
         // Activate
         object->SetLootState(GO_READY);
         object->UseDoorOrButton(autoCloseTime, false, handler->GetSession()->GetPlayer());
 
-        handler->PSendSysMessage("Object activated!");
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_ACTIVATED, sFreedomMgr->ToChatLink("Hgameobject", guidLow, goTemplate->name));
 
         return true;
     }
 
     //spawn go
-    static bool HandleGameObjectAddCommand(ChatHandler* handler, GameObjectEntry objectId, Optional<int32> spawnTimeSecs)
+    static bool HandleGameObjectAddCommand(ChatHandler* handler, char const* args)
     {
-        if (!objectId)
-            return false;
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SPAWN);
+            return true;
+        }
 
-        GameObjectTemplate const* objectInfo = sObjectMgr->GetGameObjectTemplate(objectId);
+        // number or [name] Shift-click form |color|Hgameobject_entry:go_id|h[name]|h|r
+        std::string id = sFreedomMgr->GetChatLinkKey(args, "Hgameobject_entry");
+        uint32 objectId = atoul(id.c_str());
+
+        if (!objectId)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_ID);
+            return true;
+        }
+
+        char* spawnTimeSecsToken = strtok(nullptr, " ");
+        uint32 spawnTimeSecs = 0;
+        if (spawnTimeSecsToken)
+            spawnTimeSecs = atoul(spawnTimeSecsToken);
+
+        const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(objectId);
+
         if (!objectInfo)
         {
-            handler->PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, objectId);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_ENTRY_NOT_EXISTS, objectId);
+            return true;
         }
 
         if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
         {
-            // report to DB errors log as in loading case
-            TC_LOG_ERROR("sql.sql", "Gameobject (Entry %u GoType: %u) have invalid displayId (%u), not spawned.", *objectId, objectInfo->type, objectInfo->displayId);
-            handler->PSendSysMessage(LANG_GAMEOBJECT_HAVE_INVALID_DATA, objectId);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C, objectId, objectInfo->displayId);
+            //return true; -- CUSTOM, testing force-spawning with allegedly invalid display IDs
         }
 
-        Player* player = handler->GetSession()->GetPlayer();
-        Map* map = player->GetMap();
+        Player* source = handler->GetSession()->GetPlayer();
+        float x, y, z, o;
+        source->GetPosition(x, y, z, o);
+        Map* map = source->GetMap();
 
-        GameObject* object = GameObject::CreateGameObject(objectInfo->entry, map, *player, QuaternionData::fromEulerAnglesZYX(player->GetOrientation(), 0.0f, 0.0f), 255, GO_STATE_READY);
+        if (auto extraData = sFreedomMgr->GetGameObjectTemplateExtraData(objectId))
+        {
+            if (extraData->disabled)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_IS_BLACKLISTED);
+                return true;
+            }
+        }
+
+        GameObject* object = sFreedomMgr->GameObjectCreate(source, objectInfo, spawnTimeSecs);
+
         if (!object)
-            return false;
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_FAIL, objectId);
+            return true;
+        }
 
-        PhasingHandler::InheritPhaseShift(object, player);
-
-        if (spawnTimeSecs)
-            object->SetRespawnTime(*spawnTimeSecs);
-
-        // fill the gameobject data and save to the db
-        object->SaveToDB(map->GetId(), { map->GetDifficultyID() });
-        ObjectGuid::LowType spawnId = object->GetSpawnId();
-
-        // delete the old object and do a clean load from DB with a fresh new GameObject instance.
-        // this is required to avoid weird behavior and memory leaks
-        delete object;
-
-        // this will generate a new guid if the object is in an instance
-        object = GameObject::CreateGameObjectFromDB(spawnId, map);
-        if (!object)
-            return false;
-
-        /// @todo is it really necessary to add both the real and DB table guid here ?
-        sObjectMgr->AddGameobjectToGrid(ASSERT_NOTNULL(sObjectMgr->GetGameObjectData(spawnId)));
-
-        handler->PSendSysMessage(LANG_GAMEOBJECT_ADD, objectId, objectInfo->name.c_str(), std::to_string(spawnId).c_str(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_SPAWN,
+            sFreedomMgr->ToChatLink("Hgameobject", object->GetSpawnId(), objectInfo->name),
+            object->GetSpawnId(),
+            objectInfo->entry, x, y, z);
+        sFreedomMgr->SetGameobjectSelectionForPlayer(source->GetGUID().GetCounter(), object->GetSpawnId());
         return true;
     }
 
@@ -167,9 +223,17 @@ public:
 
         if (!sObjectMgr->GetGameObjectTemplate(objectId))
         {
-            handler->PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, objectId);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_ENTRY_NOT_EXISTS, objectId);
+            return true;
+        }
+
+        if (auto extraData = sFreedomMgr->GetGameObjectTemplateExtraData(objectId))
+        {
+            if (extraData->disabled)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_IS_BLACKLISTED);
+                return true;
+            }
         }
 
         player->SummonGameObject(objectId, *player, QuaternionData::fromEulerAnglesZYX(player->GetOrientation(), 0.0f, 0.0f), spawntm);
@@ -292,125 +356,205 @@ public:
     }
 
     //delete object by selection or guid
-    static bool HandleGameObjectDeleteCommand(ChatHandler* handler, GameObjectSpawnId spawnId)
+    static bool HandleGameObjectDeleteCommand(ChatHandler* handler, char const* args)
     {
-        if (GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(spawnId))
-        {
-            Player const* const player = handler->GetSession()->GetPlayer();
-            ObjectGuid ownerGuid = object->GetOwnerGUID();
-            if (!ownerGuid.IsEmpty())
-            {
-                Unit* owner = ObjectAccessor::GetUnit(*player, ownerGuid);
-                if (!owner || !ownerGuid.IsPlayer())
-                {
-                    handler->PSendSysMessage(LANG_COMMAND_DELOBJREFERCREATURE, ownerGuid.GetCounter(), spawnId);
-                    handler->SetSentErrorMessage(true);
-                    return false;
-                }
-                owner->RemoveGameObject(object, false);
-            }
-        }
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
 
-        if (GameObject::DeleteFromDB(spawnId))
+        // number or [name] Shift-click form |color|Hgameobject:go_guid|h[name]|h|r
+        char* id = handler->extractKeyFromLink((char*)args, "Hgameobject");
+        if (id)
+            guidLow = strtoull(id, nullptr, 10);
+
+        if (!guidLow)
         {
-            handler->PSendSysMessage(LANG_COMMAND_DELOBJMESSAGE, std::to_string(*spawnId).c_str());
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
             return true;
         }
-        else
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, gameObjectData->id);
+
+        if (!object)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(*spawnId).c_str());
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
         }
+
+        ObjectGuid ownerGuid = object->GetOwnerGUID();
+        if (!ownerGuid.IsEmpty())
+        {
+            Unit* owner = ObjectAccessor::GetUnit(*handler->GetSession()->GetPlayer(), ownerGuid);
+            if (!owner || !ownerGuid.IsPlayer())
+            {
+                handler->PSendSysMessage(LANG_COMMAND_DELOBJREFERCREATURE, ownerGuid.ToString().c_str(), object->GetGUID().ToString().c_str());
+                return true;
+            }
+
+            owner->RemoveGameObject(object, false);
+        }
+
+        sFreedomMgr->GameObjectDelete(object);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_DELETE);
+
+        return true;
     }
 
     //turn selected object
-    static bool HandleGameObjectTurnCommand(ChatHandler* handler, GameObjectSpawnId guidLow, Optional<float> oz, Optional<float> oy, Optional<float> ox)
+    static bool HandleGameObjectTurnCommand(ChatHandler* handler, char const* args)
     {
-        if (!guidLow)
-            return false;
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+        float o = source->GetOrientation();
 
-        GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
-        if (!object)
+        // Prepare tokenizer with command modifiers
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-guid", 1);
+        tokenizer.LoadModifier("-adeg", 1);
+        tokenizer.LoadModifier("-sdeg", 1);
+
+        if (tokenizer.ModifierExists("-guid"))
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(*guidLow).c_str());
-            handler->SetSentErrorMessage(true);
-            return false;
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hgameobject");
+            guidLow = atoul(guidKey.c_str());
         }
 
-        if (!oz)
-            oz = handler->GetSession()->GetPlayer()->GetOrientation();
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
 
-        Map* map = object->GetMap();
-        object->Relocate(object->GetPositionX(), object->GetPositionY(), object->GetPositionZ(), *oz);
-        object->SetLocalRotationAngles(*oz, oy.value_or(0.0f), ox.value_or(0.0f));
-        object->SaveToDB();
+        GameObject* object = NULL;
 
-        // Generate a completely new spawn with new guid
-        // 3.3.5a client caches recently deleted objects and brings them back to life
-        // when CreateObject block for this guid is received again
-        // however it entirely skips parsing that block and only uses already known location
-        object->Delete();
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, gameObjectData->id);
 
-        object = GameObject::CreateGameObjectFromDB(guidLow, map);
         if (!object)
-            return false;
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
 
-        handler->PSendSysMessage(LANG_COMMAND_TURNOBJMESSAGE, std::to_string(object->GetSpawnId()).c_str(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str(), object->GetOrientation());
+        if (tokenizer.ModifierExists("-adeg"))
+        {
+            std::string addDeg = tokenizer.GetModifierValue("-adeg", 0);
+            o = ((float)atof(addDeg.c_str())) * M_PI / 180.0f + object->GetOrientation();
+        }
+
+        if (tokenizer.ModifierExists("-sdeg"))
+        {
+            std::string setDeg = tokenizer.GetModifierValue("-sdeg", 0);
+            o = ((float)atof(setDeg.c_str())) * M_PI / 180.0f;
+        }
+
+        sFreedomMgr->GameObjectTurn(object, o);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_TURNED,
+            sFreedomMgr->ToChatLink("Hgameobject", guidLow, object->GetGOInfo()->name),
+            guidLow);
+
         return true;
     }
 
     //move selected object
-    static bool HandleGameObjectMoveCommand(ChatHandler* handler, GameObjectSpawnId guidLow, Optional<std::array<float,3>> xyz)
+    static bool HandleGameObjectMoveCommand(ChatHandler* handler, char const* args)
     {
-        if (!guidLow)
-            return false;
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
 
-        GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
-        if (!object)
+        // Prepare tokenizer with command modifiers
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-guid", 1);
+        tokenizer.LoadModifier("-adeg", 1);
+        tokenizer.LoadModifier("-sdeg", 1);
+        tokenizer.LoadModifier("-po", 0);
+
+        if (tokenizer.ModifierExists("-guid"))
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(*guidLow).c_str());
-            handler->SetSentErrorMessage(true);
-            return false;
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hgameobject");
+            guidLow = atoul(guidKey.c_str());
         }
 
-        Position pos;
-        if (xyz)
+        if (!guidLow)
         {
-            pos = { (*xyz)[0], (*xyz)[1], (*xyz)[2] };
-            if (!MapManager::IsValidMapCoord(object->GetMapId(), pos))
-            {
-                handler->PSendSysMessage(LANG_INVALID_TARGET_COORD, pos.GetPositionX(), pos.GetPositionY(), object->GetMapId());
-                handler->SetSentErrorMessage(true);
-                return false;
-            }
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, gameObjectData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        float o = object->GetOrientation();
+
+        if (tokenizer.ModifierExists("-po"))
+        {
+            o = source->GetOrientation();
+        }
+
+        if (tokenizer.ModifierExists("-adeg"))
+        {
+            std::string addDeg = tokenizer.GetModifierValue("-adeg", 0);
+            o = ((float)atof(addDeg.c_str())) * M_PI / 180.0f + o;
+        }
+
+        if (tokenizer.ModifierExists("-sdeg"))
+        {
+            std::string setDeg = tokenizer.GetModifierValue("-sdeg", 0);
+            o = ((float)atof(setDeg.c_str())) * M_PI / 180.0f;
+        }
+
+        float x, y, z;
+        if (tokenizer.empty())
+        {
+            Player* player = handler->GetSession()->GetPlayer();
+            player->GetPosition(x, y, z);
         }
         else
         {
-            pos = handler->GetSession()->GetPlayer()->GetPosition();
+            float add_x = tokenizer.TryGetParam<float>(0);
+            float add_y = tokenizer.TryGetParam<float>(1);
+            float add_z = tokenizer.TryGetParam<float>(2);
+            // rotation matrix
+            x = add_x*cos(o) - add_y*sin(o) + object->GetPositionX();
+            y = add_x*sin(o) + add_y*cos(o) + object->GetPositionY();
+            z = add_z + object->GetPositionZ();
+
+            if (!MapManager::IsValidMapCoord(object->GetMapId(), x, y, z))
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_INVALID_TARGET_COORDS, x, y, z, object->GetMapId());
+                return true;
+            }
         }
 
-        Map* map = object->GetMap();
+        sFreedomMgr->GameObjectMove(object, x, y, z, o);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
 
-        pos.SetOrientation(object->GetOrientation());
-        object->Relocate(pos);
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_MOVE,
+            sFreedomMgr->ToChatLink("Hgameobject", guidLow, object->GetGOInfo()->name),
+            guidLow);
 
-        // update which cell has this gameobject registered for loading
-        sObjectMgr->RemoveGameobjectFromGrid(object->GetGameObjectData());
-        object->SaveToDB();
-        sObjectMgr->AddGameobjectToGrid(object->GetGameObjectData());
-
-        // Generate a completely new spawn with new guid
-        // 3.3.5a client caches recently deleted objects and brings them back to life
-        // when CreateObject block for this guid is received again
-        // however it entirely skips parsing that block and only uses already known location
-        object->Delete();
-
-        object = GameObject::CreateGameObjectFromDB(guidLow, map);
-        if (!object)
-            return false;
-
-        handler->PSendSysMessage(LANG_COMMAND_MOVEOBJMESSAGE, std::to_string(object->GetSpawnId()).c_str(), object->GetGOInfo()->name.c_str(), object->GetGUID().ToString().c_str());
         return true;
     }
 
@@ -446,8 +590,9 @@ public:
         uint32 count = 0;
 
         Player* player = handler->GetSession()->GetPlayer();
+        uint32 maxResults = sWorld->getIntConfig(CONFIG_MAX_RESULTS_LOOKUP_COMMANDS);
 
-        WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_GAMEOBJECT_NEAREST);
+        WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_NEAREST_GAMEOBJECTS);
         stmt->setFloat(0, player->GetPositionX());
         stmt->setFloat(1, player->GetPositionY());
         stmt->setFloat(2, player->GetPositionZ());
@@ -456,174 +601,788 @@ public:
         stmt->setFloat(5, player->GetPositionY());
         stmt->setFloat(6, player->GetPositionZ());
         stmt->setFloat(7, distance * distance);
+        stmt->setUInt32(8, maxResults);
         PreparedQueryResult result = WorldDatabase.Query(stmt);
 
-        if (result)
+      if (result)
         {
             do
             {
                 Field* fields = result->Fetch();
                 ObjectGuid::LowType guid = fields[0].GetUInt64();
                 uint32 entry = fields[1].GetUInt32();
-                float x = fields[2].GetFloat();
-                float y = fields[3].GetFloat();
-                float z = fields[4].GetFloat();
-                uint16 mapId = fields[5].GetUInt16();
+                double objDist = fields[2].GetDouble();
 
                 GameObjectTemplate const* gameObjectInfo = sObjectMgr->GetGameObjectTemplate(entry);
 
                 if (!gameObjectInfo)
                     continue;
 
-                handler->PSendSysMessage(LANG_GO_LIST_CHAT, std::to_string(guid).c_str(), entry, std::to_string(guid).c_str(), gameObjectInfo->name.c_str(), x, y, z, mapId, "", "");
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_NEAR_LIST_ITEM,
+                    objDist,
+                    entry,
+                    sFreedomMgr->ToChatLink("Hgameobject", guid, gameObjectInfo->name));
 
                 ++count;
             } while (result->NextRow());
         }
 
-        handler->PSendSysMessage(LANG_COMMAND_NEAROBJMESSAGE, distance, count);
+        if (count == maxResults)
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_NEAR_MAX_RESULT_COUNT, count, distance);
+        else
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_NEAR, count, distance);
         return true;
     }
 
     //show info of gameobject
-    static bool HandleGameObjectInfoCommand(ChatHandler* handler, Optional<EXACT_SEQUENCE("guid")> isGuid, Variant<Hyperlink<gameobject_entry>, Hyperlink<gameobject>, uint32> data)
+    static bool HandleGameObjectInfoCommand(ChatHandler* handler,char const* args)
     {
-        uint32 entry = 0;
-        uint32 type = 0;
-        uint32 displayId = 0;
-        std::string name;
-        uint32 lootId = 0;
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+        bool historyInfo = false;
+        bool positionInfo = false;
+        bool advancedInfo = false;
 
-        GameObject* thisGO = nullptr;
-        GameObjectData const* spawnData = nullptr;
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-full", 0);
+        tokenizer.LoadModifier("-pos", 0);
+        tokenizer.LoadModifier("-history", 0);
+        tokenizer.LoadModifier("-advanced", 0);
 
-        ObjectGuid::LowType spawnId = 0;
-        if (isGuid || data.holds_alternative<Hyperlink<gameobject>>())
+        std::string id = tokenizer.TryGetParam(0);
+        if (!id.empty())
+            guidLow = atoul(id.c_str());
+
+        if (!guidLow)
         {
-            spawnId = *data;
-            spawnData = sObjectMgr->GetGameObjectData(spawnId);
-            if (!spawnData)
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        if (tokenizer.ModifierExists("-full"))
+        {
+            historyInfo = true;
+            positionInfo = true;
+            advancedInfo = true;
+        }
+
+        if (tokenizer.ModifierExists("-history"))
+            historyInfo = true;
+
+        if (tokenizer.ModifierExists("-pos"))
+            positionInfo = true;
+
+        if (tokenizer.ModifierExists("-advanced"))
+            advancedInfo = true;
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        GameObjectTemplate const* goTemplate = sObjectMgr->GetGameObjectTemplate(goData->id);
+
+        if (!goTemplate)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_TEMPLATE_DOES_NOT_EXIST, guidLow, goData->id);
+            return true;
+        }
+
+        // Gather data
+        float px, py, pz, po;
+        source->GetPosition(px, py, pz, po);
+        std::string guidString = object->GetGUID().ToString();
+        uint32 entryId = goTemplate->entry;
+        uint32 displayId = goTemplate->displayId;
+        uint32 scriptId = object->GetScriptId();
+        std::string name = goTemplate->name;
+        std::string aiName = object->GetAIName();
+        //uint32 phaseMask = object->GetPhaseMask();
+        //auto phaseList = object->GetPhases();  TO UPDATE
+        float ox, oy, oz, oo;
+        object->GetPosition(ox, oy, oz, oo);
+        uint32 mapId = object->GetMapId();
+        float distance = std::sqrt(std::pow(ox - px, 2) + std::pow(oy - py, 2) + std::pow(oz - pz, 2));
+        float scale = object->GetObjectScale();
+        GOState state = object->GetGoState();
+        GameObjectExtraData const* extraData = sFreedomMgr->GetGameObjectExtraData(object->GetSpawnId());
+
+        // Display data
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO, sFreedomMgr->ToChatLink("Hgameobject", guidLow, name));
+        if (advancedInfo)
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_GUID_FULL, guidString);
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_GUID, guidLow);
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_ENTRY, entryId, sFreedomMgr->ToChatLink("Hgameobject_entry", entryId, "Spawn link"));
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_DISPLAY_ID, displayId);
+
+        if (advancedInfo)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_SCRIPT_ID, scriptId);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_NAME, name);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_AI_NAME, aiName);
+            //handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASEMASK, phaseMask);
+
+            std::string stateEnumName;
+
+            switch (state)
             {
-                handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, spawnId);
-                handler->SetSentErrorMessage(true);
-                return false;
+            case GO_STATE_ACTIVE:
+                stateEnumName = "GO_STATE_ACTIVE";
+                break;
+            case GO_STATE_READY:
+                stateEnumName = "GO_STATE_READY";
+                break;
+            case GO_STATE_TRANSPORT_ACTIVE:
+                stateEnumName = "GO_STATE_TRANSPORT_ACTIVE";
+                break;
+            case GO_STATE_TRANSPORT_STOPPED:
+                stateEnumName = "GO_STATE_TRANSPORT_STOPPED";
+                break;
+            default:
+                stateEnumName = "UNKNOWN";
+                break;
             }
-            entry = spawnData->id;
-            thisGO = handler->GetObjectFromPlayerMapByDbGuid(spawnId);
-        }
-        else
-        {
-            entry = *data;
+
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_STATE, (uint32)state, stateEnumName);
         }
 
-        GameObjectTemplate const* gameObjectInfo = sObjectMgr->GetGameObjectTemplate(entry);
-        if (!gameObjectInfo)
+        if (positionInfo)
         {
-            handler->PSendSysMessage(LANG_GAMEOBJECT_NOT_EXIST, entry);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_POS_X, ox);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_POS_Y, oy);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_POS_Z, oz);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_ORIENTATION, oo, round((oo * 180 / M_PI) * 100) / 100.0f);
+
+            float rad_roll, rad_pitch, rad_yaw;
+            float deg_roll, deg_pitch, deg_yaw;
+            sFreedomMgr->GetGameObjectEulerAnglesRad(object, rad_roll, rad_pitch, rad_yaw);
+            sFreedomMgr->GetGameObjectEulerAnglesDeg(object, deg_roll, deg_pitch, deg_yaw);
+
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_ROLL, rad_roll, deg_roll);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PITCH, rad_pitch, deg_pitch);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_YAW, rad_yaw, deg_yaw);
         }
 
-        type = gameObjectInfo->type;
-        displayId = gameObjectInfo->displayId;
-        name = gameObjectInfo->name;
-        lootId = gameObjectInfo->GetLootId();
-
-        // If we have a real object, send some info about it
-        if (thisGO)
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_DISTANCE, distance);
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_SCALE, scale);
+        /* TO UPDATE
+        if (!phaseList.empty())
         {
-            handler->PSendSysMessage(LANG_SPAWNINFO_GUIDINFO, thisGO->GetGUID().ToString().c_str());
-            handler->PSendSysMessage(LANG_SPAWNINFO_COMPATIBILITY_MODE, thisGO->GetRespawnCompatibilityMode());
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASELIST);
 
-            if (thisGO->GetGameObjectData() && thisGO->GetGameObjectData()->spawnGroupData->groupId)
+            for (uint32 phaseId : phaseList)
             {
-                SpawnGroupTemplateData const* groupData = thisGO->GetGameObjectData()->spawnGroupData;
-                handler->PSendSysMessage(LANG_SPAWNINFO_GROUP_ID, groupData->name.c_str(), groupData->groupId, groupData->flags, thisGO->GetMap()->IsSpawnGroupActive(groupData->groupId));
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_PHASE_LI, phaseId, sFreedomMgr->GetPhaseMask(phaseId));
             }
-
-            GameObjectOverride const* goOverride = sObjectMgr->GetGameObjectOverride(spawnId);
-            if (!goOverride)
-                goOverride = sObjectMgr->GetGameObjectTemplateAddon(entry);
-            if (goOverride)
-                handler->PSendSysMessage(LANG_GOINFO_ADDON, goOverride->Faction, goOverride->Flags);
         }
-
-        if (spawnData)
+        */
+        if (historyInfo)
         {
-            float yaw, pitch, roll;
-            spawnData->rotation.toEulerAnglesZYX(yaw, pitch, roll);
-            handler->PSendSysMessage(LANG_SPAWNINFO_SPAWNID_LOCATION, std::to_string(spawnData->spawnId).c_str(), spawnData->spawnPoint.GetPositionX(), spawnData->spawnPoint.GetPositionY(), spawnData->spawnPoint.GetPositionZ());
-            handler->PSendSysMessage(LANG_SPAWNINFO_ROTATION, yaw, pitch, roll);
+            if (!extraData)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_NO_HISTORY);
+            }
+            else
+            {
+                // Gather history data
+                uint64 creatorPlayerId = extraData->creatorPlayerId;
+                std::string creatorPlayerName = "(UNKNOWN)";
+                uint32 creatorBnetId = extraData->creatorBnetAccId;
+                std::string creatorAccountName = "(UNKNOWN)";
+                uint64 modifierPlayerId = extraData->modifierPlayerId;
+                std::string modifierPlayerName = "(UNKNOWN)";
+                uint32 modifierBnetId = extraData->modifierBnetAccId;
+                std::string modifierAccountName = "(UNKNOWN)";
+                time_t created = extraData->created;
+                std::string createdTimestamp = "(UNKNOWN)";
+                time_t modified = extraData->modified;
+                std::string modifiedTimestamp = "(UNKNOWN)";
+
+                // Set names
+                if (CharacterCacheEntry const* creatorPlayerInfo = sCharacterCache->GetCharacterCacheByGuid(ObjectGuid::Create<HighGuid::Player>(creatorPlayerId)))
+                    creatorPlayerName = creatorPlayerInfo->Name;
+                if (CharacterCacheEntry const* modifierPlayerInfo = sCharacterCache->GetCharacterCacheByGuid(ObjectGuid::Create<HighGuid::Player>(modifierPlayerId)))
+                    modifierPlayerName = modifierPlayerInfo->Name;
+
+                Battlenet::AccountMgr::GetName(creatorBnetId, creatorAccountName);
+                Battlenet::AccountMgr::GetName(modifierBnetId, modifierAccountName);
+
+                // Set timestamps
+                if (created)
+                    createdTimestamp = sFreedomMgr->ToDateTimeString(created);
+
+                if (modified)
+                    modifiedTimestamp = sFreedomMgr->ToDateTimeString(modified);
+
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_CREATOR_PLAYER, creatorPlayerName, creatorPlayerId);
+                if (handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION))
+                    handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_CREATOR_ACC, creatorAccountName, creatorBnetId);
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_MODIFIER_PLAYER, modifierPlayerName, modifierPlayerId);
+                if (handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION))
+                    handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_MODIFIER_ACC, modifierAccountName, modifierBnetId);
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_CREATED, createdTimestamp);
+                handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_INFO_LI_MODIFIED, modifiedTimestamp);
+            }
         }
-
-        handler->PSendSysMessage(LANG_GOINFO_ENTRY, entry);
-        handler->PSendSysMessage(LANG_GOINFO_TYPE, type);
-        handler->PSendSysMessage(LANG_GOINFO_LOOTID, lootId);
-        handler->PSendSysMessage(LANG_GOINFO_DISPLAYID, displayId);
-        handler->PSendSysMessage(LANG_GOINFO_NAME, name.c_str());
-        handler->PSendSysMessage(LANG_GOINFO_SIZE, gameObjectInfo->size);
-        handler->PSendSysMessage(LANG_OBJECTINFO_AIINFO, gameObjectInfo->AIName.c_str(), sObjectMgr->GetScriptName(gameObjectInfo->ScriptId).c_str());
-        if (GameObjectAI const* ai = thisGO ? thisGO->AI() : nullptr)
-            handler->PSendSysMessage(LANG_OBJECTINFO_AITYPE, GetTypeName(*ai).c_str());
-
-        if (GameObjectDisplayInfoEntry const* modelInfo = sGameObjectDisplayInfoStore.LookupEntry(displayId))
-            handler->PSendSysMessage(LANG_GOINFO_MODEL, modelInfo->GeoBoxMax.X, modelInfo->GeoBoxMax.Y, modelInfo->GeoBoxMax.Z, modelInfo->GeoBoxMin.X, modelInfo->GeoBoxMin.Y, modelInfo->GeoBoxMin.Z);
 
         return true;
     }
 
-    static bool HandleGameObjectSetStateCommand(ChatHandler* handler, GameObjectSpawnId guidLow, int32 objectType, Optional<uint32> objectState)
+    static bool HandleGameObjectSetStateCommand(ChatHandler* handler, char const* args)
     {
-        if (!guidLow)
-            return false;
-
-        GameObject* object = handler->GetObjectFromPlayerMapByDbGuid(guidLow);
-        if (!object)
+        if (!*args)
         {
-            handler->PSendSysMessage(LANG_COMMAND_OBJNOTFOUND, std::to_string(*guidLow).c_str());
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SET_STATE);
+            return true;
         }
 
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(args);
+        std::string type = tokenizer.TryGetParam(0);
+        std::string state = tokenizer.TryGetParam(1);
+        std::string id = tokenizer.TryGetParam(2);
+
+        if (!id.empty())
+            guidLow = atoul(sFreedomMgr->GetChatLinkKey(id, "Hgameobject").c_str());
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, gameObjectData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        int32 objectType = atoi(type.c_str());
         if (objectType < 0)
         {
             if (objectType == -1)
                 object->SendGameObjectDespawn();
             else if (objectType == -2)
-                return false;
+                handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SET_STATE);
             return true;
         }
 
-        if (!objectState)
-            return false;
+        if (state.empty())
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SET_STATE);
+            return true;
+        }
+
+        int32 objectState = atoi(state.c_str());
+
 
         switch (objectType)
         {
             case 0:
-                object->SetGoState(GOState(*objectState));
+                object->SetGoState(GOState(objectState));
                 break;
             case 1:
-                object->SetGoType(GameobjectTypes(*objectState));
+                object->SetGoType(GameobjectTypes(objectState));
                 break;
             case 2:
-                object->SetGoArtKit(*objectState);
+                object->SetGoArtKit(objectState);
                 break;
             case 3:
-                object->SetGoAnimProgress(*objectState);
+                object->SetGoAnimProgress(objectState);
                 break;
             case 4:
-                object->SendCustomAnim(*objectState);
+                object->SendCustomAnim(objectState);
                 break;
             case 5:
-                if (*objectState > GO_DESTRUCTIBLE_REBUILDING)
-                    return false;
+                // removed from original legion code
+                // if (objectState > GO_DESTRUCTIBLE_REBUILDING)
+                //     return false;
 
-                object->SetDestructibleState(GameObjectDestructibleState(*objectState));
+                // object->SetDestructibleState(GameObjectDestructibleState(objectState));
                 break;
             default:
                 break;
         }
-        handler->PSendSysMessage("Set gobject type %d state %u", objectType, *objectState);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_SET_STATE, objectType, objectState);
+        return true;
+    }
+
+    // New
+    static bool HandleGameObjectPhaseCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_PHASE);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+        bool parseAsPhaseMasks = true;
+
+        ArgumentTokenizer tokenizer(args);
+        tokenizer.LoadModifier("-ids", 0);
+        tokenizer.LoadModifier("-guid", 1);
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hgameobject");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        if (tokenizer.ModifierExists("-ids"))
+        {
+            parseAsPhaseMasks = false;
+        }
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        std::string phases = "";
+        uint32 phaseMask = 0;
+
+        for (auto phaseElem : tokenizer)
+        {
+            uint32 phase = atoul(phaseElem.c_str());
+
+            if (!phase)
+                continue;
+
+            if (parseAsPhaseMasks)
+            {
+                if (!sFreedomMgr->IsValidPhaseMask(phase))
+                    continue;
+
+                phaseMask |= phase;
+                phases += " " + phaseElem;
+            }
+            else
+            {
+                if (!sFreedomMgr->IsValidPhaseId(phase))
+                    continue;
+
+                phaseMask |= sFreedomMgr->GetPhaseMask(phase);
+                phases += " " + phaseElem;
+            }
+        }
+
+        if (phaseMask)
+        {
+            sFreedomMgr->GameObjectPhase(object, phaseMask);
+            sFreedomMgr->GameObjectSetModifyHistory(object, source);
+            sFreedomMgr->SaveGameObject(object);
+            object = sFreedomMgr->GameObjectRefresh(object);
+        }
+
+        if (phases.empty())
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_PHASE_NOT_SET);
+        else if (parseAsPhaseMasks)
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_PHASE_BITFIELDS, phases);
+        else
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_PHASE_PHASEIDS, phases);
+
+        return true;
+    }
+
+    static bool HandleGameObjectSelectCommand(ChatHandler* handler, char const* args)
+    {
+        uint32 entryId = 0;
+        Player* source = handler->GetSession()->GetPlayer();
+        float x, y, z;
+        source->GetPosition(x, y, z);
+        uint32 mapId = source->GetMapId();
+        int index = 0;
+        PreparedQueryResult result;
+
+        if (*args)
+        {
+            char* token = strtok((char*)args, " ");
+            entryId = atoul(token);
+        }
+
+        if (entryId)
+        {
+            WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_NEAREST_GAMEOBJECT_BY_EID);
+            stmt->setFloat(index++, x);
+            stmt->setFloat(index++, y);
+            stmt->setFloat(index++, z);
+            stmt->setUInt16(index++, mapId);
+            stmt->setUInt32(index++, entryId);
+
+            result = WorldDatabase.Query(stmt);
+        }
+        else
+        {
+            WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_NEAREST_GAMEOBJECT);
+            stmt->setFloat(index++, x);
+            stmt->setFloat(index++, y);
+            stmt->setFloat(index++, z);
+            stmt->setUInt16(index++, mapId);
+
+            result = WorldDatabase.Query(stmt);
+        }
+
+        if (result)
+        {
+            Field * fields = result->Fetch();
+
+            uint64 guidLow = fields[0].GetUInt64();
+            uint32 entryId = fields[1].GetUInt32();
+            double objDist = fields[2].GetDouble();
+
+            GameObjectTemplate const* objTemplate = sObjectMgr->GetGameObjectTemplate(entryId);
+
+            if (!objTemplate)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SELECT_ENTRY_ID, entryId, guidLow);
+                return true;
+            }
+
+            GameObject* obj = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, entryId);
+
+            if (!obj)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SELECT_NOT_IN_WORLD, guidLow, entryId);
+                return true;
+            }
+
+            sFreedomMgr->SetGameobjectSelectionForPlayer(source->GetGUID().GetCounter(), guidLow);
+            handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_SELECT,
+                sFreedomMgr->ToChatLink("Hgameobject", guidLow, objTemplate->name),
+                guidLow,
+                entryId,
+                objDist);
+
+            return true;
+        }
+        else
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+    }
+
+    static bool HandleGameObjectScaleCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GAMEOBJECT_SCALE);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(args);
+        std::string scaleToken = tokenizer.TryGetParam(0);
+        std::string id = tokenizer.TryGetParam(1);
+        float scale = atof(scaleToken.c_str());
+
+        if (!id.empty())
+        {
+            guidLow = atoul(sFreedomMgr->GetChatLinkKey(id, "Hgameobject").c_str());
+        }
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+
+        // by DB guid
+        if (GameObjectData const* gameObjectData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, gameObjectData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        float maxScale = sConfigMgr->GetFloatDefault("Freedom.Gameobject.MaxScale", 15.0f);
+        float minScale = sConfigMgr->GetFloatDefault("Freedom.Gameobject.MinScale", 0.0f);
+
+        if (scale < minScale)
+            scale = minScale;
+        if (scale > maxScale)
+            scale = maxScale;
+
+        sFreedomMgr->GameObjectScale(object, scale);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        sFreedomMgr->GameObjectRefresh(object);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_SCALE, scale);
+
+        return true;
+    }
+
+    static bool HandleGameObjectAxialCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_AXIAL);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-adeg", 0);
+
+        if (tokenizer.size() < 3)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_AXIAL);
+            return true;
+        }
+
+        bool addDeg = tokenizer.ModifierExists("-adeg");
+        float deg_x = tokenizer.TryGetParam<float>(0);
+        float deg_y = tokenizer.TryGetParam<float>(1);
+        float deg_z = tokenizer.TryGetParam<float>(2);
+
+        std::string id = tokenizer.TryGetParam(3);
+        if (!id.empty())
+            guidLow = atoul(id.c_str());
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        // Set axial angle, save and refresh
+        sFreedomMgr->GameObjectRotate(object, deg_x, deg_y, deg_z, addDeg);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
+
+        float deg_roll, deg_pitch, deg_yaw;
+        sFreedomMgr->GetGameObjectEulerAnglesDeg(object, deg_roll, deg_pitch, deg_yaw);
+        handler->PSendSysMessage(FREEDOM_CMDI_GOBJECT_AXIAL, deg_roll, deg_pitch, deg_yaw);
+        return true;
+    }
+    static bool HandleGameObjectRollCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_ROLL);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-adeg", 0);
+
+        if (tokenizer.size() < 1)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_ROLL);
+            return true;
+        }
+
+        bool addDeg = tokenizer.ModifierExists("-adeg");
+        float deg_x = tokenizer.TryGetParam<float>(0);
+
+        std::string id = tokenizer.TryGetParam(1);
+        if (!id.empty())
+            guidLow = atoul(id.c_str());
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        // Set axial angle, save and refresh
+        sFreedomMgr->GameObjectRotateSingleAxis(object, deg_x, AXIS_ROLL, addDeg);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
+
+        float deg_roll, deg_pitch, deg_yaw;
+        sFreedomMgr->GetGameObjectEulerAnglesDeg(object, deg_roll, deg_pitch, deg_yaw);
+        handler->PSendSysMessage(FREEDOM_CMDI_GOBJECT_ROLL, deg_roll);
+        return true;
+    }
+
+    static bool HandleGameObjectPitchCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_PITCH);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-adeg", 0);
+
+        if (tokenizer.size() < 1)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_PITCH);
+            return true;
+        }
+
+        bool addDeg = tokenizer.ModifierExists("-adeg");
+        float deg_y = tokenizer.TryGetParam<float>(0);
+
+        std::string id = tokenizer.TryGetParam(1);
+        if (!id.empty())
+            guidLow = atoul(id.c_str());
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        // Set axial angle, save and refresh
+        sFreedomMgr->GameObjectRotateSingleAxis(object, deg_y, AXIS_PITCH, addDeg);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
+
+        float deg_roll, deg_pitch, deg_yaw;
+        sFreedomMgr->GetGameObjectEulerAnglesDeg(object, deg_roll, deg_pitch, deg_yaw);
+        handler->PSendSysMessage(FREEDOM_CMDI_GOBJECT_PITCH, deg_pitch);
+        return true;
+    }
+
+    static bool HandleGameObjectYawCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_YAW);
+            return true;
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        ObjectGuid::LowType guidLow = sFreedomMgr->GetSelectedGameobjectGuidFromPlayer(source->GetGUID().GetCounter());
+
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-adeg", 0);
+
+        if (tokenizer.size() < 1)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_GOBJECT_YAW);
+            return true;
+        }
+
+        bool addDeg = tokenizer.ModifierExists("-adeg");
+        float deg_z = tokenizer.TryGetParam<float>(0);
+
+        std::string id = tokenizer.TryGetParam(1);
+        if (!id.empty())
+            guidLow = atoul(id.c_str());
+
+        if (!guidLow)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_NOT_FOUND);
+            return true;
+        }
+
+        GameObject* object = NULL;
+        GameObjectData const* goData = NULL;
+
+        // by DB guid
+        if (goData = sObjectMgr->GetGameObjectData(guidLow))
+            object = sFreedomMgr->GetAnyGameObject(source->GetMap(), guidLow, goData->id);
+
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_GUID_NOT_EXISTS, guidLow);
+            return true;
+        }
+
+        // Set axial angle, save and refresh
+        sFreedomMgr->GameObjectRotateSingleAxis(object, deg_z, AXIS_YAW, addDeg);
+        sFreedomMgr->GameObjectSetModifyHistory(object, source);
+        sFreedomMgr->SaveGameObject(object);
+        object = sFreedomMgr->GameObjectRefresh(object);
+
+        float deg_roll, deg_pitch, deg_yaw;
+        sFreedomMgr->GetGameObjectEulerAnglesDeg(object, deg_roll, deg_pitch, deg_yaw);
+        handler->PSendSysMessage(FREEDOM_CMDI_GOBJECT_YAW, deg_yaw);
         return true;
     }
 };

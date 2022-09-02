@@ -1,1 +1,0 @@
-This folder contains SQL scripts, what hold essential freedom-specific data for all databases (mostly inserts and replaces)

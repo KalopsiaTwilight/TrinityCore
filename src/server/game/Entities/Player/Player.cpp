@@ -2478,13 +2478,13 @@ void Player::InitStatsForLevel(bool reapplyMods)
 
     // reset size before reapply auras
     // TODO: Figure out how to get player id to fix player scaling
-    // QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", m_uint32Values[OBJECT_FIELD_GUID]);
-    // if (result)
-    // {
-    //     float scale = (*result)[0].GetFloat();
-    //     SetObjectScale(scale);
-    // }
-    // else
+    QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", GetGUID().GetCounter());
+    if (result)
+    {
+        float scale = (*result)[0].GetFloat();
+        SetObjectScale(scale);
+    }
+    else
         SetObjectScale(1.0f);
 
     // save base values (bonuses already included in stored stats

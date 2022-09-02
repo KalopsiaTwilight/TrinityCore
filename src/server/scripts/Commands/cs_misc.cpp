@@ -49,6 +49,11 @@
 #include "Weather.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "BattlenetAccountMgr.h"
+#include "RBAC.h"
+#include "Utilities/ArgumentTokenizer.h"
+#include "FreedomMgr.h"
+#include <boost/asio/ip/address_v4.hpp>
 
 // temporary hack until includes are sorted out (don't want to pull in Windows.h)
 #ifdef GetClassName
@@ -99,6 +104,7 @@ public:
             { "mute",             HandleMuteCommand,             rbac::RBAC_PERM_COMMAND_MUTE,             Console::Yes },
             { "mutehistory",      HandleMuteHistoryCommand,      rbac::RBAC_PERM_COMMAND_MUTEHISTORY,      Console::Yes },
             { "neargrave",        HandleNearGraveCommand,        rbac::RBAC_PERM_COMMAND_NEARGRAVE,        Console::No },
+            { "playerinfo",       HandlePInfoCommand,            rbac::RBAC_PERM_COMMAND_PINFO,            Console::Yes },
             { "pinfo",            HandlePInfoCommand,            rbac::RBAC_PERM_COMMAND_PINFO,            Console::Yes },
             { "playall",          HandlePlayAllCommand,          rbac::RBAC_PERM_COMMAND_PLAYALL,          Console::No },
             { "possess",          HandlePossessCommand,          rbac::RBAC_PERM_COMMAND_POSSESS,          Console::No },
@@ -120,6 +126,10 @@ public:
             { "unstuck",          HandleUnstuckCommand,          rbac::RBAC_PERM_COMMAND_UNSTUCK,          Console::Yes },
             { "wchange",          HandleChangeWeather,           rbac::RBAC_PERM_COMMAND_WCHANGE,          Console::No },
             { "mailbox",          HandleMailBoxCommand,          rbac::RBAC_PERM_COMMAND_MAILBOX,          Console::No },
+            { "playlocal",        HandlePlayLocalCommand,        rbac::RBAC_FPERM_COMMAND_PLAYLOCAL,       Console::No },
+            { "additemall",       HandleAddItemAllCommand,       rbac::RBAC_FPERM_COMMAND_ADDITEMALL,      Console::No },
+            { "unauraall",        HandleUnAuraAllCommand,        rbac::RBAC_FPERM_COMMAND_UNAURAALL,       Console::No },
+            { "jumptome",         HandleJumpToMeCommand,         rbac::RBAC_FPERM_MODERATOR,               Console::No },
         };
         return commandTable;
     }
@@ -366,10 +376,6 @@ public:
 
         if (target)
         {
-            // check online security
-            if (handler->HasLowerSecurity(target, ObjectGuid::Empty))
-                return false;
-
             std::string chrNameLink = handler->playerLink(targetName);
 
             Map* map = target->GetMap();
@@ -459,10 +465,6 @@ public:
         }
         else
         {
-            // check offline security
-            if (handler->HasLowerSecurity(nullptr, targetGuid))
-                return false;
-
             std::string nameLink = handler->playerLink(targetName);
 
             handler->PSendSysMessage(LANG_APPEARING_AT, nameLink.c_str());
@@ -1213,13 +1215,19 @@ public:
                 itemId = itr->ID;
             }
             else
-                return false;
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_INVALID_ARGUMENT_X, "$itemId/$shift-click-item-link");
+                return true;
+            }
         }
         else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
         {
             char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
             if (!id)
-                return false;
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_INVALID_ARGUMENT_X, "$itemId/$shift-click-item-link");
+                return true;
+            }
             itemId = atoul(id);
         }
 
@@ -1257,15 +1265,22 @@ public:
 
         Player* player = handler->GetSession()->GetPlayer();
         Player* playerTarget = handler->getSelectedPlayer();
-        if (!playerTarget)
+        if (!playerTarget || !handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION))
             playerTarget = player;
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (!itemTemplate)
         {
-            handler->PSendSysMessage(LANG_COMMAND_ITEMIDINVALID, itemId);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_X_WITH_ID_NOT_FOUND, "Item", itemId);
+            return true;
+        }
+        // Blacklist check
+        ItemTemplateExtraData const* itemExtra = sFreedomMgr->GetItemTemplateExtraById(itemId);
+
+        if (!handler->HasPermission(rbac::RBAC_FPERM_ADMINISTRATION) && itemExtra && itemExtra->hidden)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_X_IS_BLACKLISTED, "Item");
+            return true;
         }
 
         // Subtract
@@ -1703,7 +1718,9 @@ public:
 
         // Account data print variables
         std::string userName          = handler->GetTrinityString(LANG_ERROR);
+        std::string bnetUsername      = handler->GetTrinityString(LANG_ERROR);
         uint32 accId                  = 0;
+        uint32 bnetAccId              = 0;
         ObjectGuid::LowType lowguid   = targetGuid.GetCounter();
         std::string eMail             = handler->GetTrinityString(LANG_ERROR);
         std::string regMail           = handler->GetTrinityString(LANG_ERROR);
@@ -1732,15 +1749,12 @@ public:
         uint8 gender                    = 0;
         LocaleConstant locale           = handler->GetSessionDbcLocale();
         uint32 totalPlayerTime          = 0;
-        uint8 level                     = 0;
         std::string alive               = handler->GetTrinityString(LANG_ERROR);
-        uint64 money                    = 0;
-        uint32 xp                       = 0;
-        uint32 xptotal                  = 0;
 
         // Position data print
         uint32 mapId;
         uint32 areaId;
+        std::set<uint32> phases;
         char const* areaName    = nullptr;
         char const* zoneName    = nullptr;
 
@@ -1761,9 +1775,7 @@ public:
                 return false;
 
             accId             = target->GetSession()->GetAccountId();
-            money             = target->GetMoney();
             totalPlayerTime   = target->GetTotalPlayedTime();
-            level             = target->GetLevel();
             latency           = target->GetSession()->GetLatency();
             raceid            = target->GetRace();
             classid           = target->GetClass();
@@ -1790,8 +1802,6 @@ public:
 
             Field* fields      = result->Fetch();
             totalPlayerTime    = fields[0].GetUInt32();
-            level              = fields[1].GetUInt8();
-            money              = fields[2].GetUInt64();
             accId              = fields[3].GetUInt32();
             raceid             = fields[4].GetUInt8();
             classid            = fields[5].GetUInt8();
@@ -1848,6 +1858,10 @@ public:
             failedLogins  = fields[9].GetUInt32();
             locked        = fields[10].GetUInt8();
             OS            = fields[11].GetString();
+
+            // get Bnet info
+            bnetAccId     = Battlenet::AccountMgr::GetIdByGameAccount(accId);
+            Battlenet::AccountMgr::GetName(bnetAccId, bnetUsername);
         }
 
         // Creates a chat link to the character. Returns nameLink
@@ -1884,9 +1898,7 @@ public:
         if (result4)
         {
             Field* fields = result4->Fetch();
-            xp            = fields[0].GetUInt32(); // Used for "current xp" output and "%u XP Left" calculation
             ObjectGuid::LowType gguid  = fields[1].GetUInt64(); // We check if have a guild for the person, so we might not require to query it at all
-            xptotal = sObjectMgr->GetXPForLevel(level);
 
             if (gguid)
             {
@@ -1909,58 +1921,70 @@ public:
 
         // Initiate output
         // Output I. LANG_PINFO_PLAYER
-        handler->PSendSysMessage(LANG_PINFO_PLAYER, target ? "" : handler->GetTrinityString(LANG_OFFLINE), nameLink.c_str(), targetGuid.ToString().c_str());
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_START, nameLink, targetGuid.GetCounter());
+
+        // GAME-ACCOUNT INFO
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GAME_ACCOUNT, userName, accId, security);
+
+        // BNET-ACCOUNT INFO
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BNET_ACCOUNT, bnetUsername, bnetAccId);
+
+        // IP ADDRESS
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_IP, lastIp, locked ? handler->GetTrinityString(LANG_YES) : handler->GetTrinityString(LANG_NO));
+
+        // EMAIL INFO
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_EMAIL, eMail, regMail);
+
+        // LAST LOGIN
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_LAST_LOGIN, lastLogin, failedLogins);
+
+        // ONLINE STATE
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_ONLINE, target ? "YES" : "NO");
 
         // Output II. LANG_PINFO_GM_ACTIVE if character is gamemaster
         if (target && target->IsGameMaster())
-            handler->PSendSysMessage(LANG_PINFO_GM_ACTIVE);
-
-        // Output III. LANG_PINFO_BANNED if ban exists and is applied
-        if (banTime >= 0)
-            handler->PSendSysMessage(LANG_PINFO_BANNED, banType.c_str(), banReason.c_str(), banTime > 0 ? secsToTimeString(banTime - GameTime::GetGameTime(), TimeFormat::ShortText).c_str() : handler->GetTrinityString(LANG_PERMANENTLY), bannedBy.c_str());
-
-        // Output IV. LANG_PINFO_MUTED if mute is applied
-        if (muteTime > 0)
-            handler->PSendSysMessage(LANG_PINFO_MUTED, muteReason.c_str(), secsToTimeString(muteTime - GameTime::GetGameTime(), TimeFormat::ShortText).c_str(), muteBy.c_str());
-
-        // Output V. LANG_PINFO_ACC_ACCOUNT
-        handler->PSendSysMessage(LANG_PINFO_ACC_ACCOUNT, userName.c_str(), accId, security);
-
-        // Output VI. LANG_PINFO_ACC_LASTLOGIN
-        handler->PSendSysMessage(LANG_PINFO_ACC_LASTLOGIN, lastLogin.c_str(), failedLogins);
-
-        // Output VII. LANG_PINFO_ACC_OS
-        handler->PSendSysMessage(LANG_PINFO_ACC_OS, OS.c_str(), latency);
-
-        // Output VIII. LANG_PINFO_ACC_REGMAILS
-        handler->PSendSysMessage(LANG_PINFO_ACC_REGMAILS, regMail.c_str(), eMail.c_str());
-
-        // Output IX. LANG_PINFO_ACC_IP
-        handler->PSendSysMessage(LANG_PINFO_ACC_IP, lastIp.c_str(), locked ? handler->GetTrinityString(LANG_YES) : handler->GetTrinityString(LANG_NO));
-
-        // Output X. LANG_PINFO_CHR_LEVEL
-        if (level != sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL))
-            handler->PSendSysMessage(LANG_PINFO_CHR_LEVEL_LOW, level, xp, xptotal, (xptotal - xp));
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GM_TOGGLE, "ON");
+        else if (target)
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GM_TOGGLE, "OFF");
         else
-            handler->PSendSysMessage(LANG_PINFO_CHR_LEVEL_HIGH, level);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GM_TOGGLE, "OFFLINE");
 
-        // Output XI. LANG_PINFO_CHR_RACE
-        raceStr  = DB2Manager::GetChrRaceName(raceid, locale);
+        // BANNED INFO
+        if (banTime >= 0)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BAN_INFO);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BAN_INFO_LI_TYPE, banType);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BAN_INFO_LI_REASON, banReason);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BAN_INFO_LI_LENGTH, banTime > 0 ? secsToTimeString(banTime - GameTime::GetGameTime(), TimeFormat::ShortText) : handler->GetTrinityString(LANG_PERMANENTLY));
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_BAN_INFO_LI_BANNED_BY, bannedBy);
+        }
+
+        // MUTED INFO
+        if (muteTime > 0)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_MUTE_INFO);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_MUTE_INFO_LI_REASON, muteReason);
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_MUTE_INFO_LI_LENGTH, secsToTimeString(muteTime - GameTime::GetGameTime(), TimeFormat::ShortText));
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_MUTE_INFO_LI_BANNED_BY, muteBy);
+        }
+
+        // RACE/CLASS INFO
+        raceStr = DB2Manager::GetChrRaceName(raceid, locale);
         classStr = DB2Manager::GetClassName(classid, locale);
-        handler->PSendSysMessage(LANG_PINFO_CHR_RACE, (gender == 0 ? handler->GetTrinityString(LANG_CHARACTER_GENDER_MALE) : handler->GetTrinityString(LANG_CHARACTER_GENDER_FEMALE)), raceStr.c_str(), classStr.c_str());
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_RACE, (gender == 0 ? handler->GetTrinityString(LANG_CHARACTER_GENDER_MALE) : handler->GetTrinityString(LANG_CHARACTER_GENDER_FEMALE)), raceStr);
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_CLASS, classStr);
 
-        // Output XII. LANG_PINFO_CHR_ALIVE
-        handler->PSendSysMessage(LANG_PINFO_CHR_ALIVE, alive.c_str());
+        // ALIVE STATE INFO
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_ALIVE, alive);
 
-        // Output XIII. phases
+        // PHASES INFO
+        /*if (target && !target->IsGameMaster())  // IsInWorld() returns false on loadingscreen, so it's more
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_PHASEMASK, phase);
+        else if (target)
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_PHASEMASK_GM_ON);*/
         if (target)
             PhasingHandler::PrintToChat(handler, target);
 
-        // Output XIV. LANG_PINFO_CHR_MONEY
-        uint32 gold                   = money / GOLD;
-        uint32 silv                   = (money % GOLD) / SILVER;
-        uint32 copp                   = (money % GOLD) % SILVER;
-        handler->PSendSysMessage(LANG_PINFO_CHR_MONEY, gold, silv, copp);
 
         // Position data
         MapEntry const* map = sMapStore.LookupEntry(mapId);
@@ -1980,6 +2004,7 @@ public:
         if (!zoneName)
             zoneName = handler->GetTrinityString(LANG_UNKNOWN);
 
+        // TODO: in fcs_misc used to be a custom message here. Format has changed now.
         if (areaName)
             handler->PSendSysMessage(LANG_PINFO_CHR_MAP_WITH_AREA, map->MapName[locale], zoneName, areaName);
         else
@@ -1988,32 +2013,17 @@ public:
         // Output XVII. - XVIX. if they are not empty
         if (!guildName.empty())
         {
-            handler->PSendSysMessage(LANG_PINFO_CHR_GUILD, guildName.c_str(), std::to_string(guildId).c_str());
-            handler->PSendSysMessage(LANG_PINFO_CHR_GUILD_RANK, guildRank.c_str(), uint32(guildRankId));
+            handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GUILD, guildName, guildId, guildRank, uint32(guildRankId));
+
             if (!note.empty())
-                handler->PSendSysMessage(LANG_PINFO_CHR_GUILD_NOTE, note.c_str());
+                handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GUILD_NOTE, note);
             if (!officeNote.empty())
-                handler->PSendSysMessage(LANG_PINFO_CHR_GUILD_ONOTE, officeNote.c_str());
+                handler->PSendSysMessage(FREEDOM_CMDI_PINFO_GUILD_OFFICER_NOTE, officeNote);
         }
+
 
         // Output XX. LANG_PINFO_CHR_PLAYEDTIME
-        handler->PSendSysMessage(LANG_PINFO_CHR_PLAYEDTIME, (secsToTimeString(totalPlayerTime, TimeFormat::ShortText, true)).c_str());
-
-        // Mail Data - an own query, because it may or may not be useful.
-        // SQL: "SELECT SUM(CASE WHEN (checked & 1) THEN 1 ELSE 0 END) AS 'readmail', COUNT(*) AS 'totalmail' FROM mail WHERE `receiver` = ?"
-        stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PINFO_MAILS);
-        stmt->setUInt64(0, lowguid);
-        PreparedQueryResult result6 = CharacterDatabase.Query(stmt);
-        if (result6)
-        {
-            Field* fields         = result6->Fetch();
-            uint32 readmail       = uint32(fields[0].GetDouble());
-            uint32 totalmail      = uint32(fields[1].GetUInt64());
-
-            // Output XXI. LANG_INFO_CHR_MAILS if at least one mail is given
-            if (totalmail >= 1)
-               handler->PSendSysMessage(LANG_PINFO_CHR_MAILS, readmail, totalmail);
-        }
+        handler->PSendSysMessage(FREEDOM_CMDI_PINFO_PLAYED_TIME, secsToTimeString(totalPlayerTime, TimeFormat::ShortText, true));
 
         return true;
     }
@@ -2316,19 +2326,68 @@ public:
         return true;
     }
 
-    static bool HandleComeToMeCommand(ChatHandler* handler)
+    static bool HandleComeToMeCommand(ChatHandler* handler, char const* args)
     {
-        Creature* caster = handler->getSelectedCreature();
-        if (!caster)
+        Creature* target = handler->getSelectedCreature();
+        if (!target)
         {
-            handler->SendSysMessage(LANG_SELECT_CREATURE);
-            handler->SetSentErrorMessage(true);
-            return false;
+            handler->PSendSysMessage(FREEDOM_CMDE_CREATURE_NOT_FOUND);
+            return true;
+        }
+
+        // interrupt previous motion
+        target->GetMotionMaster()->Clear();
+
+        float speed = 0.0f;
+
+        if (*args)
+        {
+            ArgumentTokenizer tokenizer(args);
+            speed = tokenizer.TryGetParam<float>(0);
+
+            if (speed < 1.0f)
+                speed = 1.0f;
         }
 
         Player* player = handler->GetSession()->GetPlayer();
 
-        caster->GetMotionMaster()->MovePoint(0, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+        if (speed)
+            target->GetMotionMaster()->MoveCharge(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), speed, EVENT_CHARGE, true);
+        else
+            target->GetMotionMaster()->MovePoint(0, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+        return true;
+    }
+
+    static bool HandleJumpToMeCommand(ChatHandler* handler, char const* args)
+    {
+        Creature* target = handler->getSelectedCreature();
+        if (!target)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_CREATURE_NOT_FOUND);
+            return true;
+        }
+
+        // interrupt previous motion
+        target->GetMotionMaster()->Clear();
+
+        float speedXY = 10.0f;
+        float speedZ = 0.0f;
+
+        if (*args)
+        {
+            ArgumentTokenizer tokenizer(args);
+            speedXY = tokenizer.TryGetParam<float>(0);
+            speedZ = tokenizer.TryGetParam<float>(1);
+
+            if (speedXY < 2.0f)
+                speedXY = 2.0f;
+            if (speedZ < 0)
+                speedZ = 0;
+        }
+
+        Player* player = handler->GetSession()->GetPlayer();
+
+        target->GetMotionMaster()->MoveJump(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation(), speedXY, speedZ, EVENT_JUMP, true);
 
         return true;
     }
@@ -2783,6 +2842,138 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
 
         handler->GetSession()->SendShowMailBox(player->GetGUID());
+        return true;
+    }
+
+     static bool HandleAddItemAllCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 itemId = 0;
+
+        if (args[0] == '[')                                        // [name] manual form
+        {
+            char const* itemNameStr = strtok((char*)args, "]");
+
+            if (itemNameStr && itemNameStr[0])
+            {
+                std::string itemName = itemNameStr + 1;
+                auto itr = std::find_if(sItemSparseStore.begin(), sItemSparseStore.end(), [&itemName](ItemSparseEntry const* itemSparse)
+                {
+                    for (LocaleConstant i = LOCALE_enUS; i < TOTAL_LOCALES; i = LocaleConstant(i + 1))
+                        if (itemName == itemSparse->Display[i])
+                            return true;
+
+                    return false;
+                });
+
+                if (itr == sItemSparseStore.end())
+                {
+                    handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, itemNameStr + 1);
+                    handler->SetSentErrorMessage(true);
+                    return false;
+                }
+
+                itemId = itr->ID;
+            }
+            else
+                return false;
+        }
+        else                                                    // item_id or [name] Shift-click form |color|Hitem:item_id:0:0:0|h[name]|h|r
+        {
+            char const* id = handler->extractKeyFromLink((char*)args, "Hitem");
+            if (!id)
+                return false;
+            itemId = atoul(id);
+        }
+
+        char const* ccount = strtok(NULL, " ");
+
+        int32 count = 1;
+
+        if (ccount)
+            count = strtol(ccount, NULL, 10);
+
+        if (count == 0)
+            count = 1;
+
+        std::vector<int32> bonusListIDs;
+        char const* bonuses = strtok(NULL, " ");
+
+        char const* context = strtok(nullptr, " ");
+        ItemContext itemContext = ItemContext::NONE;
+        if (context)
+        {
+            itemContext = ItemContext(atoul(context));
+            if (itemContext != ItemContext::NONE && itemContext < ItemContext::Max)
+            {
+                std::set<uint32> contextBonuses = sDB2Manager.GetDefaultItemBonusTree(itemId, itemContext);
+                bonusListIDs.insert(bonusListIDs.begin(), contextBonuses.begin(), contextBonuses.end());
+            }
+        }
+
+        // semicolon separated bonuslist ids (parse them after all arguments are extracted by strtok!)
+        if (bonuses)
+            for (std::string_view token : Trinity::Tokenize(bonuses, ';', false))
+                if (Optional<int32> bonusListId = Trinity::StringTo<int32>(token))
+                    bonusListIDs.push_back(*bonusListId);
+
+        sWorld->AddItemAll(itemId, count, bonusListIDs, itemContext);
+
+        //Subtract
+        if (count < 0)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_REMOVEITEM_ALL, itemId, -count);
+            return true;
+        }
+        else
+        {
+            handler->PSendSysMessage(FREEDOM_CMDI_ADDITEM_ALL, itemId, count);
+            return true;
+        }
+
+        return true;
+    }
+
+    static bool HandlePlayLocalCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        uint32 soundId = atoi((char*)args);
+
+        if (!sSoundKitStore.LookupEntry(soundId))
+        {
+            handler->PSendSysMessage(LANG_SOUND_NOT_EXIST, soundId);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        WorldPacket data(SMSG_PLAY_SOUND, 4);
+        data << uint32(soundId);
+        handler->GetSession()->GetPlayer()->Player::SendMessageToSetInRange(&data, MAX_VISIBILITY_DISTANCE, true);
+
+        handler->PSendSysMessage(FREEDOM_CMDI_PLAYED_LOCALLY, soundId);
+        return true;
+    }
+
+    static bool HandleUnAuraAllCommand(ChatHandler* handler, char const* args)
+    {
+        std::string argstr = args;
+        if (argstr == "all")
+        {
+            sWorld->MassUnauraAll();
+            return true;
+        }
+
+        // number or [name] Shift-click form |color|Hspell:spell_id|h[name]|h|r or Htalent form
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        if (!spellId)
+            return false;
+
+        sWorld->MassUnaura(spellId);
+
         return true;
     }
 };

@@ -1,5 +1,8 @@
-DELETE FROM trinity_string
-WHERE entry >= 100000;
+/**
+* -- WOW FREEDOM COMMAND TRINITY STIRNGS --
+* Description: main SQL script to add trinity strings used by Freedom commands to TrinityCore
+*/
+
 
 -- Colors and color closure
 SET @C_TITLE := '|cffd2691e';
@@ -15,7 +18,7 @@ SET @T_CMD_ERROR := CONCAT(@C_ERR, 'ERROR: ', @C_CLOSE);
 SET @T_GLOBAL_GM := CONCAT(@C_LINK, '[GM-NOTIFY] ', @C_CLOSE);
 SET @T_GLOBAL    := CONCAT(@C_LINK, '[GLOBAL NOTIFY] ', @C_CLOSE);
 
-INSERT INTO trinity_string (entry, content_default) VALUES
+REPLACE INTO trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDE_NOT_YET_IMPLEMENTED                         */ (100000, CONCAT(@T_CMD_ERROR, @C_TEXT, 'This command isn\'t implemented yet.', @C_CLOSE)),
 /* FREEDOM_CMDI_MONEY_RESET                                 */ (100001, CONCAT(@T_CMD_INFO, @C_TEXT, 'Your money has been reset.', @C_CLOSE)),
 /* FREEDOM_CMDE_NOT_ENOUGH_PARAMS                           */ (100002, CONCAT(@T_CMD_ERROR, @C_TEXT, 'Not enough parameters.', @C_CLOSE)),
@@ -386,6 +389,3 @@ INSERT INTO trinity_string (entry, content_default) VALUES
 /* FREEDOM_CMDE_CHANGEACCOUNT_DIFFBNETACCT                  */ (100367, CONCAT(@T_CMD_ERROR, 'Either the character is not on your BNet account or the destination game account is not yours!  Please check the spelling of the given character name.')),
 
 (200000, 'Dummy');
--- Select new changes
-SELECT * FROM trinity_string
-WHERE entry >= 100000 ORDER BY entry DESC;

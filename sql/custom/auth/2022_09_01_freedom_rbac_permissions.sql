@@ -1,8 +1,6 @@
-/** 
+/**
 * -- WOW FREEDOM PERMISSION SETS --
-* Description: main SQL script to launch to change RBAC permissions to fit WoW Freedom 7XX needs
-* Usage: Launch this script and use '.reload rbac' (without quotes) in-game to reload RBAC perms.
-* Modification: Remember to update this script when making permanent changes to RBAC permissions.
+* Description: main SQL script to launch to change RBAC permissions to fit WoW Freedom 9XX needs
 */
 
 /**
@@ -58,6 +56,34 @@ INSERT INTO rbac_permissions (`id`, `name`) VALUES
 (1202, 'Command: .playlocal'),
 (1203, 'Command: .additemall'),
 (1204, 'Command: .unauraall'),
+(1300, 'Command: .gobject phase'),
+(1301, 'Command: .gobject select'),
+(1302, 'Command: .gobject scale'),
+(1303, 'Command: .gobject axial'),
+(1304, 'Command: .gobject roll'),
+(1305, 'Command: .gobject pitch'),
+(1306, 'Command: .gobject yaw'),
+(1307, 'Command: .nps set emote'),
+(1308, 'Command: .npc set mount'),
+(1309, 'Command: .npc set aura'),
+(1310, 'Command: .npc set deathstate'),
+(1311, 'Command: .npc set sleepstate'),
+(1312, 'Command: .npc set hoverstate'),
+(1313, 'Command: .npc set scale'),
+(1314, 'Command: .npc set bytes1'),
+(1315, 'Command: .npc set bytes2'),
+(1316, 'Command: .npc set sitgroundstate'),
+(1317, 'Command: .npc set sitlowstate'),
+(1318, 'Command: .npc set sitmedstate'),
+(1319, 'Command: .npc set sithighstate'),
+(1320, 'Command: .npc set kneelstate'),
+(1321, 'Command: .npc set sheathstate'),
+(1322, 'Command: .npc set gravity'),
+(1323, 'Command: .npc set swim'),
+(1324, 'Command: .npc set flystate'),
+(1325, 'Command: .npc turn'),
+(1326, 'Command: .npc select'),
+(1327, 'Command: .npc return'),
 (9000, 'Command: reload playercreateinfo_spell_custom'),
 (9001, 'Command: reload playercreateinfo_skill_custom')
 ;
@@ -132,14 +158,6 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 272), -- cast dest
 (@MODERATOR, 373), -- gm fly
 (@MODERATOR, 377), -- go
-(@MODERATOR, 378), -- go creature
-(@MODERATOR, 379), -- go graveyard
-(@MODERATOR, 380), -- go grid
-(@MODERATOR, 381), -- go object
-(@MODERATOR, 382), -- go taxinode
-(@MODERATOR, 384), -- go trigger
-(@MODERATOR, 385), -- go xyz
-(@MODERATOR, 386), -- go zonexy
 (@MODERATOR, 387), -- gobject
 (@MODERATOR, 388), -- gobject activate
 (@MODERATOR, 389), -- gobject add
@@ -200,14 +218,14 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 565), -- modify speed walk
 (@MODERATOR, 566), -- modify speed swim
 (@MODERATOR, 568), -- modify standstate
-(@MODERATOR, 570), -- npc 
+(@MODERATOR, 570), -- npc
 (@MODERATOR, 571), -- npc add
 (@MODERATOR, 576), -- npc add delete
 (@MODERATOR, 578), -- npc add follow
 (@MODERATOR, 579), -- npc add follow stop
 (@MODERATOR, 580), -- npc set
 (@MODERATOR, 583), -- npc set factionid
-(@MODERATOR, 585), -- npc set flag
+(@MODERATOR, 585), -- npc set level
 (@MODERATOR, 587), -- npc set model
 (@MODERATOR, 589), -- npc set phase
 (@MODERATOR, 593), -- npc info
@@ -220,7 +238,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 600), -- npc yell
 (@MODERATOR, 601), -- npc tame
 (@MODERATOR, 737), -- tele
-(@MODERATOR, 738), -- tele add  
+(@MODERATOR, 738), -- tele add
 (@MODERATOR, 739), -- tele del
 (@MODERATOR, 740), -- tele name
 (@MODERATOR, 767), -- wp
@@ -231,10 +249,36 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@MODERATOR, 772), -- wp unload
 (@MODERATOR, 773), -- wp reload
 (@MODERATOR, 774), -- wp show
-(@MODERATOR, 852), -- go offset
 
 -- [CUSTOM COMMANDS]
-(@MODERATOR, 1100), -- goto ...
+(@MODERATOR, 1300), -- RBAC_FPERM_COMMAND_GOBJECT_PHASE
+(@MODERATOR, 1301), -- RBAC_FPERM_COMMAND_GOBJECT_SELECT
+(@MODERATOR, 1302), -- RBAC_FPERM_COMMAND_GOBJECT_SCALE
+(@MODERATOR, 1303), -- RBAC_FPERM_COMMAND_GOBJECT_AXIAL
+(@MODERATOR, 1304), -- RBAC_FPERM_COMMAND_GOBJECT_ROLL
+(@MODERATOR, 1305), -- RBAC_FPERM_COMMAND_GOBJECT_PITCH
+(@MODERATOR, 1306), -- RBAC_FPERM_COMMAND_GOBJECT_YAW
+(@MODERATOR, 1307), -- RBAC_FPERM_COMMAND_NPC_SET_EMOTE
+(@MODERATOR, 1308), -- RBAC_FPERM_COMMAND_NPC_SET_MOUNT
+(@MODERATOR, 1309), -- RBAC_FPERM_COMMAND_NPC_SET_AURA
+(@MODERATOR, 1310), -- RBAC_FPERM_COMMAND_NPC_SET_DEATHSTATE
+(@MODERATOR, 1311), -- RBAC_FPERM_COMMAND_NPC_SET_SLEEPSTATE
+(@MODERATOR, 1312), -- RBAC_FPERM_COMMAND_NPC_SET_HOVERSTATE
+(@MODERATOR, 1313), -- RBAC_FPERM_COMMAND_NPC_SET_SCALE
+(@MODERATOR, 1314), -- RBAC_FPERM_COMMAND_NPC_SET_BYTES1
+(@MODERATOR, 1315), -- RBAC_FPERM_COMMAND_NPC_SET_BYTES2
+(@MODERATOR, 1316), -- RBAC_FPERM_COMMAND_NPC_SET_SITGROUNDSTATE
+(@MODERATOR, 1317), -- RBAC_FPERM_COMMAND_NPC_SET_SITLOWSTATE
+(@MODERATOR, 1318), -- RBAC_FPERM_COMMAND_NPC_SET_SITMEDSTATE
+(@MODERATOR, 1319), -- RBAC_FPERM_COMMAND_NPC_SET_SITHIGHSTATE
+(@MODERATOR, 1320), -- RBAC_FPERM_COMMAND_NPC_SET_KNEELSTATE
+(@MODERATOR, 1321), -- RBAC_FPERM_COMMAND_NPC_SET_SHEATHSTATE
+(@MODERATOR, 1322), -- RBAC_FPERM_COMMAND_NPC_SET_GRAVITY
+(@MODERATOR, 1323), -- RBAC_FPERM_COMMAND_NPC_SET_SWIM
+(@MODERATOR, 1324), -- RBAC_FPERM_COMMAND_NPC_SET_FLYSTATE
+(@MODERATOR, 1325), -- RBAC_FPERM_COMMAND_NPC_TURN
+(@MODERATOR, 1326), -- RBAC_FPERM_COMMAND_NPC_SELECT
+(@MODERATOR, 1327), -- RBAC_FPERM_COMMAND_NPC_RETURN
 (@MODERATOR, 1010), -- freedom storyteller/moderator commands
 (@MODERATOR, 1200), -- cast player
 (@MODERATOR, 1202), -- playlocal
@@ -254,7 +298,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@GM, 241), -- ban character
 (@GM, 242), -- ban ip
 (@GM, 243), -- ban playeraccount
-(@GM, 244), -- baninfo 
+(@GM, 244), -- baninfo
 (@GM, 245), -- baninfo account
 (@GM, 246), -- baninfo character
 (@GM, 247), -- baninfo ip
@@ -394,7 +438,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 204), -- rbac account deny
 (@ADMIN, 205), -- rbac account revoke
 (@ADMIN, 206), -- rbac list
-(@ADMIN, 207), -- battlenetaccount 
+(@ADMIN, 207), -- battlenetaccount
 (@ADMIN, 208), -- battlenetaccount create
 (@ADMIN, 209), -- battlenetaccount lock country
 (@ADMIN, 210), -- battlenetaccount lock ip
@@ -404,7 +448,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 214), -- battlenetaccount link
 (@ADMIN, 215), -- battlenetaccount unlink
 (@ADMIN, 216), -- battlenetaccount gameaccountcreate
-(@ADMIN, 217), -- account 
+(@ADMIN, 217), -- account
 (@ADMIN, 218), -- account addon
 (@ADMIN, 219), -- account create
 (@ADMIN, 220), -- account delete
@@ -437,7 +481,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 261), -- bf timer
 (@ADMIN, 262), -- bf enable
 (@ADMIN, 287), -- levelup
-(@ADMIN, 288), -- pdump 
+(@ADMIN, 288), -- pdump
 (@ADMIN, 289), -- pdump load
 (@ADMIN, 290), -- pdump write
 (@ADMIN, 300), -- debug
@@ -447,13 +491,13 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 304), -- debug bg
 (@ADMIN, 305), -- debug entervehicle
 (@ADMIN, 306), -- debug getitemstate
-(@ADMIN, 307), -- debug getitemvalue
-(@ADMIN, 308), -- debug getvalue
-(@ADMIN, 309), -- debug hostil
+-- (@ADMIN, 307), -- debug getitemvalue (Removed)
+-- (@ADMIN, 308), -- debug getvalue (Removed)
+(@ADMIN, 309), -- debug combat
 (@ADMIN, 310), -- debug itemexpire
 (@ADMIN, 311), -- debug lootrecipient
 (@ADMIN, 312), -- debug los
-(@ADMIN, 313), -- debug mod32value
+-- (@ADMIN, 313), -- debug mod32value (Removed)
 (@ADMIN, 314), -- debug moveflags
 (@ADMIN, 315), -- debug play
 (@ADMIN, 316), -- debug play cinematics
@@ -472,14 +516,14 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 329), -- debug send setphaseshift
 (@ADMIN, 330), -- debug send spellfail
 (@ADMIN, 331), -- debug setaurastate
-(@ADMIN, 332), -- debug setbit
-(@ADMIN, 333), -- debug setitemvalue
-(@ADMIN, 334), -- debug setvalue
+-- (@ADMIN, 332), -- debug setbit (Removed)
+-- (@ADMIN, 333), -- debug setitemvalue (Removed)
+-- (@ADMIN, 334), -- debug setvalue (Removed)
 (@ADMIN, 335), -- debug setvid
 (@ADMIN, 336), -- debug spawnvehicle
 (@ADMIN, 337), -- debug threat
-(@ADMIN, 338), -- debug update
-(@ADMIN, 339), -- debug uws
+-- (@ADMIN, 338), -- debug update (Removed)
+(@ADMIN, 339), -- debug worldstate
 (@ADMIN, 340), -- wpgps
 (@ADMIN, 400), -- debug transport
 (@ADMIN, 348), -- disable
@@ -622,7 +666,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 (@ADMIN, 702), -- reload spell_threats
 (@ADMIN, 703), -- reload spell_group_stack_rules
 (@ADMIN, 704), -- reload trinity_string
-(@ADMIN, 705), -- reload warden_action
+-- (@ADMIN, 705), -- reload warden_action (REMOVED)
 (@ADMIN, 706), -- reload waypoint_scripts
 (@ADMIN, 707), -- reload waypoint_data
 (@ADMIN, 708), -- reload vehicle_accessory
@@ -677,7 +721,7 @@ INSERT INTO rbac_linked_permissions (`id`, `linkedId`) VALUES
 ;
 
 -- [RECREATION: LINKED PERMS TO DEFAULT SEC LEVELS]
-INSERT INTO rbac_default_permissions (`secId`, `permissionId`) VALUES 
+INSERT INTO rbac_default_permissions (`secId`, `permissionId`) VALUES
 (@GMLVL_PLAYER,    @PLAYER),     -- GM LVL 0 / PLAYER      <-- Role: [GM0] Player
 (@GMLVL_MODERATOR, @MODERATOR),  -- GM LVL 1 / MOD         <-- Role: [GM1] Moderator, ST
 (@GMLVL_GM,        @GM),         -- GM LVL 2 / GM          <-- Role: [GM2] Gamemaster

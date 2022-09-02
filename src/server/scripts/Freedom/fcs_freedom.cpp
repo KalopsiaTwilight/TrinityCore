@@ -1,7 +1,9 @@
 #include "AccountMgr.h"
 #include "BattlenetAccountMgr.h"
 #include "BigNumber.h"
+#include "ChatCommand.h"
 #include "CharacterPackets.h"
+#include "CharacterCache.h"
 #include "Config.h"
 #include "Chat.h"
 #include "DatabaseEnv.h"
@@ -19,6 +21,7 @@
 #include "RBAC.h"
 #include "ScriptMgr.h"
 #include "SocialMgr.h"
+#include "SpellMgr.h"
 #include "World.h"
 #include "WorldSession.h"
 #include <boost/algorithm/string/predicate.hpp>
@@ -204,12 +207,12 @@ public:
     }
 
 #pragma region COMMAND TABLE : .freedom -> morph -> *
-    static bool HandleFreedomMorphListCommand(ChatHandler* handler, char const* args)
+    static bool HandleFreedomMorphListCommand(ChatHandler* handler, Optional<std::string> morphName)
     {
         const MorphDataContainer morphList = sFreedomMgr->GetMorphContainer(handler->GetSession()->GetPlayer()->GetGUID().GetCounter());
         uint64 count = 0;
 
-        if (!*args)
+        if (!morphName)
         {
             for (auto morphData : morphList)
             {
@@ -219,12 +222,9 @@ public:
         }
         else
         {
-            Tokenizer tokens = Tokenizer(args, ' ');
-            std::string name = tokens[0];
-
             for (auto morphData : morphList)
             {
-                if (boost::istarts_with(morphData.name, name))
+                if (boost::istarts_with(morphData.name, morphName.value()))
                 {
                     handler->PSendSysMessage(FREEDOM_CMDI_MORPH_LIST_ITEM, morphData.displayId, morphData.name);
                     count++;
@@ -248,19 +248,19 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
+        ArgumentTokenizer tokenizer(args);
 
-        if (tokens.size() < 2)
+        if (tokenizer.size() < 2)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_NOT_ENOUGH_PARAMS);
             handler->PSendSysMessage(FREEDOM_CMDH_MORPH_ADD);
             return true;
         }
 
-        std::string morphName = tokens[0];
-        uint32 displayId = atoul(tokens[1]);
+        std::string morphName = tokenizer.TryGetParam<std::string>(0);
+        uint32 displayId = tokenizer.TryGetParam<uint32>(1);
         Player* source = handler->GetSession()->GetPlayer();
-        std::string targetNameArg = tokens.size() > 2 ? tokens[2] : "";
+        std::string targetNameArg = tokenizer.size() > 2 ? tokenizer.TryGetParam<std::string>(2) : "";
         std::string targetName;
         ObjectGuid targetGuid;
 
@@ -309,11 +309,10 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string morphName = tokens[0];
-        uint32 displayId = atoul(tokens[0]);
-        Player* source = handler->GetSession()->GetPlayer();
-        std::string targetNameArg = tokens.size() > 1 ? tokens[1] : "";
+        ArgumentTokenizer tokenizer(args);
+        std::string morphName = tokenizer.TryGetParam(0);
+        uint32 displayId = tokenizer.TryGetParam<uint32>(0);
+        std::string targetNameArg = tokenizer.size() > 1 ? tokenizer.TryGetParam(1) : "";
         std::string targetName;
         ObjectGuid targetGuid;
 
@@ -356,9 +355,9 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string morphName = tokens[0];
-        uint32 displayId = atoul(tokens[0]);
+        ArgumentTokenizer tokenizer(args);
+        std::string morphName = tokenizer.TryGetParam(0);
+        uint32 displayId = tokenizer.TryGetParam<uint32>(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Check if morph actually exists
@@ -409,8 +408,8 @@ public:
         }
         else
         {
-            Tokenizer tokens = Tokenizer(args, ' ');
-            std::string name = tokens[0];
+            ArgumentTokenizer tokenizer(args);
+            std::string name = tokenizer.TryGetParam(0);
 
             for (auto teleData : teleList)
             {
@@ -438,8 +437,8 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Check if teleport already exists
@@ -472,9 +471,8 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
-        Player* source = handler->GetSession()->GetPlayer();
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
 
         // Check if teleport actually exists
         const PublicTeleData* teleData = sFreedomMgr->GetPublicTeleport(name);
@@ -499,8 +497,8 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Stop combat before teleporting
@@ -521,8 +519,7 @@ public:
         // Stop flight if needed
         if (source->IsInFlight())
         {
-            source->GetMotionMaster()->MovementExpired();
-            source->CleanupAfterTaxiFlight();
+            source->FinishTaxiFlight();
         }
         // Save only in non-flight case
         else
@@ -551,8 +548,8 @@ public:
         }
         else
         {
-            Tokenizer tokens = Tokenizer(args, ' ');
-            std::string name = tokens[0];
+            ArgumentTokenizer tokenizer(args);
+            std::string name = tokenizer.TryGetParam(0);
 
             for (auto teleData : teleList)
             {
@@ -580,8 +577,9 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
+
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Check if teleport already exists
@@ -613,8 +611,8 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Check if teleport actually exists
@@ -640,8 +638,8 @@ public:
             return true;
         }
 
-        Tokenizer tokens = Tokenizer(args, ' ');
-        std::string name = tokens[0];
+        ArgumentTokenizer tokenizer(args);
+        std::string name = tokenizer.TryGetParam(0);
         Player* source = handler->GetSession()->GetPlayer();
 
         // Stop combat before teleporting
@@ -662,8 +660,7 @@ public:
         // Stop flight if needed
         if (source->IsInFlight())
         {
-            source->GetMotionMaster()->MovementExpired();
-            source->CleanupAfterTaxiFlight();
+            source->FinishTaxiFlight();
         }
         // Save only in non-flight case
         else
@@ -692,8 +689,8 @@ public:
         }
         else
         {
-            Tokenizer tokens = Tokenizer(args, ' ');
-            std::string name = tokens[0];
+            ArgumentTokenizer tokenizer(args);
+            std::string name = tokenizer.TryGetParam(0);
 
             for (auto spellData : spellList)
             {
@@ -723,7 +720,6 @@ public:
 
         uint32 spellId = handler->extractSpellIdFromLink((char*)args);
         Player* source = handler->GetSession()->GetPlayer();
-        uint32 bnetAccId = source->GetSession()->GetBattlenetAccountId();
         uint8 targetOthers = 0;
         char* targetOthersArg = strtok(NULL, args);
 
@@ -739,7 +735,7 @@ public:
             return true;
         }
 
-        const SpellEntry* spellEntry = sSpellStore.LookupEntry(spellId);
+        const SpellNameEntry* spellEntry = sSpellNameStore.LookupEntry(spellId);
 
         if (!spellEntry)
         {
@@ -749,14 +745,14 @@ public:
 
         // Create teleport
         PublicSpellData newSpellData;
-        int locale = handler->GetSessionDbcLocale();
-        newSpellData.name = spellEntry->Name->Str[locale];
+        LocaleConstant locale = handler->GetSessionDbcLocale();
+        newSpellData.name = spellEntry->Name[locale];
         newSpellData.targetOthers = targetOthers;
         newSpellData.gmBnetAccId = source->GetSession()->GetBattlenetAccountId();
 
         sFreedomMgr->AddPublicSpell(spellId, newSpellData);
 
-        handler->PSendSysMessage(FREEDOM_CMDI_PUBLIC_SPELL_ADD, sFreedomMgr->ToChatLink("Hspell", spellId, spellEntry->Name->Str[locale]), spellId);
+        handler->PSendSysMessage(FREEDOM_CMDI_PUBLIC_SPELL_ADD, sFreedomMgr->ToChatLink("Hspell", spellId, spellEntry->Name[locale]), spellId);
         return true;
     }
 
@@ -810,7 +806,7 @@ public:
             return true;
         }
 
-        const SpellEntry* spellEntry = sSpellStore.LookupEntry(spellId);
+        const SpellNameEntry* spellEntry = sSpellNameStore.LookupEntry(spellId);
 
         if (!spellEntry)
         {
@@ -911,7 +907,7 @@ public:
         uint32 oldMSTime = getMSTime();
         sObjectMgr->LoadGameObjectTemplate();
         handler->SendGlobalGMSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_WORLD_DB, "gameobject_template").c_str());
-        sObjectMgr->LoadGameobjects();
+        sObjectMgr->LoadGameObjects();
         handler->SendGlobalGMSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_WORLD_DB, "gameobject").c_str());
         handler->SendGlobalSysMessage(handler->PGetParseString(FREEDOM_CMDI_RELOAD_FINISH, GetMSTimeDiffToNow(oldMSTime)).c_str());
         return true;
@@ -1009,8 +1005,7 @@ public:
         // stop flight if need
         if (source->IsInFlight())
         {
-            source->GetMotionMaster()->MovementExpired();
-            source->CleanupAfterTaxiFlight();
+            source->FinishTaxiFlight();
         }
 
         source->Recall();
@@ -1021,14 +1016,14 @@ public:
     {
         Player* player = handler->GetSession()->GetPlayer();
 
-        if (player->getRace() != RACE_PANDAREN_NEUTRAL)
+        if (player-> GetRace() != RACE_PANDAREN_NEUTRAL)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_FREEDOM_PANDA_NOT_NEUTRAL);
             return true;
         }
 
-        player->SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_RACE, RACE_PANDAREN_HORDE);
-        player->setFactionForRace(RACE_PANDAREN_HORDE);
+        player->SetRace(RACE_PANDAREN_HORDE);
+        player->SetFactionForRace(RACE_PANDAREN_HORDE);
         player->SaveToDB();
         player->LearnSpell(108131, false); // Language Pandaren Horde
         handler->PSendSysMessage(FREEDOM_CMDI_FREEDOM_PANDAHORDE);
@@ -1040,14 +1035,14 @@ public:
     {
         Player* player = handler->GetSession()->GetPlayer();
 
-        if (player->getRace() != RACE_PANDAREN_NEUTRAL)
+        if (player-> GetRace() != RACE_PANDAREN_NEUTRAL)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_FREEDOM_PANDA_NOT_NEUTRAL);
             return true;
         }
 
-        player->SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_RACE, RACE_PANDAREN_ALLIANCE);
-        player->setFactionForRace(RACE_PANDAREN_ALLIANCE);
+        player->SetRace(RACE_PANDAREN_ALLIANCE);
+        player->SetFactionForRace(RACE_PANDAREN_ALLIANCE);
         player->SaveToDB();
         player->LearnSpell(108130, false); // Language Pandaren Alliance
         handler->PSendSysMessage(FREEDOM_CMDI_FREEDOM_PANDAALLIANCE);
@@ -1068,13 +1063,13 @@ public:
 
         ArgumentTokenizer tokenizer(*args ? args : "");
         std::string namePart = tokenizer.GetUntokenizedString();
-        Gender gender = (Gender)source->getGender();
+        Gender gender = (Gender)source-> GetGender();
         uint32 count = 0;
 
         for (auto titleEntry : sCharTitlesStore)
         {
-            int32 locale = handler->GetSessionDbcLocale();
-            std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)->Str[locale];
+            LocaleConstant locale = handler->GetSessionDbcLocale();
+            std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)[locale];
 
             if (boost::icontains(titleName, namePart))
             {
@@ -1104,11 +1099,11 @@ public:
         Player* source = handler->GetSession()->GetPlayer();
         ArgumentTokenizer tokenizer(args);
         uint32 titleId = tokenizer.TryGetParam<uint32>(0, "Htitle");
-        uint32 prevMaskId = source->GetUInt32Value(PLAYER_CHOSEN_TITLE);
+        uint32 prevMaskId = source->m_playerData->PlayerTitle;
 
         if (!titleId)
         {
-            source->SetUInt32Value(PLAYER_CHOSEN_TITLE, 0);
+            source->SetChosenTitle(0);
             source->SaveToDB();
 
             WorldPackets::Character::TitleEarned packetRemovePrevious(SMSG_TITLE_LOST);
@@ -1136,12 +1131,12 @@ public:
         packet.Index = titleEntry->MaskID;
         source->GetSession()->SendPacket(packet.Write());
 
-        source->SetUInt32Value(PLAYER_CHOSEN_TITLE, titleEntry->MaskID);
+        source->SetChosenTitle(titleEntry->MaskID);
         source->SaveToDB();
 
-        Gender gender = (Gender)source->getGender();
-        int32 locale = handler->GetSessionDbcLocale();
-        std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)->Str[locale];
+        Gender gender = (Gender)source->GetGender();
+        LocaleConstant locale = handler->GetSessionDbcLocale();
+        std::string titleName = (gender == GENDER_MALE ? titleEntry->Name : titleEntry->Name1)[locale];
 
         handler->PSendSysMessage(FREEDOM_CMDI_FREEDOM_TITLE_SET,
             titleEntry->ID,
@@ -1192,23 +1187,23 @@ public:
 
         // place pet before player
         float x, y, z;
-        source->GetClosePoint(x, y, z, target->GetObjectSize(), CONTACT_DISTANCE);
+        source->GetClosePoint(x, y, z, target->GetCombatReach(), CONTACT_DISTANCE);
         pet->Relocate(x, y, z, float(M_PI) - source->GetOrientation());
 
         // set pet to defensive mode by default (some classes can't control controlled pets in fact).
         pet->SetReactState(REACT_DEFENSIVE);
 
         // calculate proper level
-        uint8 level = (target->getLevel() < (source->getLevel() - 5)) ? (source->getLevel() - 5) : target->getLevel();
+        uint8 level = (target->GetLevel() < (source->GetLevel() - 5)) ? (source->GetLevel() - 5) : target->GetLevel();
 
         // prepare visual effect for levelup
-        pet->SetUInt32Value(UNIT_FIELD_LEVEL, level - 1);
+        pet->SetLevel(level -1);
 
         // add to world
         pet->GetMap()->AddToMap(pet->ToCreature());
 
         // visual effect for levelup
-        pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
+        pet->SetLevel(level);
 
         // caster have pet now
         source->SetMinion(pet, true);
@@ -1264,7 +1259,7 @@ public:
         }
 
         Player* source = handler->GetSession()->GetPlayer();
-        ObjectGuid targetGuid = sObjectMgr->GetPlayerGUIDByName(args);
+        ObjectGuid targetGuid = sCharacterCache->GetCharacterGuidByName(args);
         Player* target = ObjectAccessor::FindConnectedPlayer(ObjectGuid::Create<HighGuid::Player>(targetGuid.GetCounter()));
 
         if (!target || target->IsLoading() || target->IsBeingTeleported())
@@ -1273,7 +1268,7 @@ public:
             return true;
         }
 
-        if (target->GetSocial()->HasIgnore(source->GetGUID()))
+        if (target->GetSocial()->HasIgnore(source->GetGUID(), source->GetSession()->GetAccountGUID()))
         {
             handler->PSendSysMessage(FREEDOM_CMDE_SUMMON_IGNORE, target->GetName().c_str());
             return true;
@@ -1461,14 +1456,13 @@ public:
         QueryResult result = FreedomDatabase.PQuery("SELECT scale FROM character_extra WHERE guid='%u'", handler->GetSession()->GetPlayer()->GetGUID().GetCounter());
         if (result)
         {
-            Field* fields = result->Fetch();
-
+            //Field* fields = result->Fetch();
             //float currentScale = fields[0].GetFloat();
+            //handler->PSendSysMessage(FREEDOM_CMDI_SCALE_CHANGE, currentScale, scale);
 
             Player *chr = handler->GetSession()->GetPlayer();
-            //handler->PSendSysMessage(FREEDOM_CMDI_SCALE_CHANGE, currentScale, scale);
             handler->PSendSysMessage(FREEDOM_CMDI_SCALE, scale);
-            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+            chr->SetObjectScale(scale);
 
             FreedomDatabase.PExecute("UPDATE character_extra SET scale='%f' WHERE guid='%u'", scale, chr->GetGUID().GetCounter());
             return true;
@@ -1479,7 +1473,7 @@ public:
             Player *chr = handler->GetSession()->GetPlayer();
 
             handler->PSendSysMessage(FREEDOM_CMDI_SCALE, scale);
-            chr->SetFloatValue(OBJECT_FIELD_SCALE_X, scale);
+            chr->SetObjectScale(scale);
             FreedomDatabase.PExecute("INSERT INTO character_extra (guid,scale) VALUES ('%u','%f')", chr->GetGUID().GetCounter(), scale);
 
             return true;
@@ -1589,7 +1583,7 @@ public:
     {
         Player* source = handler->GetSession()->GetPlayer();
 
-        if (source->getRace() == RACE_PANDAREN_ALLIANCE || source->getRace() == RACE_PANDAREN_HORDE || source->getRace() == RACE_PANDAREN_NEUTRAL)
+        if (source->GetRace() == RACE_PANDAREN_ALLIANCE || source->GetRace() == RACE_PANDAREN_HORDE || source->GetRace() == RACE_PANDAREN_NEUTRAL)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_SERVICE_RESTRICTED_FOR_PANDAS);
             return true;
@@ -1609,7 +1603,7 @@ public:
     {
         Player* source = handler->GetSession()->GetPlayer();
 
-        if (source->getRace() == RACE_PANDAREN_NEUTRAL)
+        if (source->GetRace() == RACE_PANDAREN_NEUTRAL)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_SERVICE_RESTRICTED_FOR_NPANDAS);
             return true;
@@ -1807,11 +1801,29 @@ public:
         return true;
     }
 
+    // TODO: Can probably go with new command structure args.
+    static void extractOptFirstArg(char* args, char** arg1, char** arg2)
+    {
+        char* p1 = strtok(args, " ");
+        char* p2 = strtok(nullptr, " ");
+
+        if (!p2)
+        {
+            p2 = p1;
+            p1 = nullptr;
+        }
+
+        if (arg1)
+            *arg1 = p1;
+
+        if (arg2)
+            *arg2 = p2;
+    }
     static bool HandleFreedomChangeAccountCommand(ChatHandler* handler, char const* args)
     {
         char* playerNameStr;
         char* accountNameStr;
-        handler->extractOptFirstArg(const_cast<char*>(args), &playerNameStr, &accountNameStr);
+        extractOptFirstArg(const_cast<char*>(args), &playerNameStr, &accountNameStr);
         if (!accountNameStr)
         {
             handler->PSendSysMessage(FREEDOM_CMDH_CHANGEACCOUNT);
@@ -1823,7 +1835,7 @@ public:
         if (!handler->extractPlayerTarget(playerNameStr, nullptr, &targetGuid, &targetName))
             return false;
 
-        CharacterInfo const* characterInfo = sWorld->GetCharacterInfo(targetGuid);
+        CharacterCacheEntry const* characterInfo = sCharacterCache->GetCharacterCacheByGuid(targetGuid);
         if (!characterInfo)
         {
             handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
@@ -1880,15 +1892,15 @@ public:
             }
         }
 
-        stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ACCOUNT_BY_GUID);
-        stmt->setUInt32(0, newAccountId);
-        stmt->setUInt32(1, targetGuid.GetCounter());
-        CharacterDatabase.DirectExecute(stmt);
+        CharacterDatabasePreparedStatement* stmt2 = CharacterDatabase.GetPreparedStatement(CHAR_UPD_ACCOUNT_BY_GUID);
+        stmt2->setUInt32(0, newAccountId);
+        stmt2->setUInt32(1, targetGuid.GetCounter());
+        CharacterDatabase.DirectExecute(stmt2);
 
         sWorld->UpdateRealmCharCount(oldAccountId);
         sWorld->UpdateRealmCharCount(newAccountId);
 
-        sWorld->UpdateCharacterInfoAccount(targetGuid, newAccountId);
+        sCharacterCache->UpdateCharacterAccountId(targetGuid, newAccountId);
 
         handler->PSendSysMessage(LANG_CHANGEACCOUNT_SUCCESS, targetName.c_str(), accountName.c_str());
         return true;

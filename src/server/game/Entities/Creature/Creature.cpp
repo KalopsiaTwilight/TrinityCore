@@ -2846,13 +2846,13 @@ void Creature::UpdateMovementFlags()
             SetSwim(IsInWater() && extraData->swim);
         else if (extraData->fly)
             SetSwim(true);
-    }
-    else
-    {
-        SetSwim(CanSwim() && IsInWater());
+        }
+        else
+        {
+            SetSwim(CanSwim() && IsInWater());
+        }
     }
 }
-
 CreatureMovementData const& Creature::GetMovementTemplate() const
 {
     if (CreatureMovementData const* movementOverride = sObjectMgr->GetCreatureMovementOverride(m_spawnId))
