@@ -800,6 +800,20 @@ public:
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_GUID, guidLow);
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_ENTRY, entryId, sFreedomMgr->ToChatLink("Hcreature_entry", entryId, "Spawn link"));
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_DISPLAY_ID, displayId, nativeId);
+
+        CreatureGroup* formation = target->GetFormation();
+        if (formation) {
+            FormationData* formationData = sFreedomMgr->GetFormationByLeader(formation->GetLeaderSpawnId());
+            if (formationData) {
+                handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_FORMATION, formationData->key, formation->GetLeaderSpawnId());
+            }
+            else {
+                handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_FORMATION, "None", formation->GetLeaderSpawnId());
+            }
+        }
+        else {
+            handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_INFO_LI_FORMATION_NONE);
+        }
         /*  TO UPDATE
         if (!phaseList.empty())
         {

@@ -368,6 +368,7 @@ class TC_GAME_API FreedomMgr
         FormationDataContainer GetFormationContainer() { return _formationStore; }
         bool FormationExists(std::string const& key) { return _formationStore.count(key) > 0; }
         ObjectGuid::LowType GetFormationLeaderGuid(std::string const& key) { return _formationStore[key].leader; }
+        FormationData* GetFormationByLeader(ObjectGuid::LowType leaderGuid);
         void AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid);
         void DeleteFormation(std::string const& key);
         void LoadFormations();

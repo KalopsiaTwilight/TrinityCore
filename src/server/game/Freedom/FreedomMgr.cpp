@@ -2601,6 +2601,16 @@ void FreedomMgr::StoreMarkerLocationForPlayer(Player* player, const WorldLocatio
     _playerExtraDataStore[player->GetGUID().GetCounter()].markerLocation = *marker;
 }
 
+FormationData* FreedomMgr::GetFormationByLeader(ObjectGuid::LowType leaderGuid)
+{
+    FormationDataContainer::iterator res = std::find_if(_formationStore.begin(), _formationStore.end(),
+        [leaderGuid](std::pair<const std::string, FormationData> data) { return data.second.leader == leaderGuid; });
+    if (res != _formationStore.end()) {
+        return &res->second;
+    }
+    return nullptr;
+}
+
 void FreedomMgr::AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid)
 {
     FormationData data;
