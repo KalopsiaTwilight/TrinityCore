@@ -866,6 +866,8 @@ enum RBACPermissions
 
     RBAC_FPERM_COMMAND_FREEDOM_MOUNT                         = 1375,
     RBAC_FPERM_COMMAND_FREEDOM_MOUNT_MODIFY                  = 1376,
+
+    RBAC_FPERM_COMMAND_FORMATION_LIST                        = 1377,
      
     // custom .reload permissions 9000-9099
     RBAC_FPERM_COMMAND_RELOAD_PLAYERCREATEINFO_SPELL_CUSTOM  = 9000,

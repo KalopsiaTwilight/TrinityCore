@@ -5,6 +5,7 @@
 #include "FreedomMgr.h"
 #include "ObjectMgr.h"
 #include <CreatureGroups.h>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace Trinity::ChatCommands;
 
@@ -22,6 +23,7 @@ public:
             { "remove",  HandleRemoveFromFormationCommand,   rbac::RBAC_FPERM_COMMAND_FORMATION_REMOVE,       Console::No},
             { "delete",  HandleDeleteFormationCommand,       rbac::RBAC_FPERM_COMMAND_FORMATION_DELETE,       Console::No},
             { "savepos", HandleFormationSavePositionCommand, rbac::RBAC_FPERM_COMMAND_FORMATION_SAVEPOSITION, Console::No},
+            { "list",    HandleListFormationCommand,         rbac::RBAC_FPERM_COMMAND_FORMATION_LIST,         Console::No},
         };
         static ChatCommandTable commandTable =
         {
@@ -195,6 +197,39 @@ public:
         sFreedomMgr->SaveFormationPosition(formationKey, handler->GetPlayer());
 
         handler->PSendSysMessage("Formation %s positions saved.", formationKey.c_str());
+        return true;
+    }
+
+    static bool HandleListFormationCommand(ChatHandler* handler, Optional<std::string> search)
+    {
+        const FormationDataContainer formationList = sFreedomMgr->GetFormationContainer();
+        uint64 count = 0;
+
+        if (!search)
+        {
+            for (auto formationData : formationList)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM, formationData.second.leader, formationData.first);
+                count++;
+            }
+        }
+        else
+        {
+            for (auto formationData : formationList)
+            {
+                if (boost::istarts_with(formationData.first, search.value()))
+                {
+                    handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM, formationData.second.leader, formationData.first);
+                    count++;
+                }
+            }
+        }
+
+        if (count == 0)
+            handler->PSendSysMessage(FREEDOM_CMDI_X_NOT_FOUND, "Formations");
+        else
+            handler->PSendSysMessage(FREEDOM_CMDI_SEARCH_QUERY_RESULT, count);
+
         return true;
     }
 };
