@@ -32,11 +32,15 @@ public:
         return commandTable;
     }
 
-    static bool HandleRemoveFromFormationCommand(ChatHandler* handler)
+    static bool HandleRemoveFromFormationCommand(ChatHandler* handler, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            guidLow = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(guidLow);
 
@@ -82,11 +86,15 @@ public:
         return true;
     }
 
-    static bool HandleNewFormationCommand(ChatHandler* handler, std::string const& formationKey)
+    static bool HandleNewFormationCommand(ChatHandler* handler, std::string const& formationKey, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            guidLow = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(guidLow);
 
@@ -118,11 +126,15 @@ public:
         return true;
     }
 
-    static bool HandleAddToFormationCommand(ChatHandler* handler, std::string const& formationKey)
+    static bool HandleAddToFormationCommand(ChatHandler* handler, std::string const& formationKey, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            guidLow = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(guidLow);
 

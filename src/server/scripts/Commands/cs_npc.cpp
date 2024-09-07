@@ -740,9 +740,9 @@ public:
         tokenizer.LoadModifier("-history", 0);
         tokenizer.LoadModifier("-advanced", 0);
 
-        if (tokenizer.size() > 1)
+        if (tokenizer.size() > 0)
         {
-            guidLow = tokenizer.TryGetParam<uint64>(1, "Hcreature");
+            guidLow = tokenizer.TryGetParam<uint64>(0, "Hcreature");
         }
 
         target = sFreedomMgr->GetAnyCreature(guidLow);
@@ -1265,15 +1265,29 @@ public:
         if (!*args)
             return false;
 
-        int32 phaseGroupId = atoi(args);
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-guid", 1);
 
-        Creature* creature = handler->getSelectedCreature();
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
+
         if (!creature || creature->IsPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
             return false;
         }
+
+        int32 phaseGroupId = tokenizer.TryGetParam<uint32>(0);
 
         PhasingHandler::ResetPhaseShift(creature);
         PhasingHandler::AddPhaseGroup(creature, phaseGroupId, true);
@@ -1286,19 +1300,33 @@ public:
 
     //npc phase handling
     //change phase of creature
-    static bool HandleNpcSetPhaseCommand(ChatHandler* handler, uint32 phaseID)
+    static bool HandleNpcSetPhaseCommand(ChatHandler* handler, char const* args)
     {
-        if (phaseID == 0)
+        ArgumentTokenizer tokenizer(*args ? args : "");
+        tokenizer.LoadModifier("-guid", 1);
+
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
         {
-            handler->SendSysMessage(LANG_PHASE_NOTFOUND);
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
+        if (!creature || creature->IsPet())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        Creature* creature = handler->getSelectedCreature();
-        if (!creature || creature->IsPet())
+        uint32 phaseID = tokenizer.TryGetParam<uint32>(0);
+        if (phaseID == 0)
         {
-            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SendSysMessage(LANG_PHASE_NOTFOUND);
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -1380,7 +1408,20 @@ public:
             return true;
         }
 
-        Creature* creature = handler->getSelectedCreature();
+        ArgumentTokenizer tokenizer(text.data());
+        tokenizer.LoadModifier("-guid", 1);
+
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
         if (!creature)
         {
             handler->SendSysMessage(FREEDOM_CMDE_MANUAL_SELECT_CREATURE);
@@ -1388,7 +1429,7 @@ public:
             return false;
         }
 
-        creature->Say(text, LANG_UNIVERSAL);
+        creature->Say(tokenizer.GetUntokenizedString(), LANG_UNIVERSAL);
 
         // make some emotes
         switch (text.back())
@@ -1409,8 +1450,20 @@ public:
             handler->PSendSysMessage(FREEDOM_CMDH_NPC_TEXTEMOTE);
             return true;
         }
+        ArgumentTokenizer tokenizer(text.data());
+        tokenizer.LoadModifier("-guid", 1);
 
-        Creature* creature = handler->getSelectedCreature();
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
 
         if (!creature)
         {
@@ -1419,7 +1472,7 @@ public:
             return false;
         }
 
-        creature->TextEmote(text);
+        creature->TextEmote(tokenizer.GetUntokenizedString());
 
         return true;
     }
@@ -1468,7 +1521,21 @@ public:
             return true;
         }
 
-        Creature* creature = handler->getSelectedCreature();
+        ArgumentTokenizer tokenizer(text.data());
+        tokenizer.LoadModifier("-guid", 1);
+
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
+
         if (!creature)
         {
             handler->SendSysMessage(FREEDOM_CMDE_MANUAL_SELECT_CREATURE);
@@ -1477,7 +1544,7 @@ public:
         }
 
         Player* receiver = ObjectAccessor::FindPlayerByName(recv);
-        creature->Whisper(text, LANG_UNIVERSAL, receiver);
+        creature->Whisper(tokenizer.GetUntokenizedString(), LANG_UNIVERSAL, receiver);
         return true;
     }
 
@@ -1489,7 +1556,21 @@ public:
             return true;
         }
 
-        Creature* creature = handler->getSelectedCreature();
+        ArgumentTokenizer tokenizer(text.data());
+        tokenizer.LoadModifier("-guid", 1);
+
+        Creature* target = handler->getSelectedCreature();
+        uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(handler->GetPlayer()->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
+
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
+
         if (!creature)
         {
             handler->SendSysMessage(FREEDOM_CMDE_MANUAL_SELECT_CREATURE);
@@ -1497,7 +1578,7 @@ public:
             return false;
         }
 
-        creature->Yell(text, LANG_UNIVERSAL);
+        creature->Yell(tokenizer.GetUntokenizedString(), LANG_UNIVERSAL);
 
         // make an emote
         creature->HandleEmoteCommand(EMOTE_ONESHOT_SHOUT);
@@ -2779,9 +2860,22 @@ public:
             return false;
         }
 
+        tokenizer.LoadModifier("-p", 0);
+        tokenizer.LoadModifier("-t", 1);
+        tokenizer.LoadModifier("-i", 1);
+        tokenizer.LoadModifier("-d", 1);
+        tokenizer.LoadModifier("-o", 1);
+        tokenizer.LoadModifier("-c", 1);
+
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (tokenizer.ModifierExists("-c")) {
+            std::string guidValue = tokenizer.GetModifierValue("-c", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
 
         target = sFreedomMgr->GetAnyCreature(guidLow);
 
@@ -2791,12 +2885,6 @@ public:
             handler->SetSentErrorMessage(true);
             return false;
         }
-
-        tokenizer.LoadModifier("-p", 0);
-        tokenizer.LoadModifier("-t", 1);
-        tokenizer.LoadModifier("-i", 1);
-        tokenizer.LoadModifier("-d", 1);
-        tokenizer.LoadModifier("-o", 1);
 
         Unit* spellTarget = target;
         if (tokenizer.ModifierExists("-t"))
@@ -2869,19 +2957,27 @@ public:
             return true;
         }
 
+        ArgumentTokenizer tokenizer(args);
+
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 guidLow = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
 
-        target = sFreedomMgr->GetAnyCreature(guidLow);
+        tokenizer.LoadModifier("-guid", 1);
+        if (tokenizer.ModifierExists("-guid"))
+        {
+            std::string guidValue = tokenizer.GetModifierValue("-guid", 0);
+            std::string guidKey = sFreedomMgr->GetChatLinkKey(guidValue, "Hcreature");
+            guidLow = atoul(guidKey.c_str());
+        }
 
-        if (!target)
+        Creature* creature = sFreedomMgr->GetAnyCreature(guidLow);
+        if (!creature)
         {
             handler->PSendSysMessage(FREEDOM_CMDE_CREATURE_NOT_FOUND);
             return true;
         }
 
-        ArgumentTokenizer tokenizer(args);
         std::string animKitString = tokenizer.TryGetParam(0);
 
         uint64 animKitId = atoul(animKitString.c_str());
@@ -2893,9 +2989,9 @@ public:
             return true;
         }
 
-        sFreedomMgr->CreatureSetAnimKitId(target, animKitId);
-        sFreedomMgr->CreatureSetModifyHistory(target, source);
-        sFreedomMgr->SaveCreature(target);
+        sFreedomMgr->CreatureSetAnimKitId(creature, animKitId);
+        sFreedomMgr->CreatureSetModifyHistory(creature, source);
+        sFreedomMgr->SaveCreature(creature);
 
         handler->PSendSysMessage("NPC Animation kit sucessfully set to: %u!", animKitId);
         return true;

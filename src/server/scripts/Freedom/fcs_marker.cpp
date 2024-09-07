@@ -42,11 +42,15 @@ public:
         return commandTable;
     }
 
-    static bool HandleGoToMarkerCommand(ChatHandler* handler)
+    static bool HandleGoToMarkerCommand(ChatHandler* handler, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 spawnId = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            spawnId = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(spawnId);
 
@@ -104,11 +108,15 @@ public:
         return true;
     }
 
-    static bool HandleTurnToMarkerCommand(ChatHandler* handler)
+    static bool HandleTurnToMarkerCommand(ChatHandler* handler, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 spawnId = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            spawnId = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(spawnId);
 
@@ -170,11 +178,15 @@ public:
         return true;
     }
 
-    static bool HandleWalkToMarkerCommand(ChatHandler* handler)
+    static bool HandleWalkToMarkerCommand(ChatHandler* handler, Optional<uint64> targetSpawnId)
     {
         Player* source = handler->GetSession()->GetPlayer();
         Creature* target = handler->getSelectedCreature();
         uint64 spawnId = target ? target->GetSpawnId() : sFreedomMgr->GetSelectedCreatureGuidFromPlayer(source->GetGUID().GetCounter());
+
+        if (targetSpawnId.has_value()) {
+            spawnId = targetSpawnId.value();
+        }
 
         target = sFreedomMgr->GetAnyCreature(spawnId);
 
