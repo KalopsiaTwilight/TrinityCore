@@ -72,6 +72,7 @@ void FreedomMgr::LoadAllTables()
     LoadNpcCasts();
     LoadAnimationMappings();
     LoadMounts();
+    LoadAddonLoginMessages();
 
     TC_LOG_INFO("server.loading", ">> Loaded FreedomMgr tables in %u ms", GetMSTimeDiffToNow(oldMSTime));
 }
@@ -3059,4 +3060,71 @@ void FreedomMgr::LoadMounts()
 
         _playerExtraDataStore[charGuid].mountDataStore.push_back(data);
     } while (result->NextRow());
+}
+
+void FreedomMgr::LoadAddonLoginMessages()
+{
+    _addonLoginMessageStore.clear();
+
+    // SELECT id, prefix, message, senderGuid FROM addon_login_msgs
+    FreedomDatabasePreparedStatement* stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_ADDON_LOGIN_MSGS);
+    PreparedQueryResult result = FreedomDatabase.Query(stmt);
+
+    if (!result)
+        return;
+
+    do
+    {
+        Field* fields = result->Fetch();
+        AddonLoginMessageData data;
+        data.id = fields[0].GetUInt32();
+        data.prefix = fields[1].GetString();
+        data.message = fields[2].GetString();
+        data.senderGuid = ObjectGuid::Create<HighGuid::Player>(fields[3].GetUInt64());
+        data.senderAccountGuid = ObjectGuid::Create<HighGuid::WowAccount>(fields[4].GetUInt64());
+        data.senderGuildGuid = ObjectGuid::Create<HighGuid::Guild>(fields[5].GetUInt64());
+        _addonLoginMessageStore.push_back(data);
+    } while (result->NextRow());
+}
+
+void FreedomMgr::AddAddonLoginMessage(std::string const& prefix, std::string_view const& message, Player* player)
+{
+    AddonLoginMessageData data;
+
+    // prefix, message, senderGuid, senderAccountGuid, senderGuildGuid
+    int index = 0;
+    FreedomDatabasePreparedStatement* stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_INS_ADDON_LOGIN_MSG);
+    stmt->setString(index++, prefix);
+    stmt->setStringView(index++, message);
+    stmt->setUInt64(index++, player->GetGUID().GetCounter());
+    stmt->setUInt64(index++, player->GetSession()->GetAccountGUID().GetCounter());
+    stmt->setUInt64(index++, player->GetGuildId());
+    FreedomDatabase.DirectExecute(stmt);
+
+    PreparedQueryResult result = FreedomDatabase.Query(FreedomDatabase.GetPreparedStatement(FREEDOM_SEL_ADDON_LOGIN_MSGS_MAX_ID));
+    data.id = result->Fetch()[0].GetUInt32();
+    data.prefix = prefix;
+    data.message = message;
+    data.senderGuid = player->GetGUID();
+    data.senderAccountGuid = player->GetSession()->GetAccountGUID();
+    data.senderGuildGuid = ObjectGuid::Create<HighGuid::Guild>(player->GetGuildId());
+
+    _addonLoginMessageStore.push_back(data);
+}
+
+bool FreedomMgr::DeleteAddonLoginMessage(uint32 id)
+{
+    auto it = std::find_if(
+        _addonLoginMessageStore.begin(), _addonLoginMessageStore.end(),
+        [id](AddonLoginMessageData msg)->bool { return msg.id == id; }
+    );
+
+    if (it != _addonLoginMessageStore.end())
+    {
+        FreedomDatabasePreparedStatement* stmt = FreedomDatabase.GetPreparedStatement(FREEDOM_DEL_ADDON_LOGIN_MSG);
+        stmt->setUInt32(0, id);
+        FreedomDatabase.Execute(stmt);
+        _addonLoginMessageStore.erase(it);
+    }
+    return it != _addonLoginMessageStore.end();
 }

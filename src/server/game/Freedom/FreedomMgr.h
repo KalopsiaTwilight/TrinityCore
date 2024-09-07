@@ -197,6 +197,18 @@ struct NpcCastData
 
 typedef std::vector<std::shared_ptr<NpcCastData>> NpcCastContainer;
 
+struct AddonLoginMessageData
+{
+    uint32 id;
+    std::string prefix;
+    std::string message;
+    ObjectGuid senderGuid;
+    ObjectGuid senderAccountGuid;
+    ObjectGuid senderGuildGuid;
+};
+
+typedef std::vector<AddonLoginMessageData> AddonLoginMessageContainer;
+
 class Map;
 
 using G3D::Vector3;
@@ -408,6 +420,13 @@ class TC_GAME_API FreedomMgr
         void DeleteMountByName(ObjectGuid::LowType playerId, std::string const& name);
         MountDataContainer const& GetMountContainer(ObjectGuid::LowType playerId) { return _playerExtraDataStore[playerId].mountDataStore; }
 
+        // Addon Login Msgs
+        void LoadAddonLoginMessages();
+        void AddAddonLoginMessage(std::string const& prefix, std::string_view const& message, Player* player);
+        bool DeleteAddonLoginMessage(uint32 id);
+        AddonLoginMessageContainer const& GetAddonLoginMessageContainer() { return _addonLoginMessageStore; };
+
+
     protected:
         PlayerExtraDataContainer _playerExtraDataStore;
         PublicTeleContainer _publicTeleStore;
@@ -425,6 +444,7 @@ class TC_GAME_API FreedomMgr
         std::set<std::shared_ptr<NpcCastData>> _removedNpcCastStore;
         NpcCastContainer _npcCastStore;
         AnimationKitMappingContainer _animationKitMappingStore;
+        AddonLoginMessageContainer _addonLoginMessageStore;
 
     private:
         void SaveNpcOutfitToDb(uint32 templateId, uint8 variationId);
