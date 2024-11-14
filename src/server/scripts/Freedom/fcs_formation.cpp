@@ -6,6 +6,8 @@
 #include "ObjectMgr.h"
 #include <CreatureGroups.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <ArgumentTokenizer.h>
+#include "CharacterCache.h"
 
 using namespace Trinity::ChatCommands;
 
@@ -120,7 +122,7 @@ public:
         if (!lowguid)
             return true;
 
-        sFreedomMgr->AddFormation(formationKey, lowguid);
+        sFreedomMgr->AddFormation(formationKey, lowguid, source->GetGUID());
 
         handler->PSendSysMessage("Formation %s added with leader " UI64FMTD, formationKey.c_str(), lowguid);
         return true;
@@ -169,7 +171,7 @@ public:
             return true;
         }
 
-        float  followAngle = (target->GetAbsoluteAngle(leader) -leader->GetOrientation()) * 180.0f / float(M_PI);
+        float  followAngle = (target->GetAbsoluteAngle(leader) - leader->GetOrientation()) * 180.0f / float(M_PI);
         float  followDist = std::sqrt(std::pow(leader->GetPositionX() - target->GetPositionX(), 2.f) + std::pow(leader->GetPositionY() - target->GetPositionY(), 2.f));
         uint32 groupAI = FLAG_IDLE_IN_FORMATION;
         sFormationMgr->AddFormationMember(lowguid, followAngle * float(M_PI) / 180.0f, followDist, leaderGUID, groupAI);
@@ -212,29 +214,44 @@ public:
         return true;
     }
 
-    static bool HandleListFormationCommand(ChatHandler* handler, Optional<std::string> search)
+    static bool HandleListFormationCommand(ChatHandler* handler, Tail cmdStr)
     {
         const FormationDataContainer formationList = sFreedomMgr->GetFormationContainer();
         uint64 count = 0;
 
-        if (!search)
-        {
-            for (auto formationData : formationList)
-            {
-                handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM, formationData.second.leader, formationData.first);
-                count++;
-            }
+        Player* player = handler->GetPlayer();
+
+        ArgumentTokenizer tokenizer(cmdStr.length() > 0 ? cmdStr.data() : "");
+        tokenizer.LoadModifier("-all", 0);
+        std::string searchStr = tokenizer.TryGetParam(0);
+        bool onlySelf = true;
+        if (tokenizer.ModifierExists("-all")) {
+            onlySelf = false;
         }
-        else
+
+        for (auto formationData : formationList)
         {
-            for (auto formationData : formationList)
-            {
-                if (boost::istarts_with(formationData.first, search.value()))
-                {
-                    handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM, formationData.second.leader, formationData.first);
-                    count++;
-                }
+            if (onlySelf && formationData.second.creatorPlayer != player->GetGUID()) {
+                continue;
             }
+            if (searchStr.length() > 0 && !boost::istarts_with(formationData.first, searchStr))
+            {
+                continue;
+            }
+
+            if (onlySelf) {
+                handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM, formationData.second.leader, formationData.first);
+            }
+            else {
+                std::string creatorPlayerName = "(UNKNOWN)";
+                // Set names
+                CharacterCacheEntry const* creatorPlayerInfo = sCharacterCache->GetCharacterCacheByGuid(formationData.second.creatorPlayer);
+                if (creatorPlayerInfo)
+                    creatorPlayerName = creatorPlayerInfo->Name;
+                handler->PSendSysMessage(FREEDOM_CMDI_FORMATION_LIST_ITEM_ALL, formationData.second.leader, formationData.first, creatorPlayerName);
+            }
+
+            count++;
         }
 
         if (count == 0)

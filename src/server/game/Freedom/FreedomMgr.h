@@ -139,6 +139,7 @@ struct FormationData
 {
     std::string key;
     ObjectGuid::LowType leader;
+    ObjectGuid creatorPlayer;
 };
 
 typedef std::unordered_map<std::string, FormationData> FormationDataContainer;
@@ -381,7 +382,7 @@ class TC_GAME_API FreedomMgr
         bool FormationExists(std::string const& key) { return _formationStore.count(key) > 0; }
         ObjectGuid::LowType GetFormationLeaderGuid(std::string const& key) { return _formationStore[key].leader; }
         FormationData* GetFormationByLeader(ObjectGuid::LowType leaderGuid);
-        void AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid);
+        void AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid, ObjectGuid playerId);
         void DeleteFormation(std::string const& key);
         void LoadFormations();
         void SaveFormationPosition(std::string const& key, Player* player);

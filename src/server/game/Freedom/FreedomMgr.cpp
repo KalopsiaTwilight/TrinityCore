@@ -2612,11 +2612,12 @@ FormationData* FreedomMgr::GetFormationByLeader(ObjectGuid::LowType leaderGuid)
     return nullptr;
 }
 
-void FreedomMgr::AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid)
+void FreedomMgr::AddFormation(std::string const& key, ObjectGuid::LowType leaderGuid, ObjectGuid playerId)
 {
     FormationData data;
     data.key = key;
     data.leader = leaderGuid;
+    data.creatorPlayer = playerId;
     _formationStore[key] = data;
 
     Creature* leader = GetAnyCreature(leaderGuid);
@@ -2634,6 +2635,7 @@ void FreedomMgr::AddFormation(std::string const& key, ObjectGuid::LowType leader
     FreedomDatabasePreparedStatement* fstmt = FreedomDatabase.GetPreparedStatement(FREEDOM_INS_FORMATION);
     fstmt->setString(0, key);
     fstmt->setUInt64(1, leaderGuid);
+    fstmt->setUInt64(2, playerId.GetCounter());
     FreedomDatabase.Execute(fstmt);
 }
 
@@ -2654,7 +2656,7 @@ void FreedomMgr::LoadFormations()
     _formationStore.clear();
 
     uint32 oldMSTime = getMSTime();
-    QueryResult result = FreedomDatabase.Query("SELECT `Key`, LeaderGuid from formations");
+    QueryResult result = FreedomDatabase.Query("SELECT `Key`, LeaderGuid, creator_player_id from formations");
     if (!result)
     {
         TC_LOG_INFO("server.loading", ">> Loaded 0 formations. DB table `formations` is empty!");
@@ -2668,6 +2670,7 @@ void FreedomMgr::LoadFormations()
         FormationData formationData;
         formationData.key = fields[0].GetString();
         formationData.leader = fields[1].GetUInt64();
+        formationData.creatorPlayer = ObjectGuid::Create<HighGuid::Player>(fields[2].GetUInt64());
         _formationStore[formationData.key] = formationData;
 
         ++count;
