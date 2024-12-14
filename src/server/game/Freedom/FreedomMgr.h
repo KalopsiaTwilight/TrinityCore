@@ -263,7 +263,7 @@ class TC_GAME_API FreedomMgr
         void GameObjectDelete(GameObject* go);
         void GameObjectSetModifyHistory(GameObject* go, Player* modifier);
         GameObjectExtraData const* GetGameObjectExtraData(uint64 guid);
-        GameObject* GameObjectCreate(Player* creator, GameObjectTemplate const* gobTemplate, uint32 spawnTimeSecs = 0, float scale = -1.0f);
+        GameObject* GameObjectCreate(Player* creator, GameObjectTemplate const* gobTemplate, uint32 spawnTimeSecs = 0, float scale = -1.0f, Position* pos = nullptr);
         bool GameObjectUsesQuatRotation(GameObject* go);
 
         // Creature

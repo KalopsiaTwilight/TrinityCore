@@ -4,8 +4,11 @@
 #include "RBAC.h"
 #include "FreedomMgr.h"
 #include "ObjectMgr.h"
+#include "PhasingHandler.h"
 
 using namespace Trinity::ChatCommands;
+using CreatureEntry = Variant<Hyperlink<creature_entry>, uint32>;
+using GobEntry = Variant<Hyperlink<gameobject_entry>, uint32>;
 
 class F_marker_commandscript : public CommandScript
 {
@@ -16,20 +19,34 @@ public:
     {
         static ChatCommandTable gotoMarkerCommandTable =
         {
-            { "formation", HandleFormationGoToMarkerCommand, rbac::RBAC_FPERM_COMMAND_GOTOMARKER_FORMATION,      Console::No},
-            { "",          HandleGoToMarkerCommand,          rbac::RBAC_FPERM_COMMAND_GOTOMARKER,                Console::No},
+            { "formation", HandleFormationGoToMarkerCommand,    rbac::RBAC_FPERM_COMMAND_GOTOMARKER_FORMATION,      Console::No},
+            { "",          HandleGoToMarkerCommand,             rbac::RBAC_FPERM_COMMAND_GOTOMARKER,                Console::No},
         };
 
         static ChatCommandTable turntoMarkerCommandTable =
         {
-            { "formation", HandleFormationTurnToMarkerCommand, rbac::RBAC_FPERM_COMMAND_TURNTOMARKER_FORMATION,  Console::No},
-            { "",          HandleTurnToMarkerCommand,          rbac::RBAC_FPERM_COMMAND_TURNTOMARKER,            Console::No},
+            { "formation", HandleFormationTurnToMarkerCommand,  rbac::RBAC_FPERM_COMMAND_TURNTOMARKER_FORMATION,  Console::No},
+            { "",          HandleTurnToMarkerCommand,           rbac::RBAC_FPERM_COMMAND_TURNTOMARKER,            Console::No},
         };
 
         static ChatCommandTable walktoMarkerCommandTable =
         {
             { "formation", HandleFormationWalkToMarkerCommand,  rbac::RBAC_FPERM_COMMAND_WALKTOMARKER_FORMATION,  Console::No},
-            { "",          HandleWalkToMarkerCommand,          rbac::RBAC_FPERM_COMMAND_WALKTOMARKER,             Console::No},
+            { "",          HandleWalkToMarkerCommand,           rbac::RBAC_FPERM_COMMAND_WALKTOMARKER,            Console::No},
+        };
+
+        static ChatCommandTable addToMarkerCommandTable =
+        {
+            { "gob", HandleMarkerAddGobCommand,                 rbac::RBAC_FPERM_COMMAND_MARKER_ADD_GOB,           Console::No},
+            { "npc", HandleMarkerAddNpcCommand,                 rbac::RBAC_FPERM_COMMAND_MARKER_ADD_NPC,           Console::No},
+        };
+
+        static ChatCommandTable markerTable =
+        {
+            { "goto",   gotoMarkerCommandTable   },
+            { "turnto", turntoMarkerCommandTable },
+            { "walkto", walktoMarkerCommandTable },
+            { "add", addToMarkerCommandTable }
         };
 
         static ChatCommandTable commandTable =
@@ -37,7 +54,7 @@ public:
             { "gotomarker",   gotoMarkerCommandTable   },
             { "turntomarker", turntoMarkerCommandTable },
             { "walktomarker", walktoMarkerCommandTable },
-
+            { "marker", markerTable }
         };
         return commandTable;
     }
@@ -241,6 +258,107 @@ public:
         handler->PSendSysMessage(FREEDOM_CMDI_CREATURE_MOVE,
             sFreedomMgr->ToChatLink("Hcreature", spawnId, target->GetName()),
             spawnId);
+        return true;
+    }
+
+    static bool HandleMarkerAddGobCommand(ChatHandler* handler, GobEntry objectId)
+    {
+        const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(objectId);
+
+        if (!objectInfo)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_ENTRY_NOT_EXISTS, objectId);
+            return true;
+        }
+
+        if (auto extraData = sFreedomMgr->GetGameObjectTemplateExtraData(objectId))
+        {
+            if (extraData->disabled)
+            {
+                handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_IS_BLACKLISTED);
+                return true;
+            }
+        }
+
+        if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_INVALID_DISPLAY_C, objectId, objectInfo->displayId);
+        }
+
+        Player* source = handler->GetSession()->GetPlayer();
+        WorldLocation* location = sFreedomMgr->GetMarketLocationForPlayer(source);
+        if (!location)
+        {
+            handler->PSendSysMessage("You don't have a marker location.");
+            return true;
+        }
+
+
+        GameObject* object = sFreedomMgr->GameObjectCreate(source, objectInfo, 0, -1, location);
+        if (!object)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_GAMEOBJECT_SPAWN_FAIL, objectId);
+            return true;
+        }
+
+        handler->PSendSysMessage(FREEDOM_CMDI_GAMEOBJECT_SPAWN,
+            sFreedomMgr->ToChatLink("Hgameobject", object->GetSpawnId(), objectInfo->name),
+            object->GetSpawnId(),
+            objectInfo->entry, location->GetPositionX(), location->GetPositionY(), location->GetPositionZ());
+        sFreedomMgr->SetGameobjectSelectionForPlayer(source->GetGUID().GetCounter(), object->GetSpawnId());
+        return true;
+    }
+
+    static bool HandleMarkerAddNpcCommand(ChatHandler* handler, CreatureEntry id)
+    {
+        if (!sObjectMgr->GetCreatureTemplate(id))
+        {
+            handler->PSendSysMessage("Could not find a creature template with id: %u. Perhaps you entered the wrong id or there is something wrong with the template?", id);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* chr = handler->GetSession()->GetPlayer();
+        WorldLocation* location = sFreedomMgr->GetMarketLocationForPlayer(chr);
+        if (!location)
+        {
+            handler->PSendSysMessage("You don't have a marker location.");
+            return true;
+        }
+
+        Map* map = chr->GetMap();
+
+        Creature* creature = Creature::CreateCreature(id, map, location->GetPosition());
+        if (!creature)
+        {
+            handler->PSendSysMessage("Could not create creature with id: %u. This indicates there is something wrong with the creature template.", id);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        PhasingHandler::InheritPhaseShift(creature, chr);
+        creature->SetDBPhase(sFreedomMgr->GetPlayerPhase(chr));
+        creature->SaveToDB(map->GetId(), { map->GetDifficultyID() });
+
+        ObjectGuid::LowType db_guid = creature->GetSpawnId();
+
+        // To call _LoadGoods(); _LoadQuests(); CreateTrainerSpells()
+        // current "creature" variable is deleted and created fresh new, otherwise old values might trigger asserts or cause undefined behavior
+        creature->CleanupsBeforeDelete();
+        delete creature;
+
+        creature = Creature::CreateCreatureFromDB(db_guid, map, true, true);
+        if (!creature)
+        {
+            handler->PSendSysMessage("Could not create creature with id: %u. This indicates there is something wrong with the creature template.", id);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        sObjectMgr->AddCreatureToGrid(sObjectMgr->GetCreatureData(db_guid));
+        sFreedomMgr->CreatureSetModifyHistory(creature, chr, true);
+        sFreedomMgr->SaveCreature(creature);
+        sFreedomMgr->SetCreatureSelectionForPlayer(chr->GetGUID().GetCounter(), creature->GetSpawnId());
         return true;
     }
 };

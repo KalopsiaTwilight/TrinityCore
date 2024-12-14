@@ -1160,7 +1160,7 @@ void FreedomMgr::GameObjectSetModifyHistory(GameObject* go, Player* modifier)
     _gameObjectExtraStore[go->GetSpawnId()] = data;
 }
 
-GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate const* gobTemplate, uint32 spawnTimeSecs, float scale)
+GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate const* gobTemplate, uint32 spawnTimeSecs, float scale, Position* pos)
 {
     if (gobTemplate->displayId && !sGameObjectDisplayInfoStore.LookupEntry(gobTemplate->displayId))
     {
@@ -1177,7 +1177,10 @@ GameObject* FreedomMgr::GameObjectCreate(Player* creator, GameObjectTemplate con
     G3D::Quat rot = G3D::Matrix3::fromEulerAnglesZYX(creator->GetOrientation(), 0.f, 0.f);
 
     GameObject* object = new GameObject;
-    object = GameObject::CreateGameObject(gobTemplate->entry, map, *player, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY);
+    if (!pos) {
+        pos = player;
+    }
+    object = GameObject::CreateGameObject(gobTemplate->entry, map, *pos, QuaternionData(rot.x, rot.y, rot.z, rot.w), 255, GO_STATE_READY);
     if (!object)
     {
         delete object;
