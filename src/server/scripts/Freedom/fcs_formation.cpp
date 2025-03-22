@@ -26,6 +26,7 @@ public:
             { "delete",  HandleDeleteFormationCommand,       rbac::RBAC_FPERM_COMMAND_FORMATION_DELETE,       Console::No},
             { "savepos", HandleFormationSavePositionCommand, rbac::RBAC_FPERM_COMMAND_FORMATION_SAVEPOSITION, Console::No},
             { "list",    HandleListFormationCommand,         rbac::RBAC_FPERM_COMMAND_FORMATION_LIST,         Console::No},
+            { "reform",  HandleFormationReformCommand,       rbac::RBAC_FPERM_COMMAND_FORMATION_REFORM,       Console::No},
         };
         static ChatCommandTable commandTable =
         {
@@ -259,6 +260,59 @@ public:
         else
             handler->PSendSysMessage(FREEDOM_CMDI_SEARCH_QUERY_RESULT, count);
 
+        return true;
+    }
+
+    static bool HandleFormationReformCommand(ChatHandler* handler, std::string const& formationKey) {
+        if (!sFreedomMgr->FormationExists(formationKey)) {
+            handler->PSendSysMessage("There is no formation with the name: %s", formationKey.c_str());
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        ObjectGuid::LowType leaderGUID = sFreedomMgr->GetFormationLeaderGuid(formationKey);
+        Creature* leader = sFreedomMgr->GetAnyCreature(leaderGUID);
+
+        if (!leader || leader->GetMapId() != leader->GetMapId())
+        {
+            handler->PSendSysMessage("Could not find the leader of formation %s on this map.", formationKey.c_str());
+            return true;
+        }
+
+        Map* map = leader->GetMap();
+        auto itr = map->CreatureGroupHolder.find(leaderGUID);
+        if (itr == map->CreatureGroupHolder.end())
+        {
+            handler->PSendSysMessage("Error: No creature group container found for formation '%s'. Please contact a dev.", formationKey.c_str());
+            return true;
+        }
+        else {
+            for (Creature* member : itr->second->GetMembers())
+            {
+                ObjectGuid::LowType spawnId = member->GetSpawnId();
+
+                sFormationMgr->RemoveCreatureFromGroup(itr->second, member);
+                sFormationMgr->ClearCreatureFormation(member);
+
+                float  followAngle = (member->GetAbsoluteAngle(leader) - leader->GetOrientation()) * 180.0f / float(M_PI);
+                float  followDist = std::sqrt(std::pow(leader->GetPositionX() - member->GetPositionX(), 2.f) + std::pow(leader->GetPositionY() - member->GetPositionY(), 2.f));
+                uint32 groupAI = FLAG_IDLE_IN_FORMATION;
+                sFormationMgr->AddFormationMember(spawnId, followAngle * float(M_PI) / 180.0f, followDist, leaderGUID, groupAI);
+                member->SearchFormation();
+
+                WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_REP_CREATURE_FORMATION);
+                stmt->setUInt64(0, leaderGUID);
+                stmt->setUInt64(1, spawnId);
+                stmt->setFloat(2, followDist);
+                stmt->setFloat(3, followAngle);
+                stmt->setUInt32(4, groupAI);
+
+                WorldDatabase.Execute(stmt);
+            }
+        }
+
+
+        handler->PSendSysMessage("Formation '%s' was succesfully reformed.", formationKey.c_str());
         return true;
     }
 };

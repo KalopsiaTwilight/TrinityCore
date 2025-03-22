@@ -106,6 +106,7 @@ void WorldDatabaseConnection::DoPrepareStatements()
     PrepareStatement(WORLD_REP_CREATURE_ADDON_FULL, "REPLACE INTO creature_addon(guid, path_id, mount, bytes1, bytes2, emote, auras, aiAnimKit) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
     PrepareStatement(WORLD_DEL_CREATURE_FORMATION, "DELETE FROM creature_formations WHERE memberGUID = ?", CONNECTION_ASYNC);
+    PrepareStatement(WORLD_REP_CREATURE_FORMATION, "REPLACE INTO creature_formations (leaderGUID, memberGUID, dist, angle, groupAI) VALUES (?, ?, ?, ?, ?)", CONNECTION_ASYNC);
 
     // Custom NPC Stuff
     PrepareStatement(WORLD_REP_CREATURE_TEMPLATE, "REPLACE INTO creature_template (entry, name, subname, HealthScalingExpansion, RequiredExpansion, faction, unit_class, type, type_flags, type_flags2, movementId, CreatureDifficultyID, minlevel, maxlevel, family) VALUES (?, ?, ?, 8, 0, 35, 1, ?, ?, 2, 100, 204488, 60, 60, ?)", CONNECTION_ASYNC);
