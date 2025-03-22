@@ -2026,37 +2026,53 @@ void FreedomMgr::SetCustomNpcOutfitGender(std::string const& key, uint8 variatio
 void FreedomMgr::SetCustomNpcLeftHand(std::string const& key, uint8 variationId, int32 itemId, int32 appearanceModId)
 {
     uint32 templateId = _customNpcStore[key].templateId;
+    SetNpcLeftHand(templateId, variationId, itemId, appearanceModId);
+    ReloadSpawnedCustomNpcs(key);
+}
+
+void FreedomMgr::SetNpcLeftHand(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId)
+{
     EnsureEquipmentInfoExists(templateId, variationId);
     EquipmentInfo _equipmentInfo = sObjectMgr->_equipmentInfoStore[templateId][variationId];
     _equipmentInfo.Items[1].ItemId = itemId;
     _equipmentInfo.Items[1].AppearanceModId = appearanceModId;
     sObjectMgr->_equipmentInfoStore[templateId][variationId] = _equipmentInfo;
     SaveNpcEquipmentInfoToDb(templateId, variationId);
-    ReloadSpawnedCustomNpcs(key);
 }
 
 void FreedomMgr::SetCustomNpcRightHand(std::string const& key, uint8 variationId, int32 itemId, int32 appearanceModId)
 {
     uint32 templateId = _customNpcStore[key].templateId;
+    SetNpcRightHand(templateId, variationId, itemId, appearanceModId);
+    ReloadSpawnedCustomNpcs(key);
+}
+
+void FreedomMgr::SetNpcRightHand(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId)
+{
     EnsureEquipmentInfoExists(templateId, variationId);
     EquipmentInfo _equipmentInfo = sObjectMgr->_equipmentInfoStore[templateId][variationId];
     _equipmentInfo.Items[0].ItemId = itemId;
     _equipmentInfo.Items[0].AppearanceModId = appearanceModId;
     sObjectMgr->_equipmentInfoStore[templateId][variationId] = _equipmentInfo;
     SaveNpcEquipmentInfoToDb(templateId, variationId);
-    ReloadSpawnedCustomNpcs(key);
 }
 
 void FreedomMgr::SetCustomNpcRanged(std::string const& key, uint8 variationId, int32 itemId, int32 appearanceModId)
 {
     uint32 templateId = _customNpcStore[key].templateId;
+    SetNpcRanged(templateId, variationId, itemId, appearanceModId);
+    ReloadSpawnedCustomNpcs(key);
+}
+
+
+void FreedomMgr::SetNpcRanged(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId)
+{
     EnsureEquipmentInfoExists(templateId, variationId);
     EquipmentInfo _equipmentInfo = sObjectMgr->_equipmentInfoStore[templateId][variationId];
     _equipmentInfo.Items[2].ItemId = itemId;
     _equipmentInfo.Items[2].AppearanceModId = appearanceModId;
     sObjectMgr->_equipmentInfoStore[templateId][variationId] = _equipmentInfo;
     SaveNpcEquipmentInfoToDb(templateId, variationId);
-    ReloadSpawnedCustomNpcs(key);
 }
 
 void FreedomMgr::SetCustomNpcDisplayId(std::string const& key, uint8 variationId, uint32 displayId)
@@ -2597,7 +2613,10 @@ uint8 FreedomMgr::GetModelVariationCountForNpc(std::string const& key) {
     return sObjectMgr->_creatureTemplateStore[_customNpcStore[key].templateId].Models.size();
 }
 uint8 FreedomMgr::GetEquipmentVariationCountForNpc(std::string const& key) {
-    return sObjectMgr->_equipmentInfoStore[_customNpcStore[key].templateId].size();
+    return GetEquipmentVariationCountForNpc(_customNpcStore[key].templateId);
+}
+uint8 FreedomMgr::GetEquipmentVariationCountForNpc(uint32 templateId) {
+    return sObjectMgr->_equipmentInfoStore[templateId].size();
 }
 
 void FreedomMgr::StoreMarkerLocationForPlayer(Player* player, const WorldLocation* marker)

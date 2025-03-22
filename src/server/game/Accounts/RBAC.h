@@ -872,6 +872,14 @@ enum RBACPermissions
     RBAC_FPERM_COMMAND_MARKER_ADD_GOB                        = 1378,
     RBAC_FPERM_COMMAND_MARKER_ADD_NPC                        = 1379,
 
+    RBAC_FPERM_COMMAND_NPC_EQUIP_LEFT                        = 1380,
+    RBAC_FPERM_COMMAND_NPC_EQUIP_RANGED                      = 1381,
+    RBAC_FPERM_COMMAND_NPC_EQUIP_RIGHT                       = 1382,
+    RBAC_FPERM_COMMAND_NPC_UNEQUIP_LEFT                      = 1383,
+    RBAC_FPERM_COMMAND_NPC_UNEQUIP_RANGED                    = 1384,
+    RBAC_FPERM_COMMAND_NPC_UNEQUIP_RIGHT                     = 1385,
+    RBAC_FPERM_COMMAND_NPC_SET_EQUIPMENT                     = 1386,
+
     // FADDON PERMISSION 2000-2999
     RBAC_FPERM_COMMAND_FADDON_LOGINMSG_ADD                   = 2000,
     RBAC_FPERM_COMMAND_FADDON_LOGINMSG_DEL                   = 2001,

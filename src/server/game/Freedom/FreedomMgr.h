@@ -354,6 +354,7 @@ class TC_GAME_API FreedomMgr
         uint32 GetEntryIdForNpc(std::string const& key) { return _customNpcStore[key].templateId; }
         uint8 GetModelVariationCountForNpc(std::string const& key);
         uint8 GetEquipmentVariationCountForNpc(std::string const& key);
+        uint8 GetEquipmentVariationCountForNpc(uint32 templateId);
         void LoadCustomNpcs();
         void CreateCustomNpcFromPlayer(Player* player, std::string const& key);
         void SetCustomNpcOutfitEquipmentSlot(std::string const& key, uint8 variationId, EquipmentSlots slot, int32 displayId);
@@ -376,6 +377,10 @@ class TC_GAME_API FreedomMgr
         void LoadCustomNpcSpawn(uint32 templateId, ObjectGuid::LowType spawn);
         void RemoveCustomNpcVariation(std::string const& key, uint8 variationId);
         void DeleteCustomNpc(std::string const& key);
+
+        void SetNpcLeftHand(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId);
+        void SetNpcRightHand(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId);
+        void SetNpcRanged(uint32 templateId, uint8 variationId, int32 itemId, int32 appearanceModId);
 
         // Formations
         FormationDataContainer GetFormationContainer() { return _formationStore; }
