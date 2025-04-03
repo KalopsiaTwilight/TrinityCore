@@ -1429,6 +1429,7 @@ public:
             }
             source->RemoveAllGameObjects();
             sFreedomMgr->RemoveAllAuraApplications(source);
+            source->SetAIAnimKitId(0);
 
             handler->PSendSysMessage(FREEDOM_CMDI_UNAURA);
             return true;
