@@ -1,3 +1,9 @@
-DELETE
+WITH set_faction_ids AS (
+SELECT DISTINCT entryorguid
 FROM smart_scripts
-WHERE action_type = 2;
+WHERE ACTION_TYPE IN (2)
+)
+DELETE FROM smart_scripts
+WHERE entryorguid IN (
+SELECT * FROM set_faction_ids
+)
