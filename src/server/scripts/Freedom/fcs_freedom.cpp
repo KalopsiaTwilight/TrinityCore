@@ -28,6 +28,7 @@
 #include "Utilities/ArgumentTokenizer.h"
 #include "CollectionMgr.h"
 #include "BattlePetMgr.h"
+#include "SpellAuras.h"
 
 enum FreedomCmdAuraSpells
 {
@@ -145,6 +146,7 @@ public:
         {
             { "hover",          rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomHoverCommand,              "" },
             { "cast",           rbac::RBAC_FPERM_COMMAND_FREEDOM_SPELL,             false, &HandleFreedomSpellCommand,              "" },
+            { "aura",           rbac::RBAC_FPERM_COMMAND_FREEDOM_SPELL,             false, &HandleFreedomAuraCommand,              "" },
             { "summon",         rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomSummonCommand,             "" },
             { "demorph",        rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomDemorphCommand,            "" },
             { "fly",            rbac::RBAC_FPERM_COMMAND_FREEDOM_UTILITIES,         false, &HandleFreedomFlyCommand,                "" },
@@ -843,6 +845,49 @@ public:
         }
 
         source->CastSpell(target, spellId);
+        return true;
+    }
+
+
+    static bool HandleFreedomAuraCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDH_PUBLIC_SPELL);
+            return true;
+        }
+
+        uint32 spellId = handler->extractSpellIdFromLink((char*)args);
+        Player* source = handler->GetSession()->GetPlayer();
+        Unit* target = handler->getSelectedUnit();
+
+        // Check if public spell already exists
+        const PublicSpellData* spellData = sFreedomMgr->GetPublicSpell(spellId);
+
+        if (!spellData)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_X_WITH_ID_NOT_FOUND, "Public spell", spellId);
+            return true;
+        }
+
+        if (!target) {
+            target = source;
+        }
+
+
+        const SpellInfo* spellEntry = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NORMAL);
+
+        if (!spellEntry)
+        {
+            handler->PSendSysMessage(FREEDOM_CMDE_X_WITH_ID_NOT_FOUND, "Spell entry", spellId);
+            return true;
+        }
+
+        ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, target->GetMapId(), spellId, target->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+        AuraCreateInfo createInfo(castId, spellEntry, target->GetMap()->GetDifficultyID(), MAX_EFFECT_MASK, target);
+        createInfo.SetCaster(target);
+
+        Aura::TryRefreshStackOrCreate(createInfo);
         return true;
     }
 
