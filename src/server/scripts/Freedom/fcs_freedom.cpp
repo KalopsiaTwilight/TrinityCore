@@ -859,7 +859,6 @@ public:
 
         uint32 spellId = handler->extractSpellIdFromLink((char*)args);
         Player* source = handler->GetSession()->GetPlayer();
-        Unit* target = handler->getSelectedUnit();
 
         // Check if public spell already exists
         const PublicSpellData* spellData = sFreedomMgr->GetPublicSpell(spellId);
@@ -870,11 +869,6 @@ public:
             return true;
         }
 
-        if (!target) {
-            target = source;
-        }
-
-
         const SpellInfo* spellEntry = sSpellMgr->GetSpellInfo(spellId, DIFFICULTY_NORMAL);
 
         if (!spellEntry)
@@ -883,9 +877,9 @@ public:
             return true;
         }
 
-        ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, target->GetMapId(), spellId, target->GetMap()->GenerateLowGuid<HighGuid::Cast>());
-        AuraCreateInfo createInfo(castId, spellEntry, target->GetMap()->GetDifficultyID(), MAX_EFFECT_MASK, target);
-        createInfo.SetCaster(target);
+        ObjectGuid castId = ObjectGuid::Create<HighGuid::Cast>(SPELL_CAST_SOURCE_NORMAL, source->GetMapId(), spellId, source->GetMap()->GenerateLowGuid<HighGuid::Cast>());
+        AuraCreateInfo createInfo(castId, spellEntry, source->GetMap()->GetDifficultyID(), MAX_EFFECT_MASK, source);
+        createInfo.SetCaster(source);
 
         Aura::TryRefreshStackOrCreate(createInfo);
         return true;
